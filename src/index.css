@@ -1,0 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ── Swiper hero nav buttons ── */
+.swiper-button-next,
+.swiper-button-prev {
+  color: #f5a623 !important;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  width: 20px !important;
+  height: 20px !important;
+  backdrop-filter: blur(4px);
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 15px !important;
+  font-weight: 800;
+}
+
+/* ── Swiper pagination ── */
+.swiper-pagination-bullet {
+  background: rgba(255, 255, 255, 0.5) !important;
+  opacity: 1 !important;
+  width: 8px !important;
+  height: 8px !important;
+}
+
+.swiper-pagination-bullet-active {
+  background: #E91E8C !important;
+  width: 24px !important;
+  border-radius: 4px !important;
+  transition: width 0.3s ease;
+}
+
+/* testimonials pagination */
+.testimonials-swiper .swiper-pagination-bullet {
+  background: rgba(233, 30, 140, 0.25) !important;
+}
+
+.testimonials-swiper .swiper-pagination-bullet-active {
+  background: #E91E8C !important;
+}
