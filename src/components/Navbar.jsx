@@ -1,18 +1,20 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Box, Flex, Text, Container, HStack, Stack, Button } from "@chakra-ui/react";
 import {
   FaPhone, FaEnvelope, FaFacebook, FaYoutube, FaInstagram,
   FaBars, FaTimes, FaTelegram, FaChevronDown,
 } from "react-icons/fa";
 import { selektup } from "../assets";
+import { isLoggedIn, logoutUser } from "../utils/auth";
 
-const NAV_LINKS = ["Home", "About Us", "Courses", "Contact", "Study Materials"];
+const NAV_LINKS = ["Home", "About Us", "Courses", "Test Series", "Contact", "Study Materials"];
 
 const ROUTE_PATHS = {
   Home: "/",
   "About Us": "/about",
   Courses: "/courses",
+  "Test Series": "/test-series",
   Contact: "/contact",
 };
 
@@ -23,10 +25,17 @@ const STUDY_MATERIAL_LINKS = [
 
 export default function Navbar() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [studyOpen, setStudyOpen] = useState(false);
   const [mobileStudyOpen, setMobileStudyOpen] = useState(false);
   const enquirySubmitted = localStorage.getItem("enquirySubmitted") === "true";
+  const loggedIn = isLoggedIn();
+
+  function handleLogout() {
+    logoutUser();
+    navigate("/");
+  }
 
   return (
     <>
@@ -193,16 +202,27 @@ export default function Navbar() {
             </HStack>
 
             {/* Desktop CTA buttons */}
-            {!enquirySubmitted && (
-              <HStack gap={3} display={{ base: "none", lg: "flex" }}>
-                <Button size="sm" variant="outline" borderColor="#039BE5" color="#039BE5">
+            <HStack gap={3} display={{ base: "none", lg: "flex" }}>
+              {loggedIn ? (
+                <>
+                  <Button as={Link} to="/dashboard" size="sm" bg="#039BE5" color="white" _hover={{ bg: "#0284C7" }}>
+                    Dashboard
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleLogout}>
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <Button as={Link} to="/login" size="sm" bg="#039BE5" color="white" _hover={{ bg: "#0284C7" }}>
                   Students Login
                 </Button>
+              )}
+              {!enquirySubmitted && (
                 <Button size="sm" bg="#E91E8C" color="white">
                   Enroll
                 </Button>
-              </HStack>
-            )}
+              )}
+            </HStack>
 
             {/* Hamburger — mobile/tablet only */}
             <Box
@@ -301,18 +321,48 @@ export default function Navbar() {
                   ) : null
                 )}
 
-                {!enquirySubmitted && (
-                  <HStack gap={3} pt={3} mt={1} borderTop="1px solid" borderColor="gray.100">
+                <HStack gap={3} pt={3} mt={1} borderTop="1px solid" borderColor="gray.100">
+                  {loggedIn ? (
+                    <>
+                      <Button
+                        as={Link}
+                        to="/dashboard"
+                        size="sm"
+                        flex={1}
+                        bg="#039BE5"
+                        color="white"
+                        _hover={{ bg: "#0284C7" }}
+                        onClick={() => setOpen(false)}
+                      >
+                        Dashboard
+                      </Button>
+                      <Button
+                        size="sm"
+                        flex={1}
+                        variant="outline"
+                        onClick={() => {
+                          handleLogout();
+                          setOpen(false);
+                        }}
+                      >
+                        Logout
+                      </Button>
+                    </>
+                  ) : (
                     <Button
+                      as={Link}
+                      to="/login"
                       size="sm"
                       flex={1}
-                      variant="outline"
-                      borderColor="#039BE5"
-                      color="#039BE5"
+                      bg="#039BE5"
+                      color="white"
+                      _hover={{ bg: "#0284C7" }}
                       onClick={() => setOpen(false)}
                     >
                       Students Login
                     </Button>
+                  )}
+                  {!enquirySubmitted && (
                     <Button
                       size="sm"
                       flex={1}
@@ -322,8 +372,8 @@ export default function Navbar() {
                     >
                       Enroll
                     </Button>
-                  </HStack>
-                )}
+                  )}
+                </HStack>
               </Stack>
             </Box>
           )}
