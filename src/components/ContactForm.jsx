@@ -1,109 +1,96 @@
-import {Box,Button,Grid,GridItem,Input,Text,VStack,Textarea,} from '@chakra-ui/react'
 import { useState } from 'react'
-import { rtdb } from '../firebase'
-import { ref, push } from 'firebase/database'
+import {
+  Box,
+  Button,
+  Grid,
+  GridItem,
+  Input,
+  Text,
+  Textarea,
+  VStack,
+} from '@chakra-ui/react'
 
-const ContactForm = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    district: '',
-    message: '',
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+// TODO: update VITE_API_BASE_URL in .env to match your backend port (currently 8081)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const EMPTY_FORM = { name: '', email: '', phone: '', district: '', message: '' }
+
+export default function ContactForm() {
+  const [form, setForm] = useState(EMPTY_FORM)
+  const [fieldErrors, setFieldErrors] = useState({})
+  const [apiError, setApiError] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData({ ...formData, [name]: value })
-    if (error) setError('')
+    setForm((f) => ({ ...f, [name]: value }))
+    // Clear the inline error for this field as the user types
+    if (fieldErrors[name]) setFieldErrors((fe) => ({ ...fe, [name]: '' }))
+    if (apiError) setApiError('')
+    if (successMsg) setSuccessMsg('')
+  }
+
+  const validate = () => {
+    const errors = {}
+    if (!form.name.trim())     errors.name     = 'Name is required'
+    if (!form.district.trim()) errors.district = 'District is required'
+    if (!form.phone.trim())    errors.phone    = 'Phone number is required'
+    if (!form.message.trim())  errors.message  = 'Message is required'
+    if (form.email.trim() && !EMAIL_RE.test(form.email.trim()))
+      errors.email = 'Enter a valid email address'
+    return errors
   }
 
   const handleSubmit = async () => {
-    if (!formData.name.trim() || !formData.phone.trim() || !formData.district.trim() || !formData.message.trim()) {
-      setError('Please fill in all required fields.')
+    const errors = validate()
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
       return
     }
-    setIsLoading(true)
-    setError('')
+    setFieldErrors({})
+    setApiError('')
+    setSuccessMsg('')
+    setLoading(true)
+
     try {
-      await push(ref(rtdb, 'enquiries'), {
-        ...formData,
-        createdAt: new Date().toISOString(),
+      const res = await fetch(`${API_BASE_URL}/api/home/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name:     form.name.trim(),
+          email:    form.email.trim() || null,
+          phone:    form.phone.trim(),
+          district: form.district.trim(),
+          message:  form.message.trim(),
+        }),
       })
-      localStorage.setItem('enquirySubmitted', 'true')
-      setSubmitted(true)
-    } catch (err) {
-      console.error('Error:', err)
-      setError('Something went wrong. Please try again.')
+      const data = await res.json()
+      if (data.success) {
+        setForm(EMPTY_FORM)
+        setSuccessMsg(data.message || "Thanks! We'll get back to you soon.")
+      } else {
+        setApiError(data.message || 'Something went wrong. Please try again.')
+      }
+    } catch {
+      setApiError('Unable to connect to server. Please try again.')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   return (
     <Box bg="#F8F9FA" minH="calc(100vh - 88px)">
-      <Box
-        bg="linear-gradient(135deg, #0C1222 0%, #1a0830 50%, #0277BD 100%)"
-        py={{ base: 14, md: 20 }}
-        textAlign="center"
-        position="relative"
-        overflow="hidden"
-      >
-        <Box
-          position="absolute"
-          top="-20%"
-          right="-5%"
-          w="360px"
-          h="360px"
-          borderRadius="full"
-          bg="rgba(233,30,140,0.08)"
-          border="1px solid rgba(233,30,140,0.12)"
-        />
-        <Box
-          position="absolute"
-          bottom="-15%"
-          left="-5%"
-          w="280px"
-          h="280px"
-          borderRadius="full"
-          bg="rgba(3,155,229,0.07)"
-        />
-        <Box position="relative" zIndex={1}>
-          <Text
-            color="#E91E8C"
-            fontWeight={700}
-            fontSize="xs"
-            letterSpacing="0.14em"
-            textTransform="uppercase"
-            mb={3}
-          >
-            Get in Touch
-          </Text>
-          <Text
-            fontSize={{ base: '2xl', md: '4xl' }}
-            fontWeight={900}
-            color="white"
-            lineHeight={1.2}
-          >
-            Join the SeleKtUp Family Today
-          </Text>
-          <Text
-            color="rgba(255,255,255,0.65)"
-            fontSize={{ base: 'md', md: 'lg' }}
-            mt={4}
-            maxW="480px"
-            mx="auto"
-            lineHeight={1.75}
-          >
-            Fill in the form below and our counseling team will reach out within 24 hours.
-          </Text>
-        </Box>
-      </Box>
 
-      {/* Card area */}
+      {/* ── Thin gradient banner strip ── */}
+      <Box
+        h="8px"
+        bg="linear-gradient(135deg, #0C1222 0%, #1a0830 50%, #0277BD 100%)"
+      />
+
+      {/* ── Card area ── */}
       <Box maxW="860px" mx="auto" px={{ base: 4, md: 8 }} py={{ base: 10, md: 16 }}>
         <Box
           bg="white"
@@ -113,166 +100,187 @@ const ContactForm = () => {
           border="1px solid"
           borderColor="gray.100"
         >
-          {submitted ? (
-            /* ── Thank-you state ── */
-            <VStack gap={4} py={10} textAlign="center">
-              <Box
-                w={16}
-                h={16}
-                borderRadius="full"
-                bg="rgba(233,30,140,0.1)"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                fontSize="2xl"
-              >
-                ✓
-              </Box>
-              <Text fontSize="2xl" fontWeight={900} color="#0C1222">
-                Thank You for Submitting!
-              </Text>
-              <Text color="gray.500" maxW="380px" lineHeight={1.75}>
-                We've received your enquiry. Our counseling team will reach out to you within 24 hours.
-              </Text>
-            </VStack>
-          ) : (
-            /* ── Form state ── */
-            <>
-              <Text fontSize="xl" fontWeight={800} color="#0C1222" mb={1}>
-                Enquiry Form
-              </Text>
-              <Text fontSize="sm" color="gray.500" mb={8}>
-                All fields marked{' '}
-                <span style={{ color: '#E91E8C', fontWeight: 700 }}>*</span>{' '}
-                are required.
-              </Text>
+          {/* Heading */}
+          <Text fontSize="2xl" fontWeight={800} color="#0C1222" mb={1}>
+            Enquiry Form
+          </Text>
+          <Text fontSize="sm" color="gray.500" mb={8}>
+            All fields marked{' '}
+            <Box as="span" color="#E91E8C" fontWeight={700}>*</Box>
+            {' '}are required.
+          </Text>
 
-              <VStack gap={6}>
-                <Grid
-                  templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
-                  gap={6}
-                  w="100%"
-                >
-                  <GridItem>
-                    <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">
-                      Name <span style={{ color: '#E91E8C' }}>*</span>
-                    </Text>
-                    <Input
-                      placeholder="Your full name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      borderColor="gray.200"
-                      borderWidth="2px"
-                      borderRadius="lg"
-                      _focus={{ borderColor: '#E91E8C', boxShadow: '0 0 0 3px rgba(233,30,140,0.12)' }}
-                      _hover={{ borderColor: '#E91E8C' }}
-                    />
-                  </GridItem>
-
-                  <GridItem>
-                    <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">
-                      Email
-                    </Text>
-                    <Input
-                      placeholder="Enter valid email id"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      borderColor="gray.200"
-                      borderWidth="2px"
-                      borderRadius="lg"
-                      _focus={{ borderColor: '#039BE5', boxShadow: '0 0 0 3px rgba(3,155,229,0.12)' }}
-                      _hover={{ borderColor: '#039BE5' }}
-                    />
-                  </GridItem>
-
-                  <GridItem>
-                    <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">
-                      District <span style={{ color: '#E91E8C' }}>*</span>
-                    </Text>
-                    <Input
-                      placeholder="Enter your district"
-                      name="district"
-                      value={formData.district}
-                      onChange={handleChange}
-                      borderColor="gray.200"
-                      borderWidth="2px"
-                      borderRadius="lg"
-                      _focus={{ borderColor: '#E91E8C', boxShadow: '0 0 0 3px rgba(233,30,140,0.12)' }}
-                      _hover={{ borderColor: '#E91E8C' }}
-                    />
-                  </GridItem>
-
-                  <GridItem>
-                    <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">
-                      Phone Number <span style={{ color: '#E91E8C' }}>*</span>
-                    </Text>
-                    <Input
-                      placeholder="Enter phone number"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      borderColor="gray.200"
-                      borderWidth="2px"
-                      borderRadius="lg"
-                      _focus={{ borderColor: '#039BE5', boxShadow: '0 0 0 3px rgba(3,155,229,0.12)' }}
-                      _hover={{ borderColor: '#039BE5' }}
-                    />
-                  </GridItem>
-                </Grid>
-
-                <Box w="100%">
-                  <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">
-                    Message <span style={{ color: '#E91E8C' }}>*</span>
-                  </Text>
-                  <Textarea
-                    placeholder="Write your message..."
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    borderColor="gray.200"
-                    borderWidth="2px"
-                    borderRadius="lg"
-                    _focus={{ borderColor: '#E91E8C', boxShadow: '0 0 0 3px rgba(233,30,140,0.12)' }}
-                    _hover={{ borderColor: '#E91E8C' }}
-                  />
-                </Box>
-
-                {error && (
-                  <Text color="red.500" fontSize="sm" alignSelf="flex-start">
-                    {error}
-                  </Text>
-                )}
-
-                <Button
-                  bg="#E91E8C"
-                  color="white"
-                  px={10}
-                  py={6}
-                  borderRadius="lg"
-                  fontWeight={700}
-                  fontSize="md"
-                  _hover={{
-                    bg: '#C2185B',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 24px rgba(233,30,140,0.4)',
-                  }}
-                  transition="all 0.25s"
-                  alignSelf="flex-start"
-                  onClick={handleSubmit}
-                  loading={isLoading}
-                  disabled={isLoading}
-                >
-                  Submit Enquiry
-                </Button>
-              </VStack>
-            </>
+          {/* API success alert */}
+          {successMsg && (
+            <Box
+              bg="green.50"
+              border="1px solid"
+              borderColor="green.300"
+              borderRadius="lg"
+              px={4}
+              py={3}
+              mb={6}
+              display="flex"
+              alignItems="center"
+              gap={2}
+            >
+              <Box color="green.500" fontSize="lg" lineHeight={1}>✓</Box>
+              <Text color="green.700" fontSize="sm" fontWeight={600}>{successMsg}</Text>
+            </Box>
           )}
+
+          {/* API error alert */}
+          {apiError && (
+            <Box
+              bg="red.50"
+              border="1px solid"
+              borderColor="red.200"
+              borderRadius="lg"
+              px={4}
+              py={3}
+              mb={6}
+            >
+              <Text color="red.600" fontSize="sm">{apiError}</Text>
+            </Box>
+          )}
+
+          <VStack gap={6}>
+            {/* Row 1: Name + Email */}
+            <Grid
+              templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)' }}
+              gap={6}
+              w="100%"
+            >
+              <GridItem>
+                <FieldLabel>Name <Asterisk /></FieldLabel>
+                <Input
+                  name="name"
+                  placeholder="Your full name"
+                  value={form.name}
+                  onChange={handleChange}
+                  borderColor={fieldErrors.name ? 'red.400' : 'gray.200'}
+                  borderWidth="2px"
+                  borderRadius="lg"
+                  _focus={{ borderColor: '#E91E8C', boxShadow: '0 0 0 3px rgba(233,30,140,0.12)' }}
+                  _hover={{ borderColor: '#E91E8C' }}
+                />
+                <FieldError msg={fieldErrors.name} />
+              </GridItem>
+
+              <GridItem>
+                <FieldLabel>Email</FieldLabel>
+                <Input
+                  name="email"
+                  placeholder="Enter valid email id"
+                  value={form.email}
+                  onChange={handleChange}
+                  borderColor={fieldErrors.email ? 'red.400' : 'gray.200'}
+                  borderWidth="2px"
+                  borderRadius="lg"
+                  _focus={{ borderColor: '#039BE5', boxShadow: '0 0 0 3px rgba(3,155,229,0.12)' }}
+                  _hover={{ borderColor: '#039BE5' }}
+                />
+                <FieldError msg={fieldErrors.email} />
+              </GridItem>
+
+              {/* Row 2: District + Phone */}
+              <GridItem>
+                <FieldLabel>District <Asterisk /></FieldLabel>
+                <Input
+                  name="district"
+                  placeholder="Enter your district"
+                  value={form.district}
+                  onChange={handleChange}
+                  borderColor={fieldErrors.district ? 'red.400' : 'gray.200'}
+                  borderWidth="2px"
+                  borderRadius="lg"
+                  _focus={{ borderColor: '#E91E8C', boxShadow: '0 0 0 3px rgba(233,30,140,0.12)' }}
+                  _hover={{ borderColor: '#E91E8C' }}
+                />
+                <FieldError msg={fieldErrors.district} />
+              </GridItem>
+
+              <GridItem>
+                <FieldLabel>Phone Number <Asterisk /></FieldLabel>
+                <Input
+                  name="phone"
+                  placeholder="Enter phone number"
+                  value={form.phone}
+                  onChange={handleChange}
+                  borderColor={fieldErrors.phone ? 'red.400' : 'gray.200'}
+                  borderWidth="2px"
+                  borderRadius="lg"
+                  _focus={{ borderColor: '#E91E8C', boxShadow: '0 0 0 3px rgba(233,30,140,0.12)' }}
+                  _hover={{ borderColor: '#E91E8C' }}
+                />
+                <FieldError msg={fieldErrors.phone} />
+              </GridItem>
+            </Grid>
+
+            {/* Message — full width */}
+            <Box w="100%">
+              <FieldLabel>Message <Asterisk /></FieldLabel>
+              <Textarea
+                name="message"
+                placeholder="Write your message..."
+                value={form.message}
+                onChange={handleChange}
+                rows={5}
+                borderColor={fieldErrors.message ? 'red.400' : 'gray.200'}
+                borderWidth="2px"
+                borderRadius="lg"
+                resize="vertical"
+                _focus={{ borderColor: '#E91E8C', boxShadow: '0 0 0 3px rgba(233,30,140,0.12)' }}
+                _hover={{ borderColor: '#E91E8C' }}
+              />
+              <FieldError msg={fieldErrors.message} />
+            </Box>
+
+            {/* Submit — left-aligned, content-width */}
+            <Box w="100%" display="flex">
+              <Button
+                bg="#E91E8C"
+                color="white"
+                px={10}
+                py={6}
+                borderRadius="lg"
+                fontWeight={700}
+                fontSize="md"
+                onClick={handleSubmit}
+                loading={loading}
+                disabled={loading}
+                _hover={{
+                  bg: '#C2185B',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 24px rgba(233,30,140,0.4)',
+                }}
+                transition="all 0.25s"
+              >
+                Submit Enquiry
+              </Button>
+            </Box>
+          </VStack>
         </Box>
       </Box>
     </Box>
   )
 }
 
-export default ContactForm
+// ── Small reusable sub-components ────────────────────────────────────────────
+
+function FieldLabel({ children }) {
+  return (
+    <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">
+      {children}
+    </Text>
+  )
+}
+
+function Asterisk() {
+  return <Box as="span" color="#E91E8C">{' '}*</Box>
+}
+
+function FieldError({ msg }) {
+  if (!msg) return null
+  return <Text color="red.500" fontSize="xs" mt={1}>{msg}</Text>
+}

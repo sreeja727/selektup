@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {Box,Flex,Text,Container,HStack,Stack,Button,} from "@chakra-ui/react";
 import {FaPhone,FaEnvelope,FaFacebook,FaTwitter,FaYoutube,FaInstagram,FaBars,FaTimes,FaTelegram,FaChevronDown,} from "react-icons/fa";
 import { selektup } from "../assets";
@@ -26,6 +26,7 @@ const STUDY_MATERIAL_LINKS = [
 
 export default function Navbar() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [studyOpen, setStudyOpen] = useState(false);
   const [mobileStudyOpen, setMobileStudyOpen] = useState(false);
@@ -216,6 +217,10 @@ export default function Navbar() {
                   variant="outline"
                   borderColor="#039BE5"
                   color="#039BE5"
+                  onClick={() => {
+                    const hasRegistered = localStorage.getItem('selektup_has_registered') === 'true'
+                    navigate(hasRegistered ? '/login' : '/register')
+                  }}
                 >
                   Students Login
                 </Button>

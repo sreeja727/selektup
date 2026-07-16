@@ -11,6 +11,9 @@ import Footer from './components/Footer'
 import ContactForm from './components/ContactForm'
 import AboutPage from './components/AboutPage'
 import CoursesPage from './components/CoursesPage'
+import Login from './components/Login'
+import Register from './components/Register'
+import ForgotPassword from './components/ForgotPassword'
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -43,6 +46,9 @@ export default function App() {
         <Route path="/contact" element={<ContactForm />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/courses" element={<CoursesPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
       <Footer />
     </>
