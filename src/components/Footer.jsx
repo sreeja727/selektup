@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 import { Link as RouterLink } from 'react-router-dom'
->>>>>>> 1f7908aaed02400d7441d351ceff84dab95da44b
 import { Box, Container, SimpleGrid, VStack, HStack, Text, Heading } from '@chakra-ui/react'
 import {
   FaFacebook, FaTwitter, FaYoutube, FaInstagram, FaLinkedin, FaTelegram,
@@ -67,29 +64,6 @@ export default function Footer() {
             <Text color="gray.500" fontSize="sm" lineHeight={1.85}>
               SelektUp is a premier coaching platform dedicated to shaping future professionals through expert guidance, structured learning, and result-oriented strategies            </Text>
             <HStack gap={3}>
-<<<<<<< HEAD
-              {SOCIAL.map(({ Icon, color, href }, i) => (
-                <Box
-                  key={i}
-                  as="a"
-                  href={href}
-                  target={href !== '#' ? '_blank' : undefined}
-                  rel={href !== '#' ? 'noopener noreferrer' : undefined}
-                  w={9}
-                  h={9}
-                  borderRadius="full"
-                  bg="rgba(255,255,255,0.07)"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  color="gray.500"
-                  transition="all 0.25s"
-                  _hover={{ bg: color, color: 'white', transform: 'translateY(-2px)' }}
-                >
-                  <Icon size={14} as={Icon} />
-                </Box>
-              ))}
-=======
               {SOCIAL.map(({ Icon, color, href }, i) => {
                 const SocialIcon = Icon
                 return (
@@ -114,7 +88,6 @@ export default function Footer() {
                   </Box>
                 )
               })}
->>>>>>> 1f7908aaed02400d7441d351ceff84dab95da44b
             </HStack>
           </VStack>
 
@@ -225,14 +198,6 @@ export default function Footer() {
               © 2025 SeleKtUp  Academy. All rights reserved.
             </Text>
             <HStack gap={6} flexWrap="wrap">
-<<<<<<< HEAD
-              {['Privacy Policy', 'Terms of Service',].map(l => (
-                <Box key={l} as="a" href="#" fontSize="sm" color="gray.600"
-                  _hover={{ color: 'white' }} transition="color 0.2s">
-                  {l}
-                </Box>
-              ))}
-=======
               <Box as={RouterLink} to="/privacy-policy" fontSize="sm" color="gray.600"
                 _hover={{ color: 'white' }} transition="color 0.2s">
                 Privacy Policy
@@ -241,7 +206,6 @@ export default function Footer() {
                 _hover={{ color: 'white' }} transition="color 0.2s">
                 Terms of Service
               </Box>
->>>>>>> 1f7908aaed02400d7441d351ceff84dab95da44b
             </HStack>
           </HStack>
         </Container>

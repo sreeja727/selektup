@@ -8,14 +8,6 @@ import WhyChooseUs from './components/WhyChooseUs'
 import ToppersSection from './components/ToppersSection'
 import TestimonialsSection from './components/TestimonialsSection'
 import Footer from './components/Footer'
-<<<<<<< HEAD
-import ContactForm from './components/ContactForm'
-import AboutPage from './components/AboutPage'
-import CoursesPage from './components/CoursesPage'
-import Login from './components/Login'
-import Register from './components/Register'
-import ForgotPassword from './components/ForgotPassword'
-=======
 import ContactForm from './pages/components/ContactForm'
 import AboutPage from './pages/components/AboutPage'
 import CoursesPage from './pages/components/CoursesPage'
@@ -31,7 +23,6 @@ import Register from './pages/components/Register'
 import PaymentPage from './pages/components/PaymentPage'
 import AdminRoutes from './Admin/Routes/AdminRoutes'
 import Dashboard from './Admin/pages/Dashboard'
->>>>>>> 1f7908aaed02400d7441d351ceff84dab95da44b
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -55,24 +46,13 @@ function HomePage() {
 }
 
 export default function App() {
-<<<<<<< HEAD
-=======
   const location = useLocation()
->>>>>>> 1f7908aaed02400d7441d351ceff84dab95da44b
   return (
     <>
       <ScrollToTop />
       <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
-<<<<<<< HEAD
-        <Route path="/contact" element={<ContactForm />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/courses" element={<CoursesPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-=======
         <Route path="/contact" element={<ContactForm key={location.key} />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/courses" element={<CoursesPage />} />
@@ -92,7 +72,6 @@ export default function App() {
 
   
 
->>>>>>> 1f7908aaed02400d7441d351ceff84dab95da44b
       </Routes>
       <Footer />
     </>
