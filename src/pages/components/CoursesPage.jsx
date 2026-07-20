@@ -215,12 +215,12 @@ function CourseCard({ course }) {
           fontWeight={700}
           px={0}
           _hover={{ bg: 'transparent', opacity: 0.75 }}
+          rightIcon={open ? <FaChevronUp size={11} /> : <FaChevronDown size={11} />}
           justifyContent="flex-start"
           transition="all 0.2s"
           onClick={() => setOpen(v => !v)}
         >
           {open ? 'Show Less' : 'Learn More'}
-          {open ? <FaChevronUp size={11} /> : <FaChevronDown size={11} />}
         </Button>
       </Stack>
     </Box>
@@ -324,12 +324,12 @@ export default function CoursesPage() {
                 fontWeight={700}
                 borderRadius="xl"
                 px={7}
+                rightIcon={<FaArrowRight />}
                 _hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(3,155,229,0.35)' }}
                 transition="all 0.25s"
                 onClick={() => navigate('/contact')}
               >
                For Enquiry
-               <FaArrowRight />
               </Button>
             </Stack>
 
@@ -416,12 +416,12 @@ export default function CoursesPage() {
                 fontWeight={700}
                 borderRadius="xl"
                 px={7}
+                rightIcon={<FaArrowRight />}
                 _hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(103,58,183,0.4)' }}
                 transition="all 0.25s"
                 onClick={() => navigate('/contact')}
               >
                 For Enquiry
-                <FaArrowRight />
               </Button>
             </Stack>
 
@@ -499,12 +499,12 @@ export default function CoursesPage() {
                 fontWeight={700}
                 borderRadius="xl"
                 px={7}
+                rightIcon={<FaArrowRight />}
                 _hover={{ transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,137,123,0.35)' }}
                 transition="all 0.25s"
                 onClick={() => navigate('/contact')}
               >
                For Enquiry
-               <FaArrowRight />
               </Button>
             </Stack>
 
