@@ -8,18 +8,21 @@ import WhyChooseUs from './components/WhyChooseUs'
 import ToppersSection from './components/ToppersSection'
 import TestimonialsSection from './components/TestimonialsSection'
 import Footer from './components/Footer'
-import ContactForm from './pages/ContactForm'
-import AboutPage from './pages/AboutPage'
-import CoursesPage from './pages/CoursesPage'
-import TestSeriesPage from './pages/TestSeriesPage'
-import TestCategoryPage from './pages/TestCategoryPage'
-import TestDetailPage from './pages/TestDetailPage'
-import CheckoutPage from './pages/CheckoutPage'
-import PrivacyPolicy from './pages/PrivacyPolicy'
-import TermsOfService from './pages/TermsOfService'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Dashboard from './pages/Dasboard'
+import ContactForm from './pages/components/ContactForm'
+import AboutPage from './pages/components/AboutPage'
+import CoursesPage from './pages/components/CoursesPage'
+import TestSeriesPage from './pages/components/TestSeriesPage'
+import TestCategoryPage from './pages/components/TestCategoryPage'
+import TestDetailPage from './pages/components/TestDetailPage'
+import CheckoutPage from './pages/components/CheckoutPage'
+import PrivacyPolicy from './pages/components/PrivacyPolicy'
+import TermsOfService from './pages/components/TermsOfService'
+import Login from './pages/components/Login'
+import Register from './pages/components/Register'
+// import Dashboard from './pages/components/Dasboard'
+import PaymentPage from './pages/components/PaymentPage'
+import AdminRoutes from './Admin/Routes/AdminRoutes'
+import Dashboard from './Admin/pages/Dashboard'
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -62,6 +65,12 @@ export default function App() {
         <Route path="/login" element={<Login />}/>
         <Route path="/register" element={<Register />}/>
         <Route path="/dashboard" element={<Dashboard/>}/>
+        <Route path='/payment' element={<PaymentPage/>}/>
+        <Route path="/admin" element={<AdminRoutes />}
+      />
+      
+
+  
 
       </Routes>
       <Footer />

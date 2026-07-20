@@ -1,7 +1,7 @@
 import { Link as RouterLink } from 'react-router-dom'
 import { Box, Container, SimpleGrid, Stack, HStack, Text, Heading } from '@chakra-ui/react'
 import { FaArrowRight, FaClipboardList } from 'react-icons/fa'
-import { TEST_CATEGORIES } from '../data/testSeries'
+import { TEST_CATEGORIES } from '../../data/testSeries'
 
 function CategoryCard({ category }) {
   return (

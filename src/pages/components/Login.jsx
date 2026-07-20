@@ -1,19 +1,30 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams, Link as RouterLink } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation, Link as RouterLink } from "react-router-dom";
 import {Box,Button,Field,Heading,Input,InputGroup,Stack,Text,Link,Checkbox,} from "@chakra-ui/react";
 import { LuEye, LuEyeOff, LuUser, LuLock } from "react-icons/lu";
-import { loginUser } from "../utils/auth";
+import { loginUser } from "../../utils/auth";
 
 export default function Login() {
   const [show, setShow] = useState(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const justRegistered = location.state?.registered;
 
   function handleLogin() {
-    if (!identifier || !password) return;
-    loginUser({ identifier });
+    setError("");
+    if (!identifier || !password) {
+      setError("Please enter your email/mobile and password.");
+      return;
+    }
+    const result = loginUser({ identifier, password });
+    if (!result.success) {
+      setError(result.error);
+      return;
+    }
     navigate(searchParams.get("redirect") || "/dashboard");
   }
 
@@ -47,9 +58,21 @@ export default function Login() {
             </Text>
 
             <Text color="gray.500">
-              Login to continue 
+              Login to continue
             </Text>
           </Box>
+
+          {justRegistered && (
+            <Text fontSize="sm" color="green.600" textAlign="center">
+              Account created successfully! Please login.
+            </Text>
+          )}
+
+          {error && (
+            <Text fontSize="sm" color="red.500" textAlign="center">
+              {error}
+            </Text>
+          )}
 
           <Field.Root>
             <Field.Label>Email / Mobile Number</Field.Label>

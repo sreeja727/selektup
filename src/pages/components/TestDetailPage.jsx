@@ -1,9 +1,9 @@
 import { Link as RouterLink, useParams, Navigate } from 'react-router-dom'
 import { Box, Container, Stack, HStack, Text, Heading, Button, SimpleGrid } from '@chakra-ui/react'
 import { FaArrowLeft, FaClipboardList, FaClock, FaStar, FaPlayCircle, FaExclamationTriangle } from 'react-icons/fa'
-import { getTest } from '../data/testSeries'
-import { isLoggedIn } from '../utils/auth'
-import { isPurchased } from '../utils/purchases'
+import { getTest } from '../../data/testSeries'
+import { isLoggedIn } from '../../utils/auth'
+import { isPurchased } from '../../utils/purchases'
 
 function InfoTile({ tile }) {
   return (
