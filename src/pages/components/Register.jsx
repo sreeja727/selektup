@@ -1,21 +1,44 @@
 import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams, Link as RouterLink } from "react-router-dom";
 import { Box, Button, Field, Heading, Input, InputGroup, Stack, Text, Link } from "@chakra-ui/react";
 import { LuEye, LuEyeOff, LuUser, LuMail, LuLock } from "react-icons/lu";
-import { loginUser } from "../utils/auth";
+import { registerUser } from "../../utils/auth";
+import { register } from "../actions";
+import { getCommonConfigSelector } from "../common/selectors";
 
 export default function Register() {
   const [show, setShow] = useState(false);
   const [name, setName] = useState("");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
+  const redirect = searchParams.get("redirect");
+  const { apiLoading, customToast } = useSelector(getCommonConfigSelector);
+  const apiError = customToast?.open && customToast?.variant === "error" ? customToast.message : "";
 
   function handleRegister() {
-    if (!name || !identifier || !password) return;
-    loginUser({ name, identifier });
-    navigate(searchParams.get("redirect") || "/dashboard");
+    setError("");
+    if (!name || !identifier || !password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    dispatch(register({ fullName: name, emailOrMobile: identifier, password }));
+    const result = registerUser({ name, identifier, password });
+    if (!result.success) {
+      setError(result.error);
+      return;
+    }
+    navigate(`/login${redirect ? `?redirect=${redirect}` : ""}`, {
+      state: { registered: true },
+    });
   }
 
   return (
@@ -112,6 +135,12 @@ export default function Register() {
             </InputGroup>
           </Field.Root>
 
+          {(error || apiError) && (
+            <Text fontSize="sm" color="red.500" textAlign="center">
+              {error || apiError}
+            </Text>
+          )}
+
           <Button
             size="lg"
             borderRadius="md"
@@ -121,6 +150,8 @@ export default function Register() {
             transition="background 0.2s ease"
             _hover={{ bg: "#c8177a" }}
             onClick={handleRegister}
+            loading={apiLoading}
+            disabled={apiLoading}
           >
             Register
           </Button>
@@ -133,7 +164,7 @@ export default function Register() {
             Already have an account?{" "}
             <Link
               as={RouterLink}
-              to={`/login${searchParams.get("redirect") ? `?redirect=${searchParams.get("redirect")}` : ""}`}
+              to={`/login${redirect ? `?redirect=${redirect}` : ""}`}
               color="#039BE5"
               fontWeight="medium"
               _hover={{ color: "#E91E8C", textDecoration: "underline" }}

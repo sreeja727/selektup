@@ -2,9 +2,8 @@ import { useState } from "react";
 import { Link as RouterLink, useParams, useNavigate, Navigate } from "react-router-dom";
 import { Box, Container, Stack, HStack, Text, Heading, Button } from "@chakra-ui/react";
 import { FaArrowLeft, FaCheckCircle, FaLock, FaClipboardList, FaClock } from "react-icons/fa";
-import { getTest } from "../data/testSeries";
-import { isLoggedIn } from "../utils/auth";
-import { isPurchased, purchaseTest } from "../utils/purchases";
+import { getTest } from "../../data/testSeries";
+import { isPurchased, purchaseTest } from "../../utils/purchases";
 
 export default function CheckoutPage() {
   const { categorySlug, testSlug } = useParams();
@@ -13,10 +12,6 @@ export default function CheckoutPage() {
   const result = getTest(categorySlug, testSlug);
 
   if (!result) return <Navigate to="/test-series" replace />;
-
-  if (!isLoggedIn()) {
-    return <Navigate to={`/login?redirect=/checkout/${categorySlug}/${testSlug}`} replace />;
-  }
 
   const { category, test } = result;
 

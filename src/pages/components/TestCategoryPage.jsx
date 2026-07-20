@@ -1,9 +1,9 @@
 import { Link as RouterLink, useParams, useNavigate, Navigate } from 'react-router-dom'
 import { Box, Container, Stack, HStack, Text, Heading, Button } from '@chakra-ui/react'
 import { FaArrowLeft, FaClipboardList, FaClock, FaPlayCircle, FaLock } from 'react-icons/fa'
-import { getCategory } from '../data/testSeries'
-import { isLoggedIn } from '../utils/auth'
-import { isPurchased } from '../utils/purchases'
+import { getCategory } from '../../data/testSeries'
+import { isLoggedIn } from '../../utils/auth'
+import { isPurchased } from '../../utils/purchases'
 
 export default function TestCategoryPage() {
   const { categorySlug } = useParams()
@@ -14,10 +14,10 @@ export default function TestCategoryPage() {
 
   function goToTest(test) {
     const path = `/test-series/${category.slug}/${test.slug}`
-    if (!isLoggedIn()) {
+    if (!isPurchased(category.slug, test.slug)) {
+      return
+    } else if (!isLoggedIn()) {
       navigate(`/login?redirect=${path}`)
-    } else if (!isPurchased(category.slug, test.slug)) {
-      navigate(`/checkout/${category.slug}/${test.slug}`)
     } else {
       navigate(path)
     }
@@ -70,7 +70,9 @@ export default function TestCategoryPage() {
         <Container maxW="7xl">
           <Stack gap={4}>
             {category.tests.map((test) => {
-              const unlocked = isPurchased(category.slug, test.slug)
+              // Payment gateway isn't integrated yet, so nothing is ever truly
+              // unlocked here regardless of stale local purchase data.
+              const unlocked = false
               return (
                 <HStack
                   key={test.slug}
