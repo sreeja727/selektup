@@ -23,23 +23,19 @@ export default function EnquiryDetails() {
         items={[
           { label: "Dashboard", to: "/admin/dashboard" },
           { label: "Enquiries", to: "/admin/enquiries" },
-          { label: enquiry.subject },
+          { label: enquiry.name },
         ]}
       />
       <BackButton to="/admin/enquiries" label="Back to Enquiries" />
 
-      <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="800px">
+      <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="800px" borderTop="4px solid" borderColor="#E91E8C">
         <Flex justify="space-between" align="flex-start" mb={6}>
-          <Heading size="lg" color="#0C1222">{enquiry.subject}</Heading>
-          <Badge colorScheme={STATUS_COLOR[enquiry.status]}>{enquiry.status}</Badge>
+          <Heading size="lg" color="#0C1222">{enquiry.name}</Heading>
+          <Badge colorPalette={STATUS_COLOR[enquiry.status]} rounded="md" px={2}>{enquiry.status}</Badge>
         </Flex>
 
-        <VStack align="stretch" spacing={4}>
-          <Flex gap={4} wrap="wrap">
-            <Box>
-              <Text fontSize="xs" color="gray.400">Name</Text>
-              <Text fontWeight={600} color="#0C1222">{enquiry.name}</Text>
-            </Box>
+        <VStack align="stretch" gap={4}>
+          <Flex gap={8} wrap="wrap">
             <Box>
               <Text fontSize="xs" color="gray.400">Email</Text>
               <Text fontWeight={600} color="#0C1222">{enquiry.email}</Text>
@@ -47,6 +43,10 @@ export default function EnquiryDetails() {
             <Box>
               <Text fontSize="xs" color="gray.400">Phone</Text>
               <Text fontWeight={600} color="#0C1222">{enquiry.phone}</Text>
+            </Box>
+            <Box>
+              <Text fontSize="xs" color="gray.400">District</Text>
+              <Text fontWeight={600} color="#0C1222">{enquiry.district}</Text>
             </Box>
             <Box>
               <Text fontSize="xs" color="gray.400">Date</Text>

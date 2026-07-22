@@ -50,20 +50,19 @@ export default function TestSeriesList() {
       <Breadcrumb items={[{ label: "Dashboard", to: "/admin/dashboard" }, { label: "Test Series" }]} />
 
       <Flex justify="space-between" align="center" mb={8}>
-        <Heading>Test Series</Heading>
+        <Heading color="#0C1222">Test Series</Heading>
 
-       <Button
-  colorScheme="blue"
-  leftIcon={<Plus size={18} />}
-  onClick={() =>
-    navigate("/admin/test-series/add")
-  }
->
-  Add Test Series
-</Button>
+        <Button
+          colorPalette="blue"
+          gap={2}
+          onClick={() => navigate("/admin/test-series/add")}
+        >
+          <Plus size={18} />
+          Add Test Series
+        </Button>
       </Flex>
 
-      <VStack spacing={4} align="stretch">
+      <VStack gap={4} align="stretch">
         {paginated.map((series) => (
           <Box
             key={series.id}
@@ -71,6 +70,10 @@ export default function TestSeriesList() {
             p={6}
             borderRadius="xl"
             boxShadow="md"
+            border="1px solid"
+            borderColor="gray.100"
+            transition="box-shadow 0.2s"
+            _hover={{ boxShadow: "0 10px 28px rgba(12,18,34,0.1)" }}
           >
             <Flex
               justify="space-between"
@@ -88,21 +91,23 @@ export default function TestSeriesList() {
                 </Text>
               </Box>
 
-              <HStack spacing={3}>
+              <HStack gap={3}>
                 <Button
                   size="sm"
                   variant="outline"
-                  leftIcon={<Pencil size={16} />}
+                  gap={2}
                 >
+                  <Pencil size={16} />
                   Edit
                 </Button>
 
                 <Button
                   size="sm"
-                  colorScheme="red"
+                  colorPalette="red"
                   variant="outline"
-                  leftIcon={<Trash2 size={16} />}
+                  gap={2}
                 >
+                  <Trash2 size={16} />
                   Delete
                 </Button>
               </HStack>

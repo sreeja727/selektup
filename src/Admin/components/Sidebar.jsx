@@ -33,14 +33,14 @@ export default function Sidebar() {
   return (
     <Box
       w="250px"
-      bg="#0B1E35"
+      bg="#0C1222"
       color="white"
       h="100vh"
       p={5}
       position="fixed"
       overflowY="auto"
     >
-      <Box mb={10} px={1}>
+      <Box mb={8} px={1} pb={5} borderBottom="1px solid" borderColor="rgba(255,255,255,0.08)">
         <Text fontWeight="900" fontSize="xl" letterSpacing="-0.5px">
           <span style={{ color: "#039BE5" }}>SeleKt</span>
           <span style={{ color: "#E91E8C" }}>Up</span>

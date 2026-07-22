@@ -21,7 +21,7 @@ export default function EnquiriesList() {
       const matchesSearch =
         e.name.toLowerCase().includes(search.toLowerCase()) ||
         e.email.toLowerCase().includes(search.toLowerCase()) ||
-        e.subject.toLowerCase().includes(search.toLowerCase());
+        e.district.toLowerCase().includes(search.toLowerCase());
       return matchesFilter && matchesSearch;
     });
   }, [search, filter]);
@@ -59,7 +59,7 @@ export default function EnquiriesList() {
             </Box>
             <Input
               pl="34px"
-              placeholder="Search by name, email or subject"
+              placeholder="Search by name, email or district"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -86,9 +86,9 @@ export default function EnquiriesList() {
                 rounded="lg"
                 fontSize="sm"
                 fontWeight={600}
-                bg={filter === f ? "#0B1E35" : "gray.100"}
+                bg={filter === f ? "#039BE5" : "gray.100"}
                 color={filter === f ? "white" : "gray.600"}
-                _hover={{ bg: filter === f ? "#0B1E35" : "gray.200" }}
+                _hover={{ bg: filter === f ? "#0277BD" : "gray.200" }}
                 transition="all 0.15s"
               >
                 {f}
@@ -102,7 +102,8 @@ export default function EnquiriesList() {
             <Table.Header>
               <Table.Row bg="gray.50">
                 <Table.ColumnHeader>Name</Table.ColumnHeader>
-                <Table.ColumnHeader>Subject</Table.ColumnHeader>
+                <Table.ColumnHeader>Phone</Table.ColumnHeader>
+                <Table.ColumnHeader>District</Table.ColumnHeader>
                 <Table.ColumnHeader>Date</Table.ColumnHeader>
                 <Table.ColumnHeader>Status</Table.ColumnHeader>
                 <Table.ColumnHeader></Table.ColumnHeader>
@@ -110,15 +111,16 @@ export default function EnquiriesList() {
             </Table.Header>
             <Table.Body>
               {paginated.map((e) => (
-                <Table.Row key={e.id}>
+                <Table.Row key={e.id} _hover={{ bg: "gray.50" }}>
                   <Table.Cell fontWeight={600} color="#0C1222">
                     <Text fontSize="sm">{e.name}</Text>
                     <Text fontSize="xs" color="gray.400">{e.email}</Text>
                   </Table.Cell>
-                  <Table.Cell color="gray.600">{e.subject}</Table.Cell>
+                  <Table.Cell color="gray.600">{e.phone}</Table.Cell>
+                  <Table.Cell color="gray.600">{e.district}</Table.Cell>
                   <Table.Cell color="gray.600">{e.date}</Table.Cell>
                   <Table.Cell>
-                    <Badge colorScheme={STATUS_COLOR[e.status]}>{e.status}</Badge>
+                    <Badge colorPalette={STATUS_COLOR[e.status]} rounded="md" px={2}>{e.status}</Badge>
                   </Table.Cell>
                   <Table.Cell>
                     <Box
@@ -137,7 +139,7 @@ export default function EnquiriesList() {
 
               {filtered.length === 0 && (
                 <Table.Row>
-                  <Table.Cell colSpan={5}>
+                  <Table.Cell colSpan={6}>
                     <Text textAlign="center" color="gray.400" py={8}>
                       No enquiries found.
                     </Text>

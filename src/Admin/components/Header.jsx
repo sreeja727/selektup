@@ -18,9 +18,10 @@ export default function Header() {
       align="center"
       justify="space-between"
       px={8}
-      shadow="sm"
+      borderBottom="1px solid"
+      borderColor="gray.100"
     >
-      <Text fontWeight="bold" fontSize="xl">
+      <Text fontWeight="800" fontSize="xl" color="#0C1222">
         Admin Dashboard
       </Text>
 
@@ -28,11 +29,17 @@ export default function Header() {
         gap={2}
         cursor="pointer"
         color="gray.600"
-        _hover={{ color: "#039BE5" }}
+        fontWeight={600}
+        fontSize="sm"
+        px={4}
+        py={2}
+        rounded="lg"
+        _hover={{ color: "#E91E8C", bg: "pink.50" }}
+        transition="all 0.15s"
         onClick={handleLogout}
       >
         <Text>Logout</Text>
-        <Box as={FaSignOutAlt} />
+        <Box as={FaSignOutAlt} fontSize="14px" />
       </HStack>
     </Flex>
   );

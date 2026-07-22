@@ -1,12 +1,30 @@
+import { useEffect, useState } from "react";
 import { Box } from "@chakra-ui/react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { QuestionsProvider } from "../context/QuestionsContext";
+import Loader from "../../components/Loader";
 
 export default function AdminLayout() {
+  const location = useLocation();
+  const [loading, setLoading] = useState(true);
+  const [loadedPath, setLoadedPath] = useState(null);
+
+  if (location.pathname !== loadedPath) {
+    setLoadedPath(location.pathname);
+    setLoading(true);
+  }
+
+  useEffect(() => {
+    if (!loading) return undefined;
+    const timer = setTimeout(() => setLoading(false), 600);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   return (
     <QuestionsProvider>
+      {loading && <Loader fullScreen />}
       <Box bg="gray.100" minH="100vh">
         <Sidebar />
 
