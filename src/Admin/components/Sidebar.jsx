@@ -1,16 +1,35 @@
+import { useState } from "react";
 import { Box, VStack, Text } from "@chakra-ui/react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import {
+  FaTachometerAlt,
+  FaEnvelopeOpenText,
+  FaLayerGroup,
+  FaUserGraduate,
+  FaBook,
+  FaQuestionCircle,
+  FaChevronDown,
+} from "react-icons/fa";
 
 const menu = [
-  { name: "Dashboard", path: "/admin/dashboard" },
-  { name: "Test Series", path: "/admin/test-series" },
-  { name: "Mock Tests", path: "/admin/mock-tests" },
-  { name: "Questions", path: "/admin/questions" },
-  { name: "Students", path: "/admin/students" },
-  { name: "Payments", path: "/admin/payments" },
+  { name: "Dashboard", path: "/admin/dashboard", icon: FaTachometerAlt },
+  { name: "Enquiries", path: "/admin/enquiries", icon: FaEnvelopeOpenText },
+  {
+    name: "Test Series & Questions",
+    icon: FaLayerGroup,
+    children: [
+      { name: "Test Series", path: "/admin/test-series", icon: FaBook },
+      { name: "Questions", path: "/admin/questions", icon: FaQuestionCircle },
+    ],
+  },
+  { name: "Students", path: "/admin/students", icon: FaUserGraduate },
 ];
 
 export default function Sidebar() {
+  const { pathname } = useLocation();
+  const inTestSeriesGroup = pathname.startsWith("/admin/test-series") || pathname.startsWith("/admin/questions");
+  const [groupOpen, setGroupOpen] = useState(inTestSeriesGroup);
+
   return (
     <Box
       w="250px"
@@ -19,25 +38,113 @@ export default function Sidebar() {
       h="100vh"
       p={5}
       position="fixed"
+      overflowY="auto"
     >
-      <Text fontSize="2xl" fontWeight="bold" mb={8}>
-        SelektUp Admin
-      </Text>
+      <Box mb={10} px={1}>
+        <Text fontWeight="900" fontSize="xl" letterSpacing="-0.5px">
+          <span style={{ color: "#039BE5" }}>SeleKt</span>
+          <span style={{ color: "#E91E8C" }}>Up</span>
+        </Text>
+        <Text fontSize="10px" fontWeight={700} color="gray.400" letterSpacing="0.12em" mt={1}>
+          ADMIN PANEL
+        </Text>
+      </Box>
 
-      <VStack align="stretch" spacing={4}>
-        {menu.map((item) => (
-          <Link key={item.name} to={item.path}>
+      <VStack align="stretch" gap={2}>
+        {menu.map((item) => {
+          if (item.children) {
+            const open = groupOpen || inTestSeriesGroup;
+            return (
+              <Box key={item.name}>
+                <Box
+                  as="button"
+                  w="100%"
+                  display="flex"
+                  alignItems="center"
+                  gap={3}
+                  p={3}
+                  rounded="lg"
+                  fontWeight={600}
+                  fontSize="sm"
+                  bg={inTestSeriesGroup ? "rgba(255,255,255,0.08)" : "transparent"}
+                  color={inTestSeriesGroup ? "white" : "gray.300"}
+                  _hover={{ bg: "rgba(255,255,255,0.08)", color: "white" }}
+                  transition="all 0.15s"
+                  onClick={() => setGroupOpen((prev) => !prev)}
+                >
+                  <Box as={item.icon} fontSize="14px" />
+                  <Text flex={1} textAlign="left">{item.name}</Text>
+                  <Box
+                    as={FaChevronDown}
+                    fontSize="10px"
+                    transform={open ? "rotate(180deg)" : "rotate(0deg)"}
+                    transition="transform 0.15s"
+                  />
+                </Box>
+
+                {open && (
+                  <VStack align="stretch" gap={1} mt={1} pl={6}>
+                    {item.children.map((child) => {
+                      const childActive = pathname.startsWith(child.path);
+                      return (
+                        <Box
+                          key={child.name}
+                          as={Link}
+                          to={child.path}
+                          display="flex"
+                          alignItems="center"
+                          gap={3}
+                          p={2}
+                          rounded="lg"
+                          fontWeight={600}
+                          fontSize="sm"
+                          bg={childActive ? "#039BE5" : "transparent"}
+                          color={childActive ? "white" : "gray.400"}
+                          _hover={{
+                            bg: childActive ? "#039BE5" : "rgba(255,255,255,0.08)",
+                            color: "white",
+                            textDecoration: "none",
+                          }}
+                          transition="all 0.15s"
+                        >
+                          <Box as={child.icon} fontSize="12px" />
+                          <Text>{child.name}</Text>
+                        </Box>
+                      );
+                    })}
+                  </VStack>
+                )}
+              </Box>
+            );
+          }
+
+          const active = pathname.startsWith(item.path);
+          return (
             <Box
+              key={item.name}
+              as={Link}
+              to={item.path}
+              display="flex"
+              alignItems="center"
+              gap={3}
               p={3}
-              rounded="md"
+              rounded="lg"
+              fontWeight={600}
+              fontSize="sm"
+              bg={active ? "#039BE5" : "transparent"}
+              color={active ? "white" : "gray.300"}
               _hover={{
-                bg: "#039BE5",
+                bg: active ? "#039BE5" : "rgba(255,255,255,0.08)",
+                color: "white",
+                textDecoration: "none",
               }}
+              transition="all 0.15s"
             >
-              {item.name}
+              <Box as={item.icon} fontSize="14px" />
+              <Text>{item.name}</Text>
             </Box>
-          </Link>
-        ))}
+          );
+        })}
       </VStack>
     </Box>
   );

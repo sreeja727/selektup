@@ -53,3 +53,7 @@ export function loginUser({ identifier, password }) {
 export function logoutUser() {
   localStorage.removeItem(AUTH_KEY)
 }
+
+export function setAuthUser(user) {
+  localStorage.setItem(AUTH_KEY, JSON.stringify(user))
+}

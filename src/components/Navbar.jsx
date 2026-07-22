@@ -29,7 +29,6 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [studyOpen, setStudyOpen] = useState(false);
   const [mobileStudyOpen, setMobileStudyOpen] = useState(false);
-  const enquirySubmitted = localStorage.getItem("enquirySubmitted") === "true";
   const loggedIn = isLoggedIn();
 
   function handleLogout() {
@@ -217,11 +216,6 @@ export default function Navbar() {
                   Students Login
                 </Button>
               )}
-              {!enquirySubmitted && (
-                <Button size="sm" bg="#E91E8C" color="white">
-                  Enroll
-                </Button>
-              )}
             </HStack>
 
             {/* Hamburger — mobile/tablet only */}
@@ -360,17 +354,6 @@ export default function Navbar() {
                       onClick={() => setOpen(false)}
                     >
                       Students Login
-                    </Button>
-                  )}
-                  {!enquirySubmitted && (
-                    <Button
-                      size="sm"
-                      flex={1}
-                      bg="#E91E8C"
-                      color="white"
-                      onClick={() => setOpen(false)}
-                    >
-                      Enroll
                     </Button>
                   )}
                 </HStack>

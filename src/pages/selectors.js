@@ -9,5 +9,19 @@ export const getRegisterData = flow(
   registerData
 );
 
+const registerError = (state) => state.registerError;
+export const getRegisterError = flow(
+  getTestData,
+  registerError
+);
+
+const loginData = (state) => state.loginData ;
+export const getLoginData  = flow(
+  getTestData,
+  loginData 
+);
+
+
+
 
 

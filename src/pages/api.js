@@ -8,13 +8,23 @@ const registerApi = (data) => {
     url: API_URL.REGISTER,
     method: REQUEST_METHOD.POST,
     payload: {
-      types: ACTION_TYPES[ACTIONS.REGISTER],
+      types: ACTION_TYPES[ACTIONS.REGISTER_API],
       data
     }
   };
 };
-
+ const loginApi =(data)=>{
+  return{
+    url:API_URL.LOGIN,
+    method:REQUEST_METHOD.POST,
+    payload:{
+      types:ACTION_TYPES[ACTIONS.LOGIN],
+      data
+    }
+  }
+ }
 
 export {
-  registerApi
+  registerApi,
+  loginApi
 };

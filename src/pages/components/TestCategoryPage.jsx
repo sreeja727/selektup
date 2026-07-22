@@ -2,8 +2,6 @@ import { Link as RouterLink, useParams, useNavigate, Navigate } from 'react-rout
 import { Box, Container, Stack, HStack, Text, Heading, Button } from '@chakra-ui/react'
 import { FaArrowLeft, FaClipboardList, FaClock, FaPlayCircle, FaLock } from 'react-icons/fa'
 import { getCategory } from '../../data/testSeries'
-import { isLoggedIn } from '../../utils/auth'
-import { isPurchased } from '../../utils/purchases'
 
 export default function TestCategoryPage() {
   const { categorySlug } = useParams()
@@ -13,14 +11,9 @@ export default function TestCategoryPage() {
   if (!category) return <Navigate to="/test-series" replace />
 
   function goToTest(test) {
-    const path = `/test-series/${category.slug}/${test.slug}`
-    if (!isPurchased(category.slug, test.slug)) {
-      return
-    } else if (!isLoggedIn()) {
-      navigate(`/login?redirect=${path}`)
-    } else {
-      navigate(path)
-    }
+    // TestDetailPage owns the login/purchase gating (and in the right
+    // order: login first, then purchase) so it's the single source of truth.
+    navigate(`/test-series/${category.slug}/${test.slug}`)
   }
 
   return (
