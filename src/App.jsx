@@ -22,6 +22,7 @@ import Register from './pages/components/Register'
 // import Dashboard from './pages/components/Dasboard'
 import PaymentPage from './pages/components/PaymentPage'
 import AdminRoutes from './Admin/Routes/AdminRoutes'
+import AdminLogin from './Admin/pages/AdminLogin'
 import Dashboard from './Admin/pages/Dashboard'
 
 function ScrollToTop() {
@@ -66,8 +67,8 @@ export default function App() {
         <Route path="/register" element={<Register />}/>
         <Route path="/dashboard" element={<Dashboard/>}/>
         <Route path='/payment' element={<PaymentPage/>}/>
-        <Route path="/admin" element={<AdminRoutes />}
-      />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/*" element={<AdminRoutes />} />
       
 
   
