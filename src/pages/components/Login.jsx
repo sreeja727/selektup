@@ -1,19 +1,37 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Box, Button, HStack, Input, Text, VStack } from '@chakra-ui/react'
 import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa'
+import { login } from '../actions'
+import { getLoginData } from '../selectors'
+import { useDispatch, useSelector } from 'react-redux'
+import { loginAdmin } from '../../utils/adminAuth'
+import { setAuthUser, loginUser } from '../../utils/auth'
+import { _ } from '../../common/lodash'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
 export default function Login() {
-  const navigate = useNavigate()
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
+    const redirect = searchParams.get('redirect')
+    const loginData = useSelector(getLoginData)
+
   const [emailOrMobile, setEmailOrMobile] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [loading, ] = useState(false)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
+
+  useEffect(() => {
+    if (!_.isEmpty(loginData)) {
+      setAuthUser({ identifier: emailOrMobile, ...loginData })
+      navigate(redirect || '/test-series', { replace: true })
+    }
+  }, [loginData, emailOrMobile, redirect, navigate])
 
   const validate = () => {
     const errors = {}
@@ -22,7 +40,7 @@ export default function Login() {
     return errors
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit =  () => {
     const errors = validate()
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors)
@@ -30,27 +48,22 @@ export default function Login() {
     }
     setFieldErrors({})
     setError('')
-    setLoading(true)
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emailOrMobile, password }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        const storage = rememberMe ? localStorage : sessionStorage
-        storage.setItem('selektup_token', data.data.token)
-        localStorage.setItem('selektup_has_registered', 'true')
-        navigate('/')
-      } else {
-        setError(data.message || 'Login failed. Please try again.')
-      }
-    } catch {
-      setError('Unable to connect to server. Please try again.')
-    } finally {
-      setLoading(false)
+
+    const adminResult = loginAdmin({ email: emailOrMobile, password })
+    if (adminResult.success) {
+      navigate('/admin/dashboard', { replace: true })
+      return
     }
+
+    const localResult = loginUser({ identifier: emailOrMobile, password })
+    if (localResult.success) {
+      navigate(redirect || '/test-series', { replace: true })
+      return
+    }
+
+    // No local account matched (or backend is the source of truth) - try the API.
+    dispatch(login({  emailOrMobile, password }))
+
   }
 
   return (
