@@ -21,7 +21,12 @@ import Login from './pages/components/Login'
 import Register from './pages/components/Register'
 import PaymentPage from './pages/components/PaymentPage'
 import AdminRoutes from './Admin/Routes/AdminRoutes'
+import Dashboard from '<<<<<<< HEAD
 import Dashboard from './Admin/components/Dashboard'
+=======
+import AdminLogin from './Admin/pages/AdminLogin'
+import Dashboard from './Admin/pages/Dashboard'
+>>>>>>> a5cc19649d8764781c96453dff6ec04a13448094
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -67,9 +72,13 @@ export default function App() {
         <Route path="/register" element={<Register />}/>
         <Route path="/dashboard" element={<Dashboard/>}/>
         <Route path='/payment' element={<PaymentPage/>}/>
+<<<<<<< HEAD
         <Route path="/admin/*" element={<AdminRoutes />} />
-      </Routes>
-      {!isAdminRoute && <Footer />}
-    </>
-  )
-}
+=======
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/*" element={<AdminRoutes />} />
+      
+
+  
+
+>>>>>>> a5cc19649d8764781c96453dff6ec04a13448094
