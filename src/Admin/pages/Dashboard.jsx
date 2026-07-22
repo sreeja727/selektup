@@ -1,12 +1,8 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Heading,
   SimpleGrid,
   Box,
   Text,
-  Button,
-  Flex,
 } from "@chakra-ui/react";
 
 const cards = [
@@ -29,27 +25,11 @@ const cards = [
 ];
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!localStorage.getItem('selektup_admin_token')) {
-      navigate('/admin/login', { replace: true });
-    }
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem('selektup_admin_token');
-    navigate('/admin/login');
-  };
-
   return (
     <>
-      <Flex justify="space-between" align="center" mb={8}>
-        <Heading>Dashboard</Heading>
-        <Button size="sm" colorScheme="red" variant="outline" onClick={handleLogout}>
-          Logout
-        </Button>
-      </Flex>
+      <Heading mb={8}>
+        Dashboard
+      </Heading>
 
       <SimpleGrid
         columns={{
