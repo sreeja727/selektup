@@ -14,6 +14,8 @@ export default function BackButton({ to, label = "Back" }) {
       fontWeight={600}
       fontSize="sm"
       mb={6}
+      transition="color 0.15s"
+      _hover={{ color: "#0277BD" }}
       onClick={() => (to ? navigate(to) : navigate(-1))}
     >
       <ArrowLeft size={16} />

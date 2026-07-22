@@ -81,7 +81,7 @@ export default function StudentsList() {
               {paginatedRequests.map((r) => {
                 const isActive = r.status === "Enabled";
                 return (
-                  <Table.Row key={r.id}>
+                  <Table.Row key={r.id} _hover={{ bg: "gray.50" }}>
                     <Table.Cell fontWeight={600} color="#0C1222">
                       <Text fontSize="sm">{r.studentName}</Text>
                       <Text fontSize="xs" color="gray.400">{r.studentEmail}</Text>
@@ -90,7 +90,7 @@ export default function StudentsList() {
                     <Table.Cell color="gray.600">{r.testName}</Table.Cell>
                     <Table.Cell color="gray.600">{r.requestedDate}</Table.Cell>
                     <Table.Cell>
-                      <Badge colorScheme={STATUS_COLOR[r.status]}>{r.status}</Badge>
+                      <Badge colorPalette={STATUS_COLOR[r.status]} rounded="md" px={2}>{r.status}</Badge>
                     </Table.Cell>
                     <Table.Cell>
                       <Button
@@ -99,9 +99,9 @@ export default function StudentsList() {
                         rounded="full"
                         fontWeight={700}
                         onClick={() => toggleAccess(r.id)}
-                        bg={isActive ? "#22C55E" : "gray.200"}
+                        bg={isActive ? "green.500" : "gray.200"}
                         color={isActive ? "white" : "gray.600"}
-                        _hover={{ bg: isActive ? "#16A34A" : "gray.300" }}
+                        _hover={{ bg: isActive ? "green.600" : "gray.300" }}
                       >
                         {isActive ? "Active" : "Inactive"}
                       </Button>
@@ -176,9 +176,9 @@ export default function StudentsList() {
                 rounded="lg"
                 fontSize="sm"
                 fontWeight={600}
-                bg={filter === f ? "#0B1E35" : "gray.100"}
+                bg={filter === f ? "#039BE5" : "gray.100"}
                 color={filter === f ? "white" : "gray.600"}
-                _hover={{ bg: filter === f ? "#0B1E35" : "gray.200" }}
+                _hover={{ bg: filter === f ? "#0277BD" : "gray.200" }}
                 transition="all 0.15s"
               >
                 {f}
@@ -200,7 +200,7 @@ export default function StudentsList() {
             </Table.Header>
             <Table.Body>
               {paginatedStudents.map((s) => (
-                <Table.Row key={s.id}>
+                <Table.Row key={s.id} _hover={{ bg: "gray.50" }}>
                   <Table.Cell fontWeight={600} color="#0C1222">
                     <Text fontSize="sm">{s.name}</Text>
                     <Text fontSize="xs" color="gray.400">{s.email}</Text>
@@ -209,7 +209,7 @@ export default function StudentsList() {
                   <Table.Cell color="gray.600">{s.lastLogin}</Table.Cell>
                   <Table.Cell color="gray.600">{s.joined}</Table.Cell>
                   <Table.Cell>
-                    <Badge colorScheme={STATUS_COLOR[s.status]}>{s.status}</Badge>
+                    <Badge colorPalette={STATUS_COLOR[s.status]} rounded="md" px={2}>{s.status}</Badge>
                   </Table.Cell>
                 </Table.Row>
               ))}

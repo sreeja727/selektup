@@ -46,12 +46,12 @@ export default function QuestionsView() {
       <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="800px">
         <Flex justify="space-between" align="flex-start" mb={6} gap={4} wrap="wrap">
           <Box>
-            <Badge colorScheme={DIFFICULTY_COLOR[question.difficulty]} mb={2}>{question.difficulty}</Badge>
+            <Badge colorPalette={DIFFICULTY_COLOR[question.difficulty]} rounded="md" px={2} mb={2}>{question.difficulty}</Badge>
             <Heading size="lg" color="#0C1222">{categoryTitle}</Heading>
             <Text color="gray.500" mt={1}>Mock Test {question.mockTestNumber}</Text>
           </Box>
 
-          <HStack spacing={3}>
+          <HStack gap={3}>
             <Button
               size="sm"
               variant="outline"
@@ -60,7 +60,7 @@ export default function QuestionsView() {
               <Pencil size={16} style={{ marginRight: 6 }} />
               Edit
             </Button>
-            <Button size="sm" colorScheme="red" variant="outline" onClick={handleDelete}>
+            <Button size="sm" colorPalette="red" variant="outline" onClick={handleDelete}>
               <Trash2 size={16} style={{ marginRight: 6 }} />
               Delete
             </Button>
@@ -72,7 +72,7 @@ export default function QuestionsView() {
           <Text color="#0C1222" fontWeight={600} whiteSpace="pre-wrap">{question.text}</Text>
         </Box>
 
-        <VStack align="stretch" spacing={2} mt={5}>
+        <VStack align="stretch" gap={2} mt={5}>
           <Text fontSize="xs" color="gray.400">Options</Text>
           {question.options.map((opt, index) => (
             <Flex

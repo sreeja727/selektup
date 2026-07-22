@@ -19,6 +19,14 @@ import BackButton from "../common/BackButton";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 
+const fieldStyle = {
+  borderColor: "gray.200",
+  borderWidth: "2px",
+  borderRadius: "lg",
+  _focus: { borderColor: "#039BE5", boxShadow: "0 0 0 3px rgba(3,155,229,0.12)" },
+  _hover: { borderColor: "#039BE5" },
+};
+
 export default function QuestionsEdit() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -77,16 +85,17 @@ export default function QuestionsEdit() {
       <BackButton to="/admin/questions" label="Back to Questions" />
 
       <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="800px">
-        <Heading mb={6}>Edit Question</Heading>
+        <Heading mb={6} color="#0C1222">Edit Question</Heading>
 
-        <VStack spacing={5} align="stretch">
-          <HStack spacing={5} align="stretch">
+        <VStack gap={5} align="stretch">
+          <HStack gap={5} align="stretch">
             <Field.Root flex={1}>
               <Field.Label>Category</Field.Label>
               <NativeSelect.Root>
                 <NativeSelect.Field
                   value={categorySlug}
                   onChange={(e) => handleCategoryChange(e.target.value)}
+                  {...fieldStyle}
                 >
                   {TEST_CATEGORIES.map((c) => (
                     <option key={c.slug} value={c.slug}>{c.title}</option>
@@ -102,6 +111,7 @@ export default function QuestionsEdit() {
                 <NativeSelect.Field
                   value={mockTestNumber}
                   onChange={(e) => setMockTestNumber(Number(e.target.value))}
+                  {...fieldStyle}
                 >
                   {category.tests.map((t, i) => (
                     <option key={t.slug} value={i + 1}>Mock Test {i + 1}</option>
@@ -117,6 +127,7 @@ export default function QuestionsEdit() {
                 <NativeSelect.Field
                   value={difficulty}
                   onChange={(e) => setDifficulty(e.target.value)}
+                  {...fieldStyle}
                 >
                   {DIFFICULTIES.map((d) => (
                     <option key={d} value={d}>{d}</option>
@@ -134,6 +145,7 @@ export default function QuestionsEdit() {
               rows={10}
               value={text}
               onChange={(e) => setText(e.target.value)}
+              {...fieldStyle}
             />
           </Field.Root>
 
@@ -147,17 +159,19 @@ export default function QuestionsEdit() {
                   </Box>
                 )}
               </Field.Label>
-              <HStack>
+              <HStack gap={3}>
                 <Input
                   placeholder={`Option ${index + 1}`}
                   value={opt}
                   onChange={(e) => updateOption(index, e.target.value)}
+                  {...fieldStyle}
                 />
                 <Button
                   size="sm"
                   variant={correctIndex === index ? "solid" : "outline"}
-                  colorScheme="green"
+                  colorPalette="green"
                   onClick={() => setCorrectIndex(index)}
+                  flexShrink={0}
                 >
                   Mark Correct
                 </Button>
@@ -172,10 +186,11 @@ export default function QuestionsEdit() {
               rows={6}
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
+              {...fieldStyle}
             />
           </Field.Root>
 
-          <Button colorScheme="blue" size="lg" onClick={handleSave}>
+          <Button colorPalette="blue" size="lg" onClick={handleSave}>
             Save Changes
           </Button>
         </VStack>

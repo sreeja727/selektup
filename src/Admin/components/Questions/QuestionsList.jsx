@@ -50,7 +50,7 @@ export default function QuestionsList() {
           <Heading mb={1} color="#0C1222">Questions</Heading>
           <Text color="gray.500">Manage questions across all test series</Text>
         </Box>
-        <Button colorScheme="blue" onClick={() => navigate("/admin/questions/add")}>
+        <Button colorPalette="blue" onClick={() => navigate("/admin/questions/add")}>
           <FaPlus size={13} style={{ marginRight: 8 }} />
           Add Question
         </Button>
@@ -104,9 +104,9 @@ export default function QuestionsList() {
                 rounded="lg"
                 fontSize="sm"
                 fontWeight={600}
-                bg={filter === slug ? "#0B1E35" : "gray.100"}
+                bg={filter === slug ? "#039BE5" : "gray.100"}
                 color={filter === slug ? "white" : "gray.600"}
-                _hover={{ bg: filter === slug ? "#0B1E35" : "gray.200" }}
+                _hover={{ bg: filter === slug ? "#0277BD" : "gray.200" }}
                 transition="all 0.15s"
               >
                 {slug === "All" ? "All" : categoryTitle(slug)}
@@ -128,14 +128,14 @@ export default function QuestionsList() {
             </Table.Header>
             <Table.Body>
               {paginated.map((q) => (
-                <Table.Row key={q.id}>
+                <Table.Row key={q.id} _hover={{ bg: "gray.50" }}>
                   <Table.Cell fontWeight={600} color="#0C1222" maxW="360px">
                     <Text fontSize="sm" lineClamp={2}>{q.text}</Text>
                   </Table.Cell>
                   <Table.Cell color="gray.600">{categoryTitle(q.categorySlug)}</Table.Cell>
                   <Table.Cell color="gray.600">Mock Test {q.mockTestNumber}</Table.Cell>
                   <Table.Cell>
-                    <Badge colorScheme={DIFFICULTY_COLOR[q.difficulty]}>{q.difficulty}</Badge>
+                    <Badge colorPalette={DIFFICULTY_COLOR[q.difficulty]} rounded="md" px={2}>{q.difficulty}</Badge>
                   </Table.Cell>
                   <Table.Cell>
                     <Flex gap={3}>

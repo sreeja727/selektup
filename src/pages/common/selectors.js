@@ -10,3 +10,9 @@ export const getApiLoading = flow(
   getCommonData,
   apiLoading
 );
+
+const navigation = (state) => state.navigation;
+export const getNavigation = flow(
+  getCommonData,
+  navigation
+);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Box, Button, HStack, Input, Text, VStack } from '@chakra-ui/react'
 import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa'
@@ -6,8 +6,7 @@ import { login } from '../actions'
 import { getLoginData } from '../selectors'
 import { useDispatch, useSelector } from 'react-redux'
 import { loginAdmin } from '../../utils/adminAuth'
-import { setAuthUser, loginUser } from '../../utils/auth'
-import { _ } from '../../common/lodash'
+import { loginUser } from '../../utils/auth'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
@@ -25,13 +24,12 @@ export default function Login() {
   const [loading, ] = useState(false)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
+  const [handledLoginData, setHandledLoginData] = useState(null)
 
-  useEffect(() => {
-    if (!_.isEmpty(loginData)) {
-      setAuthUser({ identifier: emailOrMobile, ...loginData })
-      navigate(redirect || '/test-series', { replace: true })
-    }
-  }, [loginData, emailOrMobile, redirect, navigate])
+  if (loginData && loginData.success === false && loginData !== handledLoginData) {
+    setHandledLoginData(loginData)
+    setError(loginData.message || 'Invalid email/mobile or password.')
+  }
 
   const validate = () => {
     const errors = {}

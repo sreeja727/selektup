@@ -14,7 +14,7 @@ export default function Pagination({ count, pageSize, page, onPageChange }) {
     >
       <ButtonGroup variant="ghost" size="sm" gap={1} justifyContent="flex-end" w="100%">
         <ChakraPagination.PrevTrigger asChild>
-          <IconButton aria-label="Previous page">
+          <IconButton aria-label="Previous page" rounded="lg">
             <ChevronLeft size={16} />
           </IconButton>
         </ChakraPagination.PrevTrigger>
@@ -23,9 +23,11 @@ export default function Pagination({ count, pageSize, page, onPageChange }) {
           render={(pg) => (
             <IconButton
               variant={{ base: "ghost", _selected: "solid" }}
-              bg={{ _selected: "#0B1E35" }}
+              bg={{ _selected: "#039BE5" }}
               color={{ _selected: "white" }}
-              _hover={{ bg: "gray.100" }}
+              rounded="lg"
+              fontWeight={600}
+              _hover={{ bg: { base: "gray.100", _selected: "#0277BD" } }}
             >
               {pg.value}
             </IconButton>
@@ -33,7 +35,7 @@ export default function Pagination({ count, pageSize, page, onPageChange }) {
         />
 
         <ChakraPagination.NextTrigger asChild>
-          <IconButton aria-label="Next page">
+          <IconButton aria-label="Next page" rounded="lg">
             <ChevronRight size={16} />
           </IconButton>
         </ChakraPagination.NextTrigger>

@@ -10,6 +10,14 @@ import {
 import Breadcrumb from "../common/Breadcrumb";
 import BackButton from "../common/BackButton";
 
+const fieldStyle = {
+  borderColor: "gray.200",
+  borderWidth: "2px",
+  borderRadius: "lg",
+  _focus: { borderColor: "#039BE5", boxShadow: "0 0 0 3px rgba(3,155,229,0.12)" },
+  _hover: { borderColor: "#039BE5" },
+};
+
 export default function AddTestSeries() {
   return (
     <Box>
@@ -29,12 +37,12 @@ export default function AddTestSeries() {
       boxShadow="md"
       maxW="800px"
     >
-      <Heading mb={6}>Add Test Series</Heading>
+      <Heading mb={6} color="#0C1222">Add Test Series</Heading>
 
-      <VStack spacing={5} align="stretch">
+      <VStack gap={5} align="stretch">
         <Field.Root>
           <Field.Label>Title</Field.Label>
-          <Input placeholder="UPSC Prelims 2027" />
+          <Input placeholder="UPSC Prelims 2027" {...fieldStyle} />
         </Field.Root>
 
         <Field.Root>
@@ -42,25 +50,26 @@ export default function AddTestSeries() {
           <Textarea
             placeholder="Enter description"
             rows={4}
+            {...fieldStyle}
           />
         </Field.Root>
 
         <Field.Root>
           <Field.Label>Price</Field.Label>
-          <Input placeholder="999" />
+          <Input placeholder="999" {...fieldStyle} />
         </Field.Root>
 
         <Field.Root>
           <Field.Label>Duration</Field.Label>
-          <Input placeholder="12 Months" />
+          <Input placeholder="12 Months" {...fieldStyle} />
         </Field.Root>
 
         <Field.Root>
           <Field.Label>Thumbnail URL</Field.Label>
-          <Input placeholder="https://..." />
+          <Input placeholder="https://..." {...fieldStyle} />
         </Field.Root>
 
-        <Button colorScheme="blue" size="lg">
+        <Button colorPalette="blue" size="lg">
           Save Test Series
         </Button>
       </VStack>
