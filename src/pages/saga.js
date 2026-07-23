@@ -15,10 +15,10 @@ export function* registerSaga({ payload = {} }) {
     payload: { data: resPayload = {}, errorMessage = '' } = {},
     type = ''
   } = yield take([
-    ACTION_TYPES[ACTIONS.REGISTER][1],
-    ACTION_TYPES[ACTIONS.REGISTER][2]
+    ACTION_TYPES[ACTIONS.REGISTER_API][1],
+    ACTION_TYPES[ACTIONS.REGISTER_API][2]
   ]);
-  if (type === ACTION_TYPES[ACTIONS.REGISTER][1] && !_.isEmpty(resPayload)) {
+  if (type === ACTION_TYPES[ACTIONS.REGISTER_API][1] && !_.isEmpty(resPayload)) {
     if (errorMessage === null) {
       yield put(
         commonActions.setCustomToast({
@@ -41,10 +41,45 @@ export function* registerSaga({ payload = {} }) {
 }
 
 
+export function* loginSaga({ payload = {} }) {
+  const { emailOrMobile = '', password = '' } = payload;
+  yield put(commonActions.setApiLoading(true));
+  yield fork(handleAPIRequest, api.loginApi, payload);
+  const {
+    payload: { data: resPayload = {}, errorMessage = '' } = {},
+    type = ''
+  } = yield take([
+    ACTION_TYPES[ACTIONS.LOGIN][1],
+    ACTION_TYPES[ACTIONS.LOGIN][2]
+  ]);
+  if (type === ACTION_TYPES[ACTIONS.LOGIN][1] && !_.isEmpty(resPayload)) {
+    if (errorMessage === null) {
+      yield put(
+        commonActions.setCustomToast({
+          open: true,
+          variant: 'success',
+          message: 'Login successfully',
+          title: 'Login'
+        })
+      );
+      yield put(
+        commonActions.navigateTo({
+          to: '/test-series',
+          isSameModule: true,
+          options: { state: {  emailOrMobile, password } }
+        })
+      );
+    }
+  }
+  yield put(commonActions.setApiLoading(false));
+}
+
+
 
 export default function* partnerOnboardedRequestSaga() {
   yield all([
     
-    takeLatest(ACTIONS.REGISTER, registerSaga)
+    takeLatest(ACTIONS.REGISTER, registerSaga),
+    takeLatest(ACTIONS.LOGIN,loginSaga)
   ]);
 }

@@ -1,21 +1,20 @@
 import { useState } from 'react'
+import { useDispatch } from 'react-redux'
 import { Link, useNavigate } from 'react-router-dom'
 import { Box, Button, Input, Text, VStack } from '@chakra-ui/react'
 import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa'
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+import { register } from '../actions'
+import { registerUser } from '../../utils/auth'
 
 export default function Register() {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const [fullName, setFullName] = useState('')
   const [emailOrMobile, setEmailOrMobile] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
+  const [error, setError] = useState('')
 
   const validate = () => {
     const errors = {}
@@ -23,13 +22,11 @@ export default function Register() {
     if (!emailOrMobile.trim())   errors.emailOrMobile  = 'Email or mobile is required'
     if (!password)               errors.password       = 'Password is required'
     else if (password.length < 6) errors.password      = 'Password must be at least 6 characters'
-    if (!confirmPassword)        errors.confirmPassword = 'Please confirm your password'
-    else if (password !== confirmPassword)
-                                 errors.confirmPassword = 'Passwords do not match'
+
     return errors
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     const errors = validate()
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors)
@@ -37,26 +34,17 @@ export default function Register() {
     }
     setFieldErrors({})
     setError('')
-    setLoading(true)
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName, emailOrMobile, password }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        localStorage.setItem('selektup_token', data.data.token)
-        localStorage.setItem('selektup_has_registered', 'true')
-        navigate('/')
-      } else {
-        setError(data.message || 'Registration failed. Please try again.')
-      }
-    } catch {
-      setError('Unable to connect to server. Please try again.')
-    } finally {
-      setLoading(false)
+
+    const localResult = registerUser({ name: fullName, identifier: emailOrMobile, password })
+    if (!localResult.success) {
+      setError(localResult.error)
+      return
     }
+
+    localStorage.setItem('selektup_has_registered', 'true')
+    // Best-effort: also let the backend know, if one is reachable.
+    dispatch(register({ fullName, emailOrMobile, password }))
+    navigate('/login')
   }
 
   return (
@@ -208,7 +196,7 @@ export default function Register() {
           </Box>
 
           {/* Confirm Password */}
-          <Box w="100%">
+          {/* <Box w="100%">
             <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">Confirm Password</Text>
             <Box position="relative">
               <Box
@@ -245,7 +233,7 @@ export default function Register() {
             {fieldErrors.confirmPassword && (
               <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.confirmPassword}</Text>
             )}
-          </Box>
+          </Box> */}
 
           {/* Submit */}
           <Button
@@ -257,8 +245,6 @@ export default function Register() {
             fontSize="md"
             py={6}
             onClick={handleSubmit}
-            loading={loading}
-            disabled={loading}
             _hover={{
               bg: '#0277BD',
               transform: 'translateY(-1px)',

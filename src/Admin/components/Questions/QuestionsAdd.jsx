@@ -1,0 +1,172 @@
+import { useState } from "react";
+import {
+  Box,
+  Button,
+  Field,
+  Heading,
+  HStack,
+  Input,
+  NativeSelect,
+  Textarea,
+  VStack,
+} from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
+import { TEST_CATEGORIES } from "../../../data/testSeries";
+import { useQuestions } from "../../context/QuestionsContext";
+import Breadcrumb from "../common/Breadcrumb";
+import BackButton from "../common/BackButton";
+
+const DIFFICULTIES = ["Easy", "Medium", "Hard"];
+
+export default function QuestionsAdd() {
+  const navigate = useNavigate();
+  const { addQuestion } = useQuestions();
+  const [categorySlug, setCategorySlug] = useState(TEST_CATEGORIES[0].slug);
+  const category = TEST_CATEGORIES.find((c) => c.slug === categorySlug);
+  const [mockTestNumber, setMockTestNumber] = useState(1);
+  const [difficulty, setDifficulty] = useState(DIFFICULTIES[0]);
+  const [text, setText] = useState("");
+  const [options, setOptions] = useState(["", "", "", ""]);
+  const [correctIndex, setCorrectIndex] = useState(0);
+  const [explanation, setExplanation] = useState("");
+
+  const handleCategoryChange = (slug) => {
+    setCategorySlug(slug);
+    setMockTestNumber(1);
+  };
+
+  const updateOption = (index, value) => {
+    setOptions((prev) => prev.map((opt, i) => (i === index ? value : opt)));
+  };
+
+  const handleSave = () => {
+    addQuestion({
+      categorySlug,
+      mockTestNumber,
+      difficulty,
+      text,
+      options,
+      correctIndex,
+      explanation,
+    });
+    navigate("/admin/questions");
+  };
+
+  return (
+    <Box>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", to: "/admin/dashboard" },
+          { label: "Questions", to: "/admin/questions" },
+          { label: "Add Question" },
+        ]}
+      />
+      <BackButton to="/admin/questions" label="Back to Questions" />
+
+      <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="800px">
+      <Heading mb={6}>Add Question</Heading>
+
+      <VStack spacing={5} align="stretch">
+        <HStack spacing={5} align="stretch">
+          <Field.Root flex={1}>
+            <Field.Label>Category</Field.Label>
+            <NativeSelect.Root>
+              <NativeSelect.Field
+                value={categorySlug}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+              >
+                {TEST_CATEGORIES.map((c) => (
+                  <option key={c.slug} value={c.slug}>{c.title}</option>
+                ))}
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+          </Field.Root>
+
+          <Field.Root flex={1}>
+            <Field.Label>Mock Test Number</Field.Label>
+            <NativeSelect.Root>
+              <NativeSelect.Field
+                value={mockTestNumber}
+                onChange={(e) => setMockTestNumber(Number(e.target.value))}
+              >
+                {category.tests.map((t, i) => (
+                  <option key={t.slug} value={i + 1}>Mock Test {i + 1}</option>
+                ))}
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+          </Field.Root>
+
+          <Field.Root flex={1}>
+            <Field.Label>Difficulty</Field.Label>
+            <NativeSelect.Root>
+              <NativeSelect.Field
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value)}
+              >
+                {DIFFICULTIES.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+          </Field.Root>
+        </HStack>
+
+        <Field.Root>
+          <Field.Label>Question</Field.Label>
+          <Textarea
+            placeholder="Enter the full question, including any numbered statements, assertion/reason, match-the-following pairs, etc."
+            rows={10}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+          />
+        </Field.Root>
+
+        {options.map((opt, index) => (
+          <Field.Root key={index}>
+            <Field.Label>
+              Option {index + 1}
+              {correctIndex === index && (
+                <Box as="span" color="green.500" ml={2} fontSize="xs">
+                  (Correct Answer)
+                </Box>
+              )}
+            </Field.Label>
+            <HStack>
+              <Input
+                placeholder={`Option ${index + 1}`}
+                value={opt}
+                onChange={(e) => updateOption(index, e.target.value)}
+              />
+              <Button
+                size="sm"
+                variant={correctIndex === index ? "solid" : "outline"}
+                colorScheme="green"
+                onClick={() => setCorrectIndex(index)}
+              >
+                Mark Correct
+              </Button>
+            </HStack>
+          </Field.Root>
+        ))}
+
+        <Field.Root>
+          <Field.Label>Solution / Explanation</Field.Label>
+          <Textarea
+            placeholder="Explain why the correct answer is right (shown to students after they attempt the question). One point per line works well for statement-based questions."
+            rows={6}
+            value={explanation}
+            onChange={(e) => setExplanation(e.target.value)}
+          />
+        </Field.Root>
+
+        <Button colorScheme="blue" size="lg" onClick={handleSave}>
+          Save Question
+        </Button>
+      </VStack>
+      </Box>
+    </Box>
+  );
+}

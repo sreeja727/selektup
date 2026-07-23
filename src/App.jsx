@@ -19,10 +19,9 @@ import PrivacyPolicy from './pages/components/PrivacyPolicy'
 import TermsOfService from './pages/components/TermsOfService'
 import Login from './pages/components/Login'
 import Register from './pages/components/Register'
-// import Dashboard from './pages/components/Dasboard'
 import PaymentPage from './pages/components/PaymentPage'
 import AdminRoutes from './Admin/Routes/AdminRoutes'
-import Dashboard from './Admin/pages/Dashboard'
+// import Dashboard from './Admin/components/Dashboard'
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -47,10 +46,12 @@ function HomePage() {
 
 export default function App() {
   const location = useLocation()
+  const isAdminRoute = location.pathname.startsWith('/admin')
+
   return (
     <>
       <ScrollToTop />
-      <Navbar />
+      {!isAdminRoute && <Navbar />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/contact" element={<ContactForm key={location.key} />} />
@@ -64,16 +65,16 @@ export default function App() {
         <Route path="/terms-of-service" element={<TermsOfService />}/>
         <Route path="/login" element={<Login />}/>
         <Route path="/register" element={<Register />}/>
-        <Route path="/dashboard" element={<Dashboard/>}/>
+        {/* <Route path="/dashboard" element={<Dashboard/>}/> */}
         <Route path='/payment' element={<PaymentPage/>}/>
         <Route path="/admin" element={<AdminRoutes />}
       />
       
+     </Routes>
 
+      {!isAdminRoute && <Footer />}
+    </>
+  );
+}
   
 
-      </Routes>
-      <Footer />
-    </>
-  )
-}

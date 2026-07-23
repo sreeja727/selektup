@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Box, Button, HStack, Input, Text, VStack } from '@chakra-ui/react'
 import { FaUser, FaKey, FaLock, FaEye, FaEyeSlash, FaCheckCircle } from 'react-icons/fa'
 
@@ -432,7 +432,7 @@ function PasswordField({ label, placeholder, value, show, onToggle, onChange, er
 
 // ── Root component ───────────────────────────────────────────────────────────
 export default function ForgotPassword() {
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
   const [step, setStep] = useState(1)          // 1 = request OTP, 2 = reset, 3 = success
   const [emailOrMobile, setEmailOrMobile] = useState('')
 
