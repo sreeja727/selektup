@@ -1,9 +1,14 @@
 import { useMemo, useState } from "react";
 import { Box, Button, Flex, Heading, Input, Table, Badge, Text } from "@chakra-ui/react";
 import { FaSearch } from "react-icons/fa";
-import { students, examAccessRequests, STATUS_COLOR } from "../../data/mockAdminData";
+import { KeyRound } from "lucide-react";
+import {
+  students, examAccessRequests, passwordResetRequests, STATUS_COLOR,
+} from "../../data/mockAdminData";
 import Breadcrumb from "../common/Breadcrumb";
 import Pagination from "../common/Pagination";
+import ResetPasswordDialog from "./ResetPasswordDialog";
+import { toaster } from "../../../components/ui/toaster";
 
 const FILTERS = ["All", "Active", "Blocked"];
 const PAGE_SIZE = 5;
@@ -12,8 +17,11 @@ export default function StudentsList() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [requests, setRequests] = useState(examAccessRequests);
+  const [pwRequests, setPwRequests] = useState(passwordResetRequests);
   const [requestsPage, setRequestsPage] = useState(1);
+  const [pwRequestsPage, setPwRequestsPage] = useState(1);
   const [studentsPage, setStudentsPage] = useState(1);
+  const [resetTarget, setResetTarget] = useState(null);
 
   const filtered = useMemo(() => {
     return students.filter((s) => {
@@ -31,17 +39,47 @@ export default function StudentsList() {
     return requests.slice(start, start + PAGE_SIZE);
   }, [requests, requestsPage]);
 
+  const paginatedPwRequests = useMemo(() => {
+    const start = (pwRequestsPage - 1) * PAGE_SIZE;
+    return pwRequests.slice(start, start + PAGE_SIZE);
+  }, [pwRequests, pwRequestsPage]);
+
   const paginatedStudents = useMemo(() => {
     const start = (studentsPage - 1) * PAGE_SIZE;
     return filtered.slice(start, start + PAGE_SIZE);
   }, [filtered, studentsPage]);
 
   const toggleAccess = (id) => {
+    const target = requests.find((r) => r.id === id);
+    if (!target) return;
+    const nextStatus = target.status === "Enabled" ? "Disabled" : "Enabled";
+
     setRequests((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, status: r.status === "Enabled" ? "Disabled" : "Enabled" } : r
-      )
+      prev.map((r) => (r.id === id ? { ...r, status: nextStatus } : r))
     );
+
+    toaster.create({
+      title: nextStatus === "Enabled" ? "Access enabled" : "Access disabled",
+      description: `${target.studentName}'s exam access has been ${nextStatus.toLowerCase()}.`,
+      type: nextStatus === "Enabled" ? "success" : "info",
+      duration: 3500,
+      closable: true,
+    });
+  };
+
+  const handleResolved = (target) => {
+    if (target?.__isPwRequest) {
+      setPwRequests((prev) =>
+        prev.map((r) => (r.id === target.id ? { ...r, status: "Resolved" } : r))
+      );
+      toaster.create({
+        title: "Password reset resolved",
+        description: `${target.name}'s reset request has been marked as resolved.`,
+        type: "success",
+        duration: 3500,
+        closable: true,
+      });
+    }
   };
 
   return (
@@ -50,6 +88,79 @@ export default function StudentsList() {
 
       <Heading mb={1} color="#0C1222">Students</Heading>
       <Text color="gray.500" mb={8}>Manage exam access requests and view registered students</Text>
+
+      <Box
+        bg="white"
+        rounded="xl"
+        shadow="md"
+        p={6}
+        mb={8}
+        borderTop="4px solid"
+        borderColor="#039BE5"
+      >
+        <Heading size="md" color="#0C1222" mb={1}>Password Reset Requests</Heading>
+        <Text color="gray.500" fontSize="sm" mb={6}>
+          Students who clicked "Forgot Password" and asked support for a reset
+        </Text>
+
+        <Table.ScrollArea>
+          <Table.Root size="sm">
+            <Table.Header>
+              <Table.Row bg="gray.50">
+                <Table.ColumnHeader>Student</Table.ColumnHeader>
+                <Table.ColumnHeader>Contact</Table.ColumnHeader>
+                <Table.ColumnHeader>Requested</Table.ColumnHeader>
+                <Table.ColumnHeader>Status</Table.ColumnHeader>
+                <Table.ColumnHeader></Table.ColumnHeader>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {paginatedPwRequests.map((r) => (
+                <Table.Row key={r.id} _hover={{ bg: "gray.50" }}>
+                  <Table.Cell fontWeight={600} color="#0C1222">
+                    <Text fontSize="sm">{r.name}</Text>
+                  </Table.Cell>
+                  <Table.Cell color="gray.600">{r.contact}</Table.Cell>
+                  <Table.Cell color="gray.600">{r.requestedDate}</Table.Cell>
+                  <Table.Cell>
+                    <Badge colorPalette={STATUS_COLOR[r.status]} rounded="md" px={2}>{r.status}</Badge>
+                  </Table.Cell>
+                  <Table.Cell>
+                    {r.status !== "Resolved" && (
+                      <Box
+                        as="button"
+                        onClick={() => setResetTarget({ id: r.id, name: r.name, __isPwRequest: true })}
+                        display="flex"
+                        alignItems="center"
+                        gap={1}
+                        color="#039BE5"
+                        fontSize="sm"
+                        fontWeight={600}
+                        _hover={{ textDecoration: "underline" }}
+                      >
+                        <KeyRound size={14} />
+                        Reset &amp; Send
+                      </Box>
+                    )}
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+
+              {pwRequests.length === 0 && (
+                <Table.Row>
+                  <Table.Cell colSpan={5}>
+                    <Text textAlign="center" color="gray.400" py={8}>
+                      No password reset requests.
+                    </Text>
+                  </Table.Cell>
+                </Table.Row>
+              )}
+            </Table.Body>
+          </Table.Root>
+        </Table.ScrollArea>
+
+        <Pagination count={pwRequests.length} pageSize={PAGE_SIZE} page={pwRequestsPage} onPageChange={setPwRequestsPage} />
+      </Box>
 
       <Box
         bg="white"
@@ -84,7 +195,6 @@ export default function StudentsList() {
                   <Table.Row key={r.id} _hover={{ bg: "gray.50" }}>
                     <Table.Cell fontWeight={600} color="#0C1222">
                       <Text fontSize="sm">{r.studentName}</Text>
-                      <Text fontSize="xs" color="gray.400">{r.studentEmail}</Text>
                     </Table.Cell>
                     <Table.Cell color="gray.600">{r.testSeries}</Table.Cell>
                     <Table.Cell color="gray.600">{r.testName}</Table.Cell>
@@ -196,6 +306,7 @@ export default function StudentsList() {
                 <Table.ColumnHeader>Last Login</Table.ColumnHeader>
                 <Table.ColumnHeader>Joined</Table.ColumnHeader>
                 <Table.ColumnHeader>Status</Table.ColumnHeader>
+                <Table.ColumnHeader></Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -203,7 +314,6 @@ export default function StudentsList() {
                 <Table.Row key={s.id} _hover={{ bg: "gray.50" }}>
                   <Table.Cell fontWeight={600} color="#0C1222">
                     <Text fontSize="sm">{s.name}</Text>
-                    <Text fontSize="xs" color="gray.400">{s.email}</Text>
                   </Table.Cell>
                   <Table.Cell color="gray.600">{s.phone}</Table.Cell>
                   <Table.Cell color="gray.600">{s.lastLogin}</Table.Cell>
@@ -211,12 +321,28 @@ export default function StudentsList() {
                   <Table.Cell>
                     <Badge colorPalette={STATUS_COLOR[s.status]} rounded="md" px={2}>{s.status}</Badge>
                   </Table.Cell>
+                  <Table.Cell>
+                    <Box
+                      as="button"
+                      onClick={() => setResetTarget(s)}
+                      display="flex"
+                      alignItems="center"
+                      gap={1}
+                      color="gray.500"
+                      fontSize="sm"
+                      fontWeight={600}
+                      _hover={{ color: "#039BE5" }}
+                    >
+                      <KeyRound size={14} />
+                      Reset Password
+                    </Box>
+                  </Table.Cell>
                 </Table.Row>
               ))}
 
               {filtered.length === 0 && (
                 <Table.Row>
-                  <Table.Cell colSpan={5}>
+                  <Table.Cell colSpan={6}>
                     <Text textAlign="center" color="gray.400" py={8}>
                       No students found.
                     </Text>
@@ -229,6 +355,13 @@ export default function StudentsList() {
 
         <Pagination count={filtered.length} pageSize={PAGE_SIZE} page={studentsPage} onPageChange={setStudentsPage} />
       </Box>
+
+      <ResetPasswordDialog
+        student={resetTarget}
+        open={!!resetTarget}
+        onClose={() => setResetTarget(null)}
+        onResolved={handleResolved}
+      />
     </>
   );
 }

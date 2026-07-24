@@ -9,7 +9,9 @@ import QuestionsList from "../components/Questions/QuestionsList";
 import QuestionsAdd from "../components/Questions/QuestionsAdd";
 import QuestionsEdit from "../components/Questions/QuestionsEdit";
 import QuestionsView from "../components/Questions/QuestionsView";
-import StudentsList from "../components/Students/StudentsList";
+import ExamAccess from "../components/Students/ExamAccess";
+import PasswordReset from "../components/Students/PasswordReset";
+import StudentDetails from "../components/Students/StudentDetails";
 
 export default function AdminRoutes() {
   return (
@@ -29,7 +31,10 @@ export default function AdminRoutes() {
         <Route path="questions/edit/:id" element={<QuestionsEdit />} />
         <Route path="questions/:id" element={<QuestionsView />} />
 
-        <Route path="students" element={<StudentsList />} />
+        <Route path="students" element={<Navigate to="exam-access" replace />} />
+        <Route path="students/exam-access" element={<ExamAccess />} />
+        <Route path="students/password-reset" element={<PasswordReset />} />
+        <Route path="students/details" element={<StudentDetails />} />
       </Route>
     </Routes>
   );

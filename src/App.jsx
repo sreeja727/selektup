@@ -3,7 +3,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Loader from './components/Loader'
-import { getApiLoading, getNavigation } from './pages/common/selectors'
+import { Toaster, toaster } from './components/ui/toaster'
+import { getApiLoading, getCustomToast, getNavigation } from './pages/common/selectors'
 import { actions as commonActions } from './pages/common/slice'
 import HeroSection from './components/HeroSection'
 import AboutSection from './components/AboutSection'
@@ -23,6 +24,7 @@ import PrivacyPolicy from './pages/components/PrivacyPolicy'
 import TermsOfService from './pages/components/TermsOfService'
 import Login from './pages/components/Login'
 import Register from './pages/components/Register'
+import ForgotPassword from './pages/components/ForgotPassword'
 import PaymentPage from './pages/components/PaymentPage'
 import AdminRoutes from './Admin/Routes/AdminRoutes'
 // import Dashboard from './Admin/components/Dashboard'
@@ -59,6 +61,7 @@ export default function App() {
   const isAdminRoute = location.pathname.startsWith('/admin')
   const apiLoading = useSelector(getApiLoading)
   const navigation = useSelector(getNavigation)
+  const customToast = useSelector(getCustomToast)
 
   useEffect(() => {
     if (navigation && navigation.to) {
@@ -67,9 +70,23 @@ export default function App() {
     }
   }, [navigation, navigate, dispatch])
 
+  useEffect(() => {
+    if (customToast && customToast.open) {
+      toaster.create({
+        title: customToast.title,
+        description: customToast.message,
+        type: customToast.variant || 'info',
+        duration: 4000,
+        closable: true,
+      })
+      dispatch(commonActions.setCustomToast({ open: false, variant: 'info', message: '', title: '' }))
+    }
+  }, [customToast, dispatch])
+
   return (
     <>
       <ScrollToTop />
+      <Toaster />
       {apiLoading && <Loader fullScreen />}
       {!isAdminRoute && <Navbar />}
       <Routes>
@@ -85,6 +102,7 @@ export default function App() {
         <Route path="/terms-of-service" element={<TermsOfService />}/>
         <Route path="/login" element={<Login />}/>
         <Route path="/register" element={<Register />}/>
+        <Route path="/forgot-password" element={<ForgotPassword />}/>
         {/* <Route path="/dashboard" element={<Dashboard/>}/> */}
         <Route path='/payment' element={<PaymentPage/>}/>
         <Route path="/admin/*" element={<AdminRoutes />} />

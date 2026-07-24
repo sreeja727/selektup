@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Box, Button, HStack, Input, Text, VStack } from '@chakra-ui/react'
-import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa'
+import { FaPhoneAlt, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa'
 import { login } from '../actions'
 import { getLoginData } from '../selectors'
 import { useDispatch, useSelector } from 'react-redux'
 import { loginAdmin } from '../../utils/adminAuth'
 import { loginUser } from '../../utils/auth'
+import { toaster } from '../../components/ui/toaster'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
@@ -28,7 +29,7 @@ export default function Login() {
 
   if (loginData && loginData.success === false && loginData !== handledLoginData) {
     setHandledLoginData(loginData)
-    setError(loginData.message || 'Invalid email/mobile or password.')
+    setError(loginData.message || 'Invalid mobile number or password.')
   }
 
   const validate = () => {
@@ -49,12 +50,14 @@ export default function Login() {
 
     const adminResult = loginAdmin({ email: emailOrMobile, password })
     if (adminResult.success) {
+      toaster.create({ title: 'Login successful', description: 'Welcome back, Admin!', type: 'success', duration: 4000, closable: true })
       navigate('/admin/dashboard', { replace: true })
       return
     }
 
     const localResult = loginUser({ identifier: emailOrMobile, password })
     if (localResult.success) {
+      toaster.create({ title: 'Login successful', description: 'Welcome back!', type: 'success', duration: 4000, closable: true })
       navigate(redirect || '/test-series', { replace: true })
       return
     }
@@ -112,10 +115,10 @@ export default function Login() {
         )}
 
         <VStack gap={5}>
-          {/* Email / Mobile */}
+          {/* Mobile Number */}
           <Box w="100%">
             <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">
-              Email / Mobile Number
+              Mobile Number
             </Text>
             <Box position="relative">
               <Box
@@ -127,11 +130,11 @@ export default function Login() {
                 zIndex={1}
                 pointerEvents="none"
               >
-                <FaUser size={14} />
+                <FaPhoneAlt size={14} />
               </Box>
               <Input
                 pl="36px"
-                placeholder="Enter Email or Mobile Number"
+                placeholder="Enter your mobile number"
                 value={emailOrMobile}
                 onChange={(e) => {
                   setEmailOrMobile(e.target.value)

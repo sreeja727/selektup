@@ -2,6 +2,7 @@ import { Link as RouterLink, useParams, useNavigate, Navigate } from 'react-rout
 import { Box, Container, Stack, HStack, Text, Heading, Button } from '@chakra-ui/react'
 import { FaArrowLeft, FaClipboardList, FaClock, FaPlayCircle, FaLock } from 'react-icons/fa'
 import { getCategory } from '../../data/testSeries'
+import { isPurchased } from '../../utils/purchases'
 
 export default function TestCategoryPage() {
   const { categorySlug } = useParams()
@@ -63,9 +64,7 @@ export default function TestCategoryPage() {
         <Container maxW="7xl">
           <Stack gap={4}>
             {category.tests.map((test) => {
-              // Payment gateway isn't integrated yet, so nothing is ever truly
-              // unlocked here regardless of stale local purchase data.
-              const unlocked = false
+              const unlocked = isPurchased(category.slug, test.slug)
               return (
                 <HStack
                   key={test.slug}

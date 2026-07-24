@@ -2,15 +2,19 @@ import { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { Link, useNavigate } from 'react-router-dom'
 import { Box, Button, Input, Text, VStack } from '@chakra-ui/react'
-import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa'
+import { FaUser, FaPhoneAlt, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa'
 import { register } from '../actions'
 import { registerUser } from '../../utils/auth'
+import { toaster } from '../../components/ui/toaster'
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function Register() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const [fullName, setFullName] = useState('')
   const [emailOrMobile, setEmailOrMobile] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [fieldErrors, setFieldErrors] = useState({})
@@ -19,7 +23,9 @@ export default function Register() {
   const validate = () => {
     const errors = {}
     if (!fullName.trim())        errors.fullName       = 'Full name is required'
-    if (!emailOrMobile.trim())   errors.emailOrMobile  = 'Email or mobile is required'
+    if (!emailOrMobile.trim())   errors.emailOrMobile  = 'Mobile number is required'
+    if (!email.trim())           errors.email          = 'Email is required for account recovery and notifications'
+    else if (!EMAIL_RE.test(email.trim())) errors.email = 'Enter a valid email address'
     if (!password)               errors.password       = 'Password is required'
     else if (password.length < 6) errors.password      = 'Password must be at least 6 characters'
 
@@ -35,15 +41,17 @@ export default function Register() {
     setFieldErrors({})
     setError('')
 
-    const localResult = registerUser({ name: fullName, identifier: emailOrMobile, password })
+    const localResult = registerUser({ name: fullName, identifier: emailOrMobile, email, password })
     if (!localResult.success) {
       setError(localResult.error)
+      toaster.create({ title: 'Registration failed', description: localResult.error, type: 'error', duration: 4000, closable: true })
       return
     }
 
     localStorage.setItem('selektup_has_registered', 'true')
     // Best-effort: also let the backend know, if one is reachable.
-    dispatch(register({ fullName, emailOrMobile, password }))
+    dispatch(register({ fullName, emailOrMobile, email, password }))
+    toaster.create({ title: 'Account created', description: 'Please log in to continue.', type: 'success', duration: 4000, closable: true })
     navigate('/login')
   }
 
@@ -125,19 +133,19 @@ export default function Register() {
             )}
           </Box>
 
-          {/* Email / Mobile */}
+          {/* Mobile Number */}
           <Box w="100%">
-            <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">Email / Mobile Number</Text>
+            <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">Mobile Number</Text>
             <Box position="relative">
               <Box
                 position="absolute" left={3} top="50%" transform="translateY(-50%)"
                 color="gray.400" zIndex={1} pointerEvents="none"
               >
-                <FaUser size={14} />
+                <FaPhoneAlt size={14} />
               </Box>
               <Input
                 pl="36px"
-                placeholder="Enter Email or Mobile Number"
+                placeholder="Enter your mobile number"
                 value={emailOrMobile}
                 onChange={(e) => {
                   setEmailOrMobile(e.target.value)
@@ -152,6 +160,36 @@ export default function Register() {
             </Box>
             {fieldErrors.emailOrMobile && (
               <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.emailOrMobile}</Text>
+            )}
+          </Box>
+
+          {/* Email */}
+          <Box w="100%">
+            <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">Email</Text>
+            <Box position="relative">
+              <Box
+                position="absolute" left={3} top="50%" transform="translateY(-50%)"
+                color="gray.400" zIndex={1} pointerEvents="none"
+              >
+                <FaEnvelope size={14} />
+              </Box>
+              <Input
+                pl="36px"
+                placeholder="Enter your email address"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  setFieldErrors((f) => ({ ...f, email: '' }))
+                }}
+                borderColor={fieldErrors.email ? 'red.400' : 'gray.200'}
+                borderWidth="2px"
+                borderRadius="lg"
+                _focus={{ borderColor: '#039BE5', boxShadow: '0 0 0 3px rgba(3,155,229,0.12)' }}
+                _hover={{ borderColor: '#039BE5' }}
+              />
+            </Box>
+            {fieldErrors.email && (
+              <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.email}</Text>
             )}
           </Box>
 

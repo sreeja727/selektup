@@ -16,3 +16,9 @@ export const getNavigation = flow(
   getCommonData,
   navigation
 );
+
+const customToast = (state) => state.customToast;
+export const getCustomToast = flow(
+  getCommonData,
+  customToast
+);

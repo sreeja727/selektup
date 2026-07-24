@@ -15,6 +15,7 @@ import { TEST_CATEGORIES } from "../../../data/testSeries";
 import { useQuestions } from "../../context/QuestionsContext";
 import Breadcrumb from "../common/Breadcrumb";
 import BackButton from "../common/BackButton";
+import { toaster } from "../../../components/ui/toaster";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 
@@ -57,6 +58,7 @@ export default function QuestionsAdd() {
       correctIndex,
       explanation,
     });
+    toaster.create({ title: "Question added", description: "The new question is now live.", type: "success", duration: 3500, closable: true });
     navigate("/admin/questions");
   };
 

@@ -7,6 +7,7 @@ import { useQuestions } from "../../context/QuestionsContext";
 import { TEST_CATEGORIES } from "../../../data/testSeries";
 import Breadcrumb from "../common/Breadcrumb";
 import Pagination from "../common/Pagination";
+import { toaster } from "../../../components/ui/toaster";
 
 const DIFFICULTY_COLOR = { Easy: "green", Medium: "orange", Hard: "red" };
 const PAGE_SIZE = 5;
@@ -38,6 +39,7 @@ export default function QuestionsList() {
   const handleDelete = (id) => {
     if (window.confirm("Delete this question? This cannot be undone.")) {
       deleteQuestion(id);
+      toaster.create({ title: "Question deleted", type: "success", duration: 3500, closable: true });
     }
   };
 

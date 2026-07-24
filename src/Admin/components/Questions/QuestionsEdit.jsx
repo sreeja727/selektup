@@ -16,6 +16,7 @@ import { TEST_CATEGORIES } from "../../../data/testSeries";
 import { useQuestions } from "../../context/QuestionsContext";
 import Breadcrumb from "../common/Breadcrumb";
 import BackButton from "../common/BackButton";
+import { toaster } from "../../../components/ui/toaster";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 
@@ -70,6 +71,7 @@ export default function QuestionsEdit() {
       correctIndex,
       explanation,
     });
+    toaster.create({ title: "Question updated", description: "Your changes have been saved.", type: "success", duration: 3500, closable: true });
     navigate("/admin/questions");
   };
 

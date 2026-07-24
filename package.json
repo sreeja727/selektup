@@ -15,8 +15,6 @@
     "@emotion/styled": "^11.14.1",
     "@reduxjs/toolkit": "^2.12.0",
     "axios": "^1.18.1",
-    "firebase": "^12.12.1",
-    "firebase-tools": "^15.15.0",
     "framer-motion": "^12.42.2",
     "lodash-es": "^4.18.1",
     "lucide-react": "^1.25.0",
