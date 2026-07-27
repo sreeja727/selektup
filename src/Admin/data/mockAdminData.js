@@ -7,7 +7,6 @@ export const enquiries = [
     district: 'Ernakulam',
     message: 'I want to know more about the UPSC Prelims test series pricing and schedule. Also please share if there is any discount for early enrollment.',
     date: '2026-07-18',
-    status: 'New',
   },
   {
     id: 2,
@@ -17,7 +16,6 @@ export const enquiries = [
     district: 'Thiruvananthapuram',
     message: 'Unable to access the mock test after payment, please help. It shows a blank screen after clicking start.',
     date: '2026-07-17',
-    status: 'In Progress',
   },
   {
     id: 3,
@@ -27,7 +25,6 @@ export const enquiries = [
     district: 'Kozhikode',
     message: 'I was charged twice for the same test series. Requesting a refund for the duplicate transaction.',
     date: '2026-07-15',
-    status: 'Resolved',
   },
   {
     id: 4,
@@ -37,7 +34,6 @@ export const enquiries = [
     district: 'Thrissur',
     message: 'Please share the detailed syllabus for the Optional Subject test series before I enroll.',
     date: '2026-07-14',
-    status: 'New',
   },
   {
     id: 5,
@@ -47,7 +43,6 @@ export const enquiries = [
     district: 'Kollam',
     message: 'The website is not loading the test series page properly on mobile Chrome.',
     date: '2026-07-12',
-    status: 'In Progress',
   },
 ]
 
@@ -135,6 +130,23 @@ export const examAccessRequests = [
     testName: 'Full Mock Test 1',
     requestedDate: '2026-07-15',
     status: 'Disabled',
+  },
+]
+
+export const passwordResetRequests = [
+  {
+    id: 1,
+    name: 'Amit Kumar',
+    contact: 'amit.kumar@gmail.com',
+    requestedDate: '2026-07-21',
+    status: 'Pending',
+  },
+  {
+    id: 2,
+    name: 'Sneha Iyer',
+    contact: '+91 90000 11223',
+    requestedDate: '2026-07-19',
+    status: 'Resolved',
   },
 ]
 

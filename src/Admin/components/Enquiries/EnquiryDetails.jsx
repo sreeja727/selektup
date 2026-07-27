@@ -1,6 +1,6 @@
-import { Badge, Box, Flex, Heading, Text, VStack } from "@chakra-ui/react";
+import { Box, Flex, Heading, Text, VStack } from "@chakra-ui/react";
 import { useParams } from "react-router-dom";
-import { enquiries, STATUS_COLOR } from "../../data/mockAdminData";
+import { enquiries } from "../../data/mockAdminData";
 import Breadcrumb from "../common/Breadcrumb";
 import BackButton from "../common/BackButton";
 
@@ -29,10 +29,7 @@ export default function EnquiryDetails() {
       <BackButton to="/admin/enquiries" label="Back to Enquiries" />
 
       <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="800px" borderTop="4px solid" borderColor="#E91E8C">
-        <Flex justify="space-between" align="flex-start" mb={6}>
-          <Heading size="lg" color="#0C1222">{enquiry.name}</Heading>
-          <Badge colorPalette={STATUS_COLOR[enquiry.status]} rounded="md" px={2}>{enquiry.status}</Badge>
-        </Flex>
+        <Heading size="lg" color="#0C1222" mb={6}>{enquiry.name}</Heading>
 
         <VStack align="stretch" gap={4}>
           <Flex gap={8} wrap="wrap">

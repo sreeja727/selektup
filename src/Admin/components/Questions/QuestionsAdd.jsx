@@ -7,6 +7,7 @@ import {
   HStack,
   Input,
   NativeSelect,
+  Text,
   Textarea,
   VStack,
 } from "@chakra-ui/react";
@@ -15,6 +16,7 @@ import { TEST_CATEGORIES } from "../../../data/testSeries";
 import { useQuestions } from "../../context/QuestionsContext";
 import Breadcrumb from "../common/Breadcrumb";
 import BackButton from "../common/BackButton";
+import { toaster } from "../../../components/ui/toaster";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 
@@ -37,6 +39,7 @@ export default function QuestionsAdd() {
   const [options, setOptions] = useState(["", "", "", ""]);
   const [correctIndex, setCorrectIndex] = useState(0);
   const [explanation, setExplanation] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const handleCategoryChange = (slug) => {
     setCategorySlug(slug);
@@ -45,9 +48,25 @@ export default function QuestionsAdd() {
 
   const updateOption = (index, value) => {
     setOptions((prev) => prev.map((opt, i) => (i === index ? value : opt)));
+    setFieldErrors((f) => ({ ...f, options: undefined }));
+  };
+
+  const validate = () => {
+    const errors = {};
+    if (!text.trim()) errors.text = "Question text is required";
+    if (options.some((opt) => !opt.trim())) errors.options = "All 4 options must be filled in";
+    if (!explanation.trim()) errors.explanation = "An explanation is required";
+    return errors;
   };
 
   const handleSave = () => {
+    const errors = validate();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      toaster.create({ title: "Missing information", description: "Please fill in all required fields before saving.", type: "error", duration: 3500, closable: true });
+      return;
+    }
+    setFieldErrors({});
     addQuestion({
       categorySlug,
       mockTestNumber,
@@ -57,6 +76,7 @@ export default function QuestionsAdd() {
       correctIndex,
       explanation,
     });
+    toaster.create({ title: "Question added", description: "The new question is now live.", type: "success", duration: 3500, closable: true });
     navigate("/admin/questions");
   };
 
@@ -131,9 +151,14 @@ export default function QuestionsAdd() {
             placeholder="Enter the full question, including any numbered statements, assertion/reason, match-the-following pairs, etc."
             rows={10}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              setFieldErrors((f) => ({ ...f, text: undefined }));
+            }}
             {...fieldStyle}
+            borderColor={fieldErrors.text ? "red.400" : fieldStyle.borderColor}
           />
+          {fieldErrors.text && <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.text}</Text>}
         </Field.Root>
 
         {options.map((opt, index) => (
@@ -152,6 +177,7 @@ export default function QuestionsAdd() {
                 value={opt}
                 onChange={(e) => updateOption(index, e.target.value)}
                 {...fieldStyle}
+                borderColor={fieldErrors.options && !opt.trim() ? "red.400" : fieldStyle.borderColor}
               />
               <Button
                 size="sm"
@@ -165,6 +191,7 @@ export default function QuestionsAdd() {
             </HStack>
           </Field.Root>
         ))}
+        {fieldErrors.options && <Text color="red.500" fontSize="xs" mt={-3}>{fieldErrors.options}</Text>}
 
         <Field.Root>
           <Field.Label>Solution / Explanation</Field.Label>
@@ -172,9 +199,14 @@ export default function QuestionsAdd() {
             placeholder="Explain why the correct answer is right (shown to students after they attempt the question). One point per line works well for statement-based questions."
             rows={6}
             value={explanation}
-            onChange={(e) => setExplanation(e.target.value)}
+            onChange={(e) => {
+              setExplanation(e.target.value);
+              setFieldErrors((f) => ({ ...f, explanation: undefined }));
+            }}
             {...fieldStyle}
+            borderColor={fieldErrors.explanation ? "red.400" : fieldStyle.borderColor}
           />
+          {fieldErrors.explanation && <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.explanation}</Text>}
         </Field.Root>
 
         <Button colorPalette="blue" size="lg" onClick={handleSave}>

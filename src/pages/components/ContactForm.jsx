@@ -10,6 +10,7 @@ import {
   Textarea,
   VStack,
 } from '@chakra-ui/react'
+import { toaster } from '../../components/ui/toaster'
 
 // TODO: update VITE_API_BASE_URL in .env to match your backend port (currently 8081)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
@@ -71,12 +72,18 @@ export default function ContactForm() {
       const data = await res.json()
       if (data.success) {
         setForm(EMPTY_FORM)
-        setSuccessMsg(data.message || "Thanks! We'll get back to you soon.")
+        const message = data.message || "Thanks! We'll get back to you soon."
+        setSuccessMsg(message)
+        toaster.create({ title: 'Enquiry submitted', description: message, type: 'success', duration: 4000, closable: true })
       } else {
-        setApiError(data.message || 'Something went wrong. Please try again.')
+        const message = data.message || 'Something went wrong. Please try again.'
+        setApiError(message)
+        toaster.create({ title: 'Submission failed', description: message, type: 'error', duration: 4000, closable: true })
       }
     } catch {
-      setApiError('Unable to connect to server. Please try again.')
+      const message = 'Unable to connect to server. Please try again.'
+      setApiError(message)
+      toaster.create({ title: 'Submission failed', description: message, type: 'error', duration: 4000, closable: true })
     } finally {
       setLoading(false)
     }

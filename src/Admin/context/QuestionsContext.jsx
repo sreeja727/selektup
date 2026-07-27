@@ -3,7 +3,7 @@ import { createContext, useContext, useState } from "react";
 const seedQuestions = [
   {
     id: 1,
-    categorySlug: "degree-prelims",
+    categorySlug: "degree-mains",
     mockTestNumber: 1,
     difficulty: "Medium",
     text: "Which Article of the Indian Constitution deals with the Right to Equality?",

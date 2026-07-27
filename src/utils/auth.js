@@ -27,15 +27,15 @@ export function isLoggedIn() {
   return getUser() !== null
 }
 
-export function registerUser({ name, identifier, password }) {
+export function registerUser({ name, identifier, email, password }) {
   const users = getUsers()
   const exists = users.some(
     (u) => u.identifier.toLowerCase() === identifier.toLowerCase()
   )
   if (exists) {
-    return { success: false, error: 'An account with this email/mobile already exists.' }
+    return { success: false, error: 'An account with this mobile number already exists.' }
   }
-  users.push({ name, identifier, password })
+  users.push({ name, identifier, email, password })
   saveUsers(users)
   return { success: true }
 }
@@ -46,9 +46,12 @@ export function loginUser({ identifier, password }) {
     (u) => u.identifier.toLowerCase() === identifier.toLowerCase()
   )
   if (!user || user.password !== password) {
-    return { success: false, error: 'Invalid email/mobile or password.' }
+    return { success: false, error: 'Invalid mobile number or password.' }
   }
-  localStorage.setItem(AUTH_KEY, JSON.stringify({ name: user.name, identifier: user.identifier }))
+  localStorage.setItem(
+    AUTH_KEY,
+    JSON.stringify({ name: user.name, identifier: user.identifier, email: user.email })
+  )
   return { success: true }
 }
 

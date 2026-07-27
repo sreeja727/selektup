@@ -12,38 +12,19 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Breadcrumb from "../common/Breadcrumb";
 import Pagination from "../common/Pagination";
+import { useTestSeries } from "../../context/TestSeriesContext";
 
 const PAGE_SIZE = 5;
 
-
-const testSeries = [
-  {
-    id: 1,
-    title: "UPSC Prelims 2027",
-    price: "₹999",
-    tests: 100,
-  },
-  {
-    id: 2,
-    title: "KTET Test Series",
-    price: "₹699",
-    tests: 50,
-  },
-  {
-    id: 3,
-    title: "PSC Mock Tests",
-    price: "₹499",
-    tests: 30,
-  },
-];
 export default function TestSeriesList() {
   const navigate = useNavigate();
+  const { testSeries, deleteTestSeries } = useTestSeries();
   const [page, setPage] = useState(1);
 
   const paginated = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     return testSeries.slice(start, start + PAGE_SIZE);
-  }, [page]);
+  }, [testSeries, page]);
 
   return (
     <Box>
@@ -106,6 +87,11 @@ export default function TestSeriesList() {
                   colorPalette="red"
                   variant="outline"
                   gap={2}
+                  onClick={() => {
+                    if (window.confirm(`Delete "${series.title}"? This cannot be undone.`)) {
+                      deleteTestSeries(series.id);
+                    }
+                  }}
                 >
                   <Trash2 size={16} />
                   Delete

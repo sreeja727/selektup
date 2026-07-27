@@ -18,7 +18,19 @@ export const getRegisterError = flow(
 const loginData = (state) => state.loginData ;
 export const getLoginData  = flow(
   getTestData,
-  loginData 
+  loginData
+);
+
+const forgotPasswordData = (state) => state.forgotPasswordData;
+export const getForgotPasswordData = flow(
+  getTestData,
+  forgotPasswordData
+);
+
+const resetPasswordData = (state) => state.resetPasswordData;
+export const getResetPasswordData = flow(
+  getTestData,
+  resetPasswordData
 );
 
 

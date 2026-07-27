@@ -9,10 +9,22 @@ import {
   FaBook,
   FaQuestionCircle,
   FaChevronDown,
+  FaUserCheck,
+  FaKey,
+  FaIdCard,
 } from "react-icons/fa";
 
 const menu = [
   { name: "Dashboard", path: "/admin/dashboard", icon: FaTachometerAlt },
+  {
+    name: "Students",
+    icon: FaUserGraduate,
+    children: [
+      { name: "Category Access", path: "/admin/students/exam-access", icon: FaUserCheck },
+      { name: "Password Reset", path: "/admin/students/password-reset", icon: FaKey },
+      { name: "Student Details", path: "/admin/students/details", icon: FaIdCard },
+    ],
+  },
   { name: "Enquiries", path: "/admin/enquiries", icon: FaEnvelopeOpenText },
   {
     name: "Test Series & Questions",
@@ -22,13 +34,25 @@ const menu = [
       { name: "Questions", path: "/admin/questions", icon: FaQuestionCircle },
     ],
   },
-  { name: "Students", path: "/admin/students", icon: FaUserGraduate },
 ];
+
+function isGroupActive(item, pathname) {
+  return item.children.some((child) => pathname.startsWith(child.path));
+}
 
 export default function Sidebar() {
   const { pathname } = useLocation();
-  const inTestSeriesGroup = pathname.startsWith("/admin/test-series") || pathname.startsWith("/admin/questions");
-  const [groupOpen, setGroupOpen] = useState(inTestSeriesGroup);
+  const [openGroups, setOpenGroups] = useState(() => {
+    const initial = {};
+    menu.forEach((item) => {
+      if (item.children) initial[item.name] = isGroupActive(item, pathname);
+    });
+    return initial;
+  });
+
+  const toggleGroup = (name) => {
+    setOpenGroups((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
 
   return (
     <Box
@@ -53,7 +77,8 @@ export default function Sidebar() {
       <VStack align="stretch" gap={2}>
         {menu.map((item) => {
           if (item.children) {
-            const open = groupOpen || inTestSeriesGroup;
+            const active = isGroupActive(item, pathname);
+            const open = openGroups[item.name] || active;
             return (
               <Box key={item.name}>
                 <Box
@@ -66,11 +91,11 @@ export default function Sidebar() {
                   rounded="lg"
                   fontWeight={600}
                   fontSize="sm"
-                  bg={inTestSeriesGroup ? "rgba(255,255,255,0.08)" : "transparent"}
-                  color={inTestSeriesGroup ? "white" : "gray.300"}
+                  bg={active ? "rgba(255,255,255,0.08)" : "transparent"}
+                  color={active ? "white" : "gray.300"}
                   _hover={{ bg: "rgba(255,255,255,0.08)", color: "white" }}
                   transition="all 0.15s"
-                  onClick={() => setGroupOpen((prev) => !prev)}
+                  onClick={() => toggleGroup(item.name)}
                 >
                   <Box as={item.icon} fontSize="14px" />
                   <Text flex={1} textAlign="left">{item.name}</Text>

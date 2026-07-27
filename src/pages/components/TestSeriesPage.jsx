@@ -49,10 +49,21 @@ function CategoryCard({ category }) {
             <FaClipboardList size={13} />
             <Text fontSize="xs" fontWeight={600}>{category.tests.length} Tests</Text>
           </HStack>
-          <HStack gap={1} color={category.color} fontSize="xs" fontWeight={700}>
-            <Text>View Tests</Text>
-            <FaArrowRight size={11} />
-          </HStack>
+          <Text fontSize="sm" fontWeight={800} color="#0C1222">₹{category.price}</Text>
+        </HStack>
+
+        <HStack
+          justify="center"
+          gap={2}
+          bg={category.bg}
+          color={category.color}
+          borderRadius="lg"
+          py={2}
+          fontSize="xs"
+          fontWeight={700}
+        >
+          <Text>View Category</Text>
+          <FaArrowRight size={11} />
         </HStack>
       </Stack>
     </Box>

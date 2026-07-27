@@ -6,7 +6,9 @@ import { STATE_REDUCER_KEY } from './constants';
 const initialState = {
   registerData: {},
   registerError: {},
-  loginData:{}
+  loginData:{},
+  forgotPasswordData: {},
+  resetPasswordData: {}
 };
 
 const registerSlice = createSlice({
@@ -43,6 +45,18 @@ const registerSlice = createSlice({
         ACTION_TYPES[ACTIONS.REGISTER_API][2],
         (state, { payload = {} }) => {
           _.set(state, 'registerError', payload);
+        }
+      )
+      .addCase(
+        ACTION_TYPES[ACTIONS.FORGOT_PASSWORD][1],
+        (state, { payload = {} }) => {
+          _.set(state, 'forgotPasswordData', payload.data || payload);
+        }
+      )
+      .addCase(
+        ACTION_TYPES[ACTIONS.RESET_PASSWORD][1],
+        (state, { payload = {} }) => {
+          _.set(state, 'resetPasswordData', payload.data || payload);
         }
       )
       ;
