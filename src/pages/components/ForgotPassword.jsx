@@ -1,51 +1,33 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
 import { Box, Button, HStack, Input, Text, VStack } from '@chakra-ui/react'
 import { FaLifeRing, FaPhoneAlt, FaEnvelope, FaCheckCircle, FaMobileAlt } from 'react-icons/fa'
-import { toaster } from '../../components/ui/toaster'
+import { forgotPassword } from '../actions'
+import { getApiLoading } from '../common/selectors'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
+const MOBILE_RE = /^[6-9]\d{9}$/
 
 export default function ForgotPassword() {
-  const [contact, setContact] = useState('')
-  const [loading, setLoading] = useState(false)
+  const dispatch = useDispatch()
+  const loading = useSelector(getApiLoading)
+  const [mobile, setMobile] = useState('')
   const [error, setError] = useState('')
   const [sent, setSent] = useState(false)
 
-  // TODO: this endpoint doesn't exist yet — implement it on the backend so it
-  // actually lands in the admin's "Password Reset Requests" queue. Expected contract:
-  //   POST /api/auth/request-password-reset
-  //   body: { contact }  // the mobile number the user typed
-  //   -> { success: true } | { success: false, message }
-  const handleSubmit = async () => {
-    if (!contact.trim()) {
+  const handleSubmit = () => {
+    const trimmed = mobile.trim()
+    if (!trimmed) {
       setError('Please enter your registered mobile number')
       return
     }
-    setError('')
-    setLoading(true)
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/request-password-reset`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contact: contact.trim() }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setSent(true)
-        toaster.create({ title: 'Request sent', description: 'Our admin team has been notified.', type: 'success', duration: 4000, closable: true })
-      } else {
-        const message = data.message || 'Something went wrong. Please try again.'
-        setError(message)
-        toaster.create({ title: 'Request failed', description: message, type: 'error', duration: 4000, closable: true })
-      }
-    } catch {
-      const message = 'Unable to reach the server right now. Please try again, or contact support directly below.'
-      setError(message)
-      toaster.create({ title: 'Request failed', description: message, type: 'error', duration: 4000, closable: true })
-    } finally {
-      setLoading(false)
+    if (!MOBILE_RE.test(trimmed)) {
+      setError('Enter a valid 10-digit mobile number')
+      return
     }
+    setError('')
+    dispatch(forgotPassword({ mobile: trimmed }))
+    setSent(true)
   }
 
   return (
@@ -84,8 +66,8 @@ export default function ForgotPassword() {
             </Text>
 
             <Text fontSize="sm" color="gray.500" maxW="340px">
-              Enter your registered mobile number and notify our admin team.
-              We'll verify your identity and reset your password for you.
+              Enter your registered mobile number. We'll send a password reset
+              link to the email address linked to your account.
             </Text>
 
             <Box w="100%">
@@ -104,9 +86,9 @@ export default function ForgotPassword() {
                 <Input
                   pl="36px"
                   placeholder="Enter your registered mobile number"
-                  value={contact}
+                  value={mobile}
                   onChange={(e) => {
-                    setContact(e.target.value)
+                    setMobile(e.target.value)
                     setError('')
                   }}
                   onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
@@ -138,7 +120,7 @@ export default function ForgotPassword() {
               }}
               transition="all 0.2s"
             >
-              Notify Admin
+              Send Reset Link
             </Button>
 
             <Text fontSize="xs" color="gray.400" mt={1}>Or reach us directly:</Text>
@@ -197,10 +179,10 @@ export default function ForgotPassword() {
             <Box color="green.400" fontSize="52px">
               <FaCheckCircle />
             </Box>
-            <Text fontWeight={800} fontSize="xl" color="#0C1222">Request Sent</Text>
+            <Text fontWeight={800} fontSize="xl" color="#0C1222">Check Your Email</Text>
             <Text fontSize="sm" color="gray.500" maxW="320px">
-              Our admin team has been notified and will reset your password shortly.
-              You'll receive your temporary password via email or SMS.
+              If that mobile number is registered, we've sent a password reset
+              link to the email address on file. Click the link to set a new password.
             </Text>
             <Button
               as={Link}

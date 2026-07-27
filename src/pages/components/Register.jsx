@@ -8,26 +8,55 @@ import { registerUser } from '../../utils/auth'
 import { toaster } from '../../components/ui/toaster'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const MOBILE_RE = /^\d{10}$/
+const NAME_RE = /^[A-Za-z\s]{2,}$/
 
 export default function Register() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const [fullName, setFullName] = useState('')
-  const [emailOrMobile, setEmailOrMobile] = useState('')
+  const [mobile, setMobile] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [fieldErrors, setFieldErrors] = useState({})
   const [error, setError] = useState('')
+  const [emailReadOnly, setEmailReadOnly] = useState(true)
+  const [passwordReadOnly, setPasswordReadOnly] = useState(true)
+
+  const validateField = (name, value) => {
+    switch (name) {
+      case 'fullName':
+        if (!value.trim()) return 'Full name is required'
+        if (!NAME_RE.test(value.trim())) return 'Enter a valid name (letters only, min 2 characters)'
+        return ''
+      case 'mobile':
+        if (!value.trim()) return 'Mobile number is required'
+        if (!MOBILE_RE.test(value.trim())) return 'Enter a valid 10-digit mobile number'
+        return ''
+      case 'email':
+        if (!value.trim()) return 'Email is required for account recovery and notifications'
+        if (!EMAIL_RE.test(value.trim())) return 'Enter a valid email address'
+        return ''
+      case 'password':
+        if (!value) return 'Password is required'
+        if (value.length < 6) return 'Password must be at least 6 characters'
+        return ''
+      default:
+        return ''
+    }
+  }
 
   const validate = () => {
     const errors = {}
-    if (!fullName.trim())        errors.fullName       = 'Full name is required'
-    if (!emailOrMobile.trim())   errors.emailOrMobile  = 'Mobile number is required'
-    if (!email.trim())           errors.email          = 'Email is required for account recovery and notifications'
-    else if (!EMAIL_RE.test(email.trim())) errors.email = 'Enter a valid email address'
-    if (!password)               errors.password       = 'Password is required'
-    else if (password.length < 6) errors.password      = 'Password must be at least 6 characters'
+    const fullNameError = validateField('fullName', fullName)
+    const mobileError = validateField('mobile', mobile)
+    const emailError = validateField('email', email)
+    const passwordError = validateField('password', password)
+    if (fullNameError) errors.fullName = fullNameError
+    if (mobileError) errors.mobile = mobileError
+    if (emailError) errors.email = emailError
+    if (passwordError) errors.password = passwordError
 
     return errors
   }
@@ -41,7 +70,7 @@ export default function Register() {
     setFieldErrors({})
     setError('')
 
-    const localResult = registerUser({ name: fullName, identifier: emailOrMobile, email, password })
+    const localResult = registerUser({ name: fullName, identifier: mobile, email, password })
     if (!localResult.success) {
       setError(localResult.error)
       toaster.create({ title: 'Registration failed', description: localResult.error, type: 'error', duration: 4000, closable: true })
@@ -50,7 +79,7 @@ export default function Register() {
 
     localStorage.setItem('selektup_has_registered', 'true')
     // Best-effort: also let the backend know, if one is reachable.
-    dispatch(register({ fullName, emailOrMobile, email, password }))
+    dispatch(register({ fullName, email, mobile, password }))
     toaster.create({ title: 'Account created', description: 'Please log in to continue.', type: 'success', duration: 4000, closable: true })
     navigate('/login')
   }
@@ -121,6 +150,7 @@ export default function Register() {
                   setFullName(e.target.value)
                   setFieldErrors((f) => ({ ...f, fullName: '' }))
                 }}
+                onBlur={(e) => setFieldErrors((f) => ({ ...f, fullName: validateField('fullName', e.target.value) }))}
                 borderColor={fieldErrors.fullName ? 'red.400' : 'gray.200'}
                 borderWidth="2px"
                 borderRadius="lg"
@@ -146,20 +176,21 @@ export default function Register() {
               <Input
                 pl="36px"
                 placeholder="Enter your mobile number"
-                value={emailOrMobile}
+                value={mobile}
                 onChange={(e) => {
-                  setEmailOrMobile(e.target.value)
-                  setFieldErrors((f) => ({ ...f, emailOrMobile: '' }))
+                  setMobile(e.target.value)
+                  setFieldErrors((f) => ({ ...f, mobile: '' }))
                 }}
-                borderColor={fieldErrors.emailOrMobile ? 'red.400' : 'gray.200'}
+                onBlur={(e) => setFieldErrors((f) => ({ ...f, mobile: validateField('mobile', e.target.value) }))}
+                borderColor={fieldErrors.mobile ? 'red.400' : 'gray.200'}
                 borderWidth="2px"
                 borderRadius="lg"
                 _focus={{ borderColor: '#039BE5', boxShadow: '0 0 0 3px rgba(3,155,229,0.12)' }}
                 _hover={{ borderColor: '#039BE5' }}
               />
             </Box>
-            {fieldErrors.emailOrMobile && (
-              <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.emailOrMobile}</Text>
+            {fieldErrors.mobile && (
+              <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.mobile}</Text>
             )}
           </Box>
 
@@ -174,6 +205,9 @@ export default function Register() {
                 <FaEnvelope size={14} />
               </Box>
               <Input
+                autoComplete='off'
+                readOnly={emailReadOnly}
+                onFocus={() => setEmailReadOnly(false)}
                 pl="36px"
                 placeholder="Enter your email address"
                 value={email}
@@ -181,6 +215,7 @@ export default function Register() {
                   setEmail(e.target.value)
                   setFieldErrors((f) => ({ ...f, email: '' }))
                 }}
+                onBlur={(e) => setFieldErrors((f) => ({ ...f, email: validateField('email', e.target.value) }))}
                 borderColor={fieldErrors.email ? 'red.400' : 'gray.200'}
                 borderWidth="2px"
                 borderRadius="lg"
@@ -204,6 +239,9 @@ export default function Register() {
                 <FaLock size={14} />
               </Box>
               <Input
+                autoComplete='new-password'
+                readOnly={passwordReadOnly}
+                onFocus={() => setPasswordReadOnly(false)}
                 pl="36px"
                 pr="40px"
                 type={showPassword ? 'text' : 'password'}
@@ -213,6 +251,7 @@ export default function Register() {
                   setPassword(e.target.value)
                   setFieldErrors((f) => ({ ...f, password: '' }))
                 }}
+                onBlur={(e) => setFieldErrors((f) => ({ ...f, password: validateField('password', e.target.value) }))}
                 borderColor={fieldErrors.password ? 'red.400' : 'gray.200'}
                 borderWidth="2px"
                 borderRadius="lg"

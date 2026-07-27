@@ -1,22 +1,60 @@
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams, Navigate } from "react-router-dom";
 import {
   Box,
   Button,
   Flex,
   Heading,
-  List,
-  ListItem,
+  Stack,
   Text,
-  VStack,
 } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
+import { getTest } from "../../../data/testSeries";
+import { isLoggedIn } from "../../../utils/auth";
+import { fetchAccessStatus } from "../../categoryAccess/actions";
+import { getRawStatusForCategory, getStatusLoading } from "../../categoryAccess/selectors";
+import { ACCESS_STATUS } from "../../categoryAccess/constants";
+import Loader from "../../../components/Loader";
 
 export default function Instructions() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { categorySlug, testSlug } = useParams();
+  const result = getTest(categorySlug, testSlug);
+
+  const loggedIn = isLoggedIn();
+  // undefined = haven't checked this category yet; distinct from a resolved
+  // NOT_REQUESTED, so we don't flash-redirect before the fetch completes.
+  const status = useSelector(getRawStatusForCategory(categorySlug));
+  const statusLoading = useSelector(getStatusLoading);
+
+  useEffect(() => {
+    if (loggedIn && categorySlug) {
+      dispatch(fetchAccessStatus(categorySlug));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categorySlug, loggedIn]);
+
+  if (!result) return <Navigate to="/test-series" replace />;
+
+  if (!loggedIn) {
+    return <Navigate to={`/login?redirect=/test-series/${categorySlug}/${testSlug}`} replace />;
+  }
+
+  if (status === undefined || statusLoading) {
+    return <Loader fullScreen />;
+  }
+
+  if (status !== ACCESS_STATUS.APPROVED) {
+    return <Navigate to={`/test-series/${categorySlug}`} replace />;
+  }
+
+  const { category, test } = result;
 
   const instructions = [
     "Read every question carefully before answering.",
-    "The test contains 100 multiple-choice questions.",
-    "Duration of the test is 120 minutes.",
+    `The test contains ${test.questions} multiple-choice questions.`,
+    `Duration of the test is ${test.duration} minutes.`,
     "Each question has only one correct answer.",
     "Every 3 wrong answers will reduce 2 marks.",
     "Do not refresh or close the browser during the exam.",
@@ -35,8 +73,11 @@ export default function Instructions() {
         boxShadow="lg"
         p={8}
       >
+        <Text fontSize="xs" fontWeight={700} color={category.color} textTransform="uppercase" letterSpacing="0.08em" mb={1}>
+          {category.title}
+        </Text>
         <Heading color="blue.600" mb={2}>
-          UPSC Mock Test
+          {test.title}
         </Heading>
 
         <Text color="gray.600" mb={8}>
@@ -53,17 +94,17 @@ export default function Instructions() {
         >
           <Box mb={3}>
             <Text fontWeight="bold">Total Questions</Text>
-            <Text>100</Text>
+            <Text>{test.questions}</Text>
           </Box>
 
           <Box mb={3}>
             <Text fontWeight="bold">Duration</Text>
-            <Text>120 Minutes</Text>
+            <Text>{test.duration} Minutes</Text>
           </Box>
 
           <Box mb={3}>
             <Text fontWeight="bold">Total Marks</Text>
-            <Text>100</Text>
+            <Text>{test.marks}</Text>
           </Box>
 
           <Box mb={3}>
@@ -92,29 +133,27 @@ export default function Instructions() {
           Instructions
         </Heading>
 
-        <VStack align="stretch" spacing={3}>
-          <List spacing={3}>
-            {instructions.map((item, index) => (
-              <ListItem key={index}>
-                {index + 1}. {item}
-              </ListItem>
-            ))}
-          </List>
-        </VStack>
+        <Stack align="stretch" gap={3}>
+          {instructions.map((item, index) => (
+            <Text key={index}>
+              {index + 1}. {item}
+            </Text>
+          ))}
+        </Stack>
 
         <Flex justify="space-between" mt={10}>
           <Button
             variant="outline"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(`/test-series/${categorySlug}`)}
           >
             Back
           </Button>
 
           <Button
             colorScheme="blue"
-            onClick={() => navigate("/mock-test")}
+            onClick={() => navigate(`/mock-test/${categorySlug}/${testSlug}`)}
           >
-            Start Test
+            Start Exam
           </Button>
         </Flex>
       </Box>

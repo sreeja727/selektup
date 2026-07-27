@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Box, Flex, Text, Container, HStack, Stack, Button } from "@chakra-ui/react";
 import {
@@ -7,6 +8,7 @@ import {
 } from "react-icons/fa";
 import { selektup } from "../assets";
 import { isLoggedIn, logoutUser } from "../utils/auth";
+import { actions as categoryAccessActions } from "../pages/categoryAccess/slice";
 
 const NAV_LINKS = ["Home", "About Us", "Courses", "Test Series", "Contact", "Study Materials"];
 
@@ -26,6 +28,7 @@ const STUDY_MATERIAL_LINKS = [
 export default function Navbar() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [open, setOpen] = useState(false);
   const [studyOpen, setStudyOpen] = useState(false);
   const [mobileStudyOpen, setMobileStudyOpen] = useState(false);
@@ -33,6 +36,7 @@ export default function Navbar() {
 
   function handleLogout() {
     logoutUser();
+    dispatch(categoryAccessActions.clearAll());
     navigate("/");
   }
 

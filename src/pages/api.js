@@ -24,7 +24,31 @@ const registerApi = (data) => {
   }
  }
 
+const forgotPasswordApi = (data) => {
+  return {
+    url: API_URL.FORGOT_PASSWORD,
+    method: REQUEST_METHOD.POST,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FORGOT_PASSWORD],
+      data
+    }
+  };
+};
+
+const resetPasswordApi = (data) => {
+  return {
+    url: API_URL.RESET_PASSWORD,
+    method: REQUEST_METHOD.POST,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.RESET_PASSWORD],
+      data
+    }
+  };
+};
+
 export {
   registerApi,
-  loginApi
+  loginApi,
+  forgotPasswordApi,
+  resetPasswordApi
 };

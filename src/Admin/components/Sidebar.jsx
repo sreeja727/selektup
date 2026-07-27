@@ -20,7 +20,7 @@ const menu = [
     name: "Students",
     icon: FaUserGraduate,
     children: [
-      { name: "Exam Access", path: "/admin/students/exam-access", icon: FaUserCheck },
+      { name: "Category Access", path: "/admin/students/exam-access", icon: FaUserCheck },
       { name: "Password Reset", path: "/admin/students/password-reset", icon: FaKey },
       { name: "Student Details", path: "/admin/students/details", icon: FaIdCard },
     ],

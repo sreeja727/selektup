@@ -7,7 +7,7 @@ const TAG_COLORS = {
   teal:   { bg: 'rgba(0,137,123,0.10)',  color: '#00897B' },
 }
 
-function makeTests(slug, count = 10) {
+function makeTests(count = 10) {
   return Array.from({ length: count }, (_, i) => {
     const n = i + 1
     return {
@@ -17,20 +17,28 @@ function makeTests(slug, count = 10) {
       questions: 100,
       duration: 120,
       marks: 100,
-      price: 49,
     }
   })
 }
 
+// Students purchase access to the whole category — price and features
+// live here, not on the individual tests.
 export const TEST_CATEGORIES = [
   {
-    slug: 'degree-prelims',
+    slug: 'degree-mains',
     Icon: FaPlay,
-    title: 'Degree Prelims PYQ',
-    description: 'Previous year question based mock tests for degree-level PSC preliminary exams.',
+    title: 'Degree Mains PYQ',
+    description: 'Previous year question based mock tests for degree-level PSC mains exams.',
     colorKey: 'pink',
     ...TAG_COLORS.pink,
-    tests: makeTests('degree-prelims'),
+    price: 599,
+    features: [
+      '10 Full-Length Mock Tests',
+      'Previous Year Question Pattern',
+      'Detailed Solutions & Explanations',
+      'Unlimited Access Once Approved',
+    ],
+    tests: makeTests(),
   },
   {
     slug: 'psc-mentorship',
@@ -39,7 +47,14 @@ export const TEST_CATEGORIES = [
     description: 'Structured mock tests aligned with the PSC Mentorship Programme syllabus.',
     colorKey: 'blue',
     ...TAG_COLORS.blue,
-    tests: makeTests('psc-mentorship'),
+    price: 599,
+    features: [
+      '10 Full-Length Mock Tests',
+      'Mentor-Curated Question Sets',
+      'Performance Analysis',
+      'Unlimited Access Once Approved',
+    ],
+    tests: makeTests(),
   },
   {
     slug: 'ktet-psychology',
@@ -48,7 +63,14 @@ export const TEST_CATEGORIES = [
     description: 'Mock tests covering child psychology, learning theories, and teaching aptitude for KTET.',
     colorKey: 'purple',
     ...TAG_COLORS.purple,
-    tests: makeTests('ktet-psychology'),
+    price: 399,
+    features: [
+      '10 Full-Length Mock Tests',
+      'Child Psychology & Pedagogy Focus',
+      'Detailed Solutions & Explanations',
+      'Unlimited Access Once Approved',
+    ],
+    tests: makeTests(),
   },
   {
     slug: 'engineering-graphics',
@@ -57,7 +79,14 @@ export const TEST_CATEGORIES = [
     description: 'Mock tests covering projections, sections, and development of surfaces for KTU students.',
     colorKey: 'teal',
     ...TAG_COLORS.teal,
-    tests: makeTests('engineering-graphics'),
+    price: 349,
+    features: [
+      '10 Full-Length Mock Tests',
+      'Projections, Sections & Surfaces',
+      'Detailed Solutions & Explanations',
+      'Unlimited Access Once Approved',
+    ],
+    tests: makeTests(),
   },
 ]
 

@@ -42,6 +42,7 @@ export default function QuestionsEdit() {
   const [options, setOptions] = useState(question?.options || ["", "", "", ""]);
   const [correctIndex, setCorrectIndex] = useState(question?.correctIndex ?? 0);
   const [explanation, setExplanation] = useState(question?.explanation || "");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   if (!question) {
     return (
@@ -59,9 +60,25 @@ export default function QuestionsEdit() {
 
   const updateOption = (index, value) => {
     setOptions((prev) => prev.map((opt, i) => (i === index ? value : opt)));
+    setFieldErrors((f) => ({ ...f, options: undefined }));
+  };
+
+  const validate = () => {
+    const errors = {};
+    if (!text.trim()) errors.text = "Question text is required";
+    if (options.some((opt) => !opt.trim())) errors.options = "All 4 options must be filled in";
+    if (!explanation.trim()) errors.explanation = "An explanation is required";
+    return errors;
   };
 
   const handleSave = () => {
+    const errors = validate();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      toaster.create({ title: "Missing information", description: "Please fill in all required fields before saving.", type: "error", duration: 3500, closable: true });
+      return;
+    }
+    setFieldErrors({});
     updateQuestion(id, {
       categorySlug,
       mockTestNumber,
@@ -146,9 +163,14 @@ export default function QuestionsEdit() {
               placeholder="Enter the full question, including any numbered statements, assertion/reason, match-the-following pairs, etc."
               rows={10}
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => {
+                setText(e.target.value);
+                setFieldErrors((f) => ({ ...f, text: undefined }));
+              }}
               {...fieldStyle}
+              borderColor={fieldErrors.text ? "red.400" : fieldStyle.borderColor}
             />
+            {fieldErrors.text && <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.text}</Text>}
           </Field.Root>
 
           {options.map((opt, index) => (
@@ -167,6 +189,7 @@ export default function QuestionsEdit() {
                   value={opt}
                   onChange={(e) => updateOption(index, e.target.value)}
                   {...fieldStyle}
+                  borderColor={fieldErrors.options && !opt.trim() ? "red.400" : fieldStyle.borderColor}
                 />
                 <Button
                   size="sm"
@@ -180,6 +203,7 @@ export default function QuestionsEdit() {
               </HStack>
             </Field.Root>
           ))}
+          {fieldErrors.options && <Text color="red.500" fontSize="xs" mt={-3}>{fieldErrors.options}</Text>}
 
           <Field.Root>
             <Field.Label>Solution / Explanation</Field.Label>
@@ -187,9 +211,14 @@ export default function QuestionsEdit() {
               placeholder="Explain why the correct answer is right (shown to students after they attempt the question). One point per line works well for statement-based questions."
               rows={6}
               value={explanation}
-              onChange={(e) => setExplanation(e.target.value)}
+              onChange={(e) => {
+                setExplanation(e.target.value);
+                setFieldErrors((f) => ({ ...f, explanation: undefined }));
+              }}
               {...fieldStyle}
+              borderColor={fieldErrors.explanation ? "red.400" : fieldStyle.borderColor}
             />
+            {fieldErrors.explanation && <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.explanation}</Text>}
           </Field.Root>
 
           <Button colorPalette="blue" size="lg" onClick={handleSave}>

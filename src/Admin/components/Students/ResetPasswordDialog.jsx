@@ -47,8 +47,13 @@ export default function ResetPasswordDialog({ student, open, onClose, onResolved
   };
 
   const handleReset = () => {
-    if (tempPassword.trim().length < 8) {
+    const value = tempPassword.trim();
+    if (value.length < 8) {
       setError("Password must be at least 8 characters.");
+      return;
+    }
+    if (!/[a-zA-Z]/.test(value) || !/\d/.test(value)) {
+      setError("Password must include at least one letter and one number.");
       return;
     }
     setError("");

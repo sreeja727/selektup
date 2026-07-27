@@ -4,6 +4,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { QuestionsProvider } from "../context/QuestionsContext";
+import { TestSeriesProvider } from "../context/TestSeriesContext";
 import Loader from "../../components/Loader";
 
 export default function AdminLayout() {
@@ -24,18 +25,20 @@ export default function AdminLayout() {
 
   return (
     <QuestionsProvider>
-      {loading && <Loader fullScreen />}
-      <Box bg="gray.100" minH="100vh">
-        <Sidebar />
+      <TestSeriesProvider>
+        {loading && <Loader fullScreen />}
+        <Box bg="gray.100" minH="100vh">
+          <Sidebar />
 
-        <Box ml="250px">
-          <Header />
+          <Box ml="250px">
+            <Header />
 
-          <Box p={8}>
-            <Outlet />
+            <Box p={8}>
+              <Outlet />
+            </Box>
           </Box>
         </Box>
-      </Box>
+      </TestSeriesProvider>
     </QuestionsProvider>
   );
 }

@@ -10,6 +10,7 @@ import { loginUser } from '../../utils/auth'
 import { toaster } from '../../components/ui/toaster'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+const MOBILE_RE = /^\d{10}$/
 
 export default function Login() {
     const dispatch = useDispatch()
@@ -18,7 +19,7 @@ export default function Login() {
     const redirect = searchParams.get('redirect')
     const loginData = useSelector(getLoginData)
 
-  const [emailOrMobile, setEmailOrMobile] = useState('')
+  const [mobile, setMobile] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
@@ -32,10 +33,27 @@ export default function Login() {
     setError(loginData.message || 'Invalid mobile number or password.')
   }
 
+  const validateField = (name, value) => {
+    switch (name) {
+      case 'mobile':
+        if (!value.trim()) return 'This field is required'
+        if (!MOBILE_RE.test(value.trim())) return 'Enter a valid 10-digit mobile number'
+        return ''
+      case 'password':
+        if (!value.trim()) return 'This field is required'
+        if (value.length < 6) return 'Password must be at least 6 characters'
+        return ''
+      default:
+        return ''
+    }
+  }
+
   const validate = () => {
     const errors = {}
-    if (!emailOrMobile.trim()) errors.emailOrMobile = 'This field is required'
-    if (!password.trim()) errors.password = 'This field is required'
+    const mobileError = validateField('mobile', mobile)
+    const passwordError = validateField('password', password)
+    if (mobileError) errors.mobile = mobileError
+    if (passwordError) errors.password = passwordError
     return errors
   }
 
@@ -48,22 +66,22 @@ export default function Login() {
     setFieldErrors({})
     setError('')
 
-    const adminResult = loginAdmin({ email: emailOrMobile, password })
+    // Always hit the backend login API.
+    dispatch(login({  mobile, password }))
+
+    const adminResult = loginAdmin({ email: mobile, password })
     if (adminResult.success) {
       toaster.create({ title: 'Login successful', description: 'Welcome back, Admin!', type: 'success', duration: 4000, closable: true })
       navigate('/admin/dashboard', { replace: true })
       return
     }
 
-    const localResult = loginUser({ identifier: emailOrMobile, password })
+    const localResult = loginUser({ identifier: mobile, password })
     if (localResult.success) {
       toaster.create({ title: 'Login successful', description: 'Welcome back!', type: 'success', duration: 4000, closable: true })
       navigate(redirect || '/test-series', { replace: true })
       return
     }
-
-    // No local account matched (or backend is the source of truth) - try the API.
-    dispatch(login({  emailOrMobile, password }))
 
   }
 
@@ -134,21 +152,23 @@ export default function Login() {
               </Box>
               <Input
                 pl="36px"
+                autoComplete="off"
                 placeholder="Enter your mobile number"
-                value={emailOrMobile}
+                value={mobile}
                 onChange={(e) => {
-                  setEmailOrMobile(e.target.value)
-                  setFieldErrors((f) => ({ ...f, emailOrMobile: '' }))
+                  setMobile(e.target.value)
+                  setFieldErrors((f) => ({ ...f, mobile: '' }))
                 }}
-                borderColor={fieldErrors.emailOrMobile ? 'red.400' : 'gray.200'}
+                onBlur={(e) => setFieldErrors((f) => ({ ...f, mobile: validateField('mobile', e.target.value) }))}
+                borderColor={fieldErrors.mobile ? 'red.400' : 'gray.200'}
                 borderWidth="2px"
                 borderRadius="lg"
                 _focus={{ borderColor: '#039BE5', boxShadow: '0 0 0 3px rgba(3,155,229,0.12)' }}
                 _hover={{ borderColor: '#039BE5' }}
               />
             </Box>
-            {fieldErrors.emailOrMobile && (
-              <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.emailOrMobile}</Text>
+            {fieldErrors.mobile && (
+              <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.mobile}</Text>
             )}
           </Box>
 
@@ -172,6 +192,7 @@ export default function Login() {
               <Input
                 pl="36px"
                 pr="40px"
+                autoComplete="new-password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter Password"
                 value={password}
@@ -179,6 +200,7 @@ export default function Login() {
                   setPassword(e.target.value)
                   setFieldErrors((f) => ({ ...f, password: '' }))
                 }}
+                onBlur={(e) => setFieldErrors((f) => ({ ...f, password: validateField('password', e.target.value) }))}
                 borderColor={fieldErrors.password ? 'red.400' : 'gray.200'}
                 borderWidth="2px"
                 borderRadius="lg"

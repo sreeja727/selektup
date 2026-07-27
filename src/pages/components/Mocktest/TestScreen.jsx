@@ -8,16 +8,54 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useParams, Navigate } from "react-router-dom";
 import Timer from "./Timer";
 import QuestionPalette from "./QuestionPalette";
 import { useDisclosure } from "@chakra-ui/react";
 import SubmitModal from "./SubmitModal";
+import { getTest } from "../../../data/testSeries";
+import { isLoggedIn } from "../../../utils/auth";
+import { fetchAccessStatus } from "../../categoryAccess/actions";
+import { getRawStatusForCategory, getStatusLoading } from "../../categoryAccess/selectors";
+import { ACCESS_STATUS } from "../../categoryAccess/constants";
+import Loader from "../../../components/Loader";
 
 export default function TestScreen() {
+  const { categorySlug, testSlug } = useParams();
+  const dispatch = useDispatch();
+  const result = getTest(categorySlug, testSlug);
+  const testTitle = result ? `${result.category.title} — ${result.test.title}` : "Mock Test";
+
+  const loggedIn = isLoggedIn();
+  const status = useSelector(getRawStatusForCategory(categorySlug));
+  const statusLoading = useSelector(getStatusLoading);
+
   const [selected, setSelected] = useState("");
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const { isOpen, onOpen, onClose } = useDisclosure();
+
+  useEffect(() => {
+    if (loggedIn && categorySlug) {
+      dispatch(fetchAccessStatus(categorySlug));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categorySlug, loggedIn]);
+
+  if (!result) return <Navigate to="/test-series" replace />;
+
+  if (!loggedIn) {
+    return <Navigate to={`/login?redirect=/test-series/${categorySlug}/${testSlug}`} replace />;
+  }
+
+  if (status === undefined || statusLoading) {
+    return <Loader fullScreen />;
+  }
+
+  if (status !== ACCESS_STATUS.APPROVED) {
+    return <Navigate to={`/test-series/${categorySlug}`} replace />;
+  }
 
   const question = {
     id: 1,
@@ -43,7 +81,7 @@ export default function TestScreen() {
         boxShadow="md"
         mb={5}
       >
-        <Heading size="md">UPSC Mock Test 1</Heading>
+        <Heading size="md">{testTitle}</Heading>
 
         <Timer
   duration={7200}
