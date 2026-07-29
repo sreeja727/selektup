@@ -18,13 +18,15 @@ export default function Register() {
   const [mobile, setMobile] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [fieldErrors, setFieldErrors] = useState({})
   const [error, setError] = useState('')
   const [emailReadOnly, setEmailReadOnly] = useState(true)
   const [passwordReadOnly, setPasswordReadOnly] = useState(true)
 
-  const validateField = (name, value) => {
+  const validateField = (name, value, allValues = {}) => {
     switch (name) {
       case 'fullName':
         if (!value.trim()) return 'Full name is required'
@@ -42,6 +44,12 @@ export default function Register() {
         if (!value) return 'Password is required'
         if (value.length < 6) return 'Password must be at least 6 characters'
         return ''
+      case 'confirmPassword': {
+        if (!value) return 'Please confirm your password'
+        const pwd = allValues.password ?? password
+        if (value !== pwd) return 'Passwords do not match'
+        return ''
+      }
       default:
         return ''
     }
@@ -53,10 +61,12 @@ export default function Register() {
     const mobileError = validateField('mobile', mobile)
     const emailError = validateField('email', email)
     const passwordError = validateField('password', password)
+    const confirmPasswordError = validateField('confirmPassword', confirmPassword, { password })
     if (fullNameError) errors.fullName = fullNameError
     if (mobileError) errors.mobile = mobileError
     if (emailError) errors.email = emailError
     if (passwordError) errors.password = passwordError
+    if (confirmPasswordError) errors.confirmPassword = confirmPasswordError
 
     return errors
   }
@@ -77,6 +87,7 @@ export default function Register() {
       return
     }
 
+    setConfirmPassword('')
     localStorage.setItem('selektup_has_registered', 'true')
     // Best-effort: also let the backend know, if one is reachable.
     dispatch(register({ fullName, email, mobile, password }))
@@ -175,10 +186,13 @@ export default function Register() {
               </Box>
               <Input
                 pl="36px"
+                inputMode="numeric"
+                maxLength={10}
                 placeholder="Enter your mobile number"
                 value={mobile}
                 onChange={(e) => {
-                  setMobile(e.target.value)
+                  const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10)
+                  setMobile(digitsOnly)
                   setFieldErrors((f) => ({ ...f, mobile: '' }))
                 }}
                 onBlur={(e) => setFieldErrors((f) => ({ ...f, mobile: validateField('mobile', e.target.value) }))}
@@ -273,7 +287,7 @@ export default function Register() {
           </Box>
 
           {/* Confirm Password */}
-          {/* <Box w="100%">
+          <Box w="100%">
             <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">Confirm Password</Text>
             <Box position="relative">
               <Box
@@ -292,6 +306,7 @@ export default function Register() {
                   setConfirmPassword(e.target.value)
                   setFieldErrors((f) => ({ ...f, confirmPassword: '' }))
                 }}
+                onBlur={(e) => setFieldErrors((f) => ({ ...f, confirmPassword: validateField('confirmPassword', e.target.value, { password }) }))}
                 borderColor={fieldErrors.confirmPassword ? 'red.400' : 'gray.200'}
                 borderWidth="2px"
                 borderRadius="lg"
@@ -310,7 +325,7 @@ export default function Register() {
             {fieldErrors.confirmPassword && (
               <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.confirmPassword}</Text>
             )}
-          </Box> */}
+          </Box>
 
           {/* Submit */}
           <Button

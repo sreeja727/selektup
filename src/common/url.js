@@ -4,5 +4,6 @@ export const API_URL={
     REGISTER:'auth/register',
     LOGIN:'auth/login',
     FORGOT_PASSWORD:'auth/forgot-password',
-    RESET_PASSWORD:'auth/reset-password'
+    RESET_PASSWORD:'auth/reset-password',
+    TEST_CATEGORIES:'test-categories'
 }

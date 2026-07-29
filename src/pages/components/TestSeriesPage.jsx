@@ -1,13 +1,15 @@
 import { Link as RouterLink } from 'react-router-dom'
-import { Box, Container, SimpleGrid, Stack, HStack, Text, Heading } from '@chakra-ui/react'
+import { Box, Container, SimpleGrid, Stack, HStack, Text, Heading, Badge } from '@chakra-ui/react'
 import { FaArrowRight, FaClipboardList } from 'react-icons/fa'
 import { TEST_CATEGORIES } from '../../data/testSeries'
 
 function CategoryCard({ category }) {
+  const available = category.available !== false
+
   return (
     <Box
-      as={RouterLink}
-      to={`/test-series/${category.slug}`}
+      as={available ? RouterLink : 'div'}
+      to={available ? `/test-series/${category.slug}` : undefined}
       bg="white"
       borderRadius="2xl"
       p={7}
@@ -15,13 +17,34 @@ function CategoryCard({ category }) {
       boxShadow="0 2px 14px rgba(0,0,0,0.06)"
       transition="all 0.25s"
       display="block"
-      _hover={{
+      position="relative"
+      opacity={available ? 1 : 0.6}
+      cursor={available ? 'pointer' : 'not-allowed'}
+      _hover={available ? {
         textDecoration: 'none',
         transform: 'translateY(-4px)',
         boxShadow: '0 14px 40px rgba(0,0,0,0.10)',
         borderColor: category.color,
-      }}
+      } : undefined}
     >
+      {!available && (
+        <Badge
+          position="absolute"
+          top={4}
+          right={4}
+          colorPalette="gray"
+          bg="gray.100"
+          color="gray.600"
+          fontWeight={700}
+          fontSize="2xs"
+          px={2.5}
+          py={1}
+          borderRadius="full"
+        >
+          Coming Soon
+        </Badge>
+      )}
+
       <Stack gap={4}>
         <Box
           w={14} h={14}
@@ -52,19 +75,34 @@ function CategoryCard({ category }) {
           <Text fontSize="sm" fontWeight={800} color="#0C1222">₹{category.price}</Text>
         </HStack>
 
-        <HStack
-          justify="center"
-          gap={2}
-          bg={category.bg}
-          color={category.color}
-          borderRadius="lg"
-          py={2}
-          fontSize="xs"
-          fontWeight={700}
-        >
-          <Text>View Category</Text>
-          <FaArrowRight size={11} />
-        </HStack>
+        {available ? (
+          <HStack
+            justify="center"
+            gap={2}
+            bg={category.bg}
+            color={category.color}
+            borderRadius="lg"
+            py={2}
+            fontSize="xs"
+            fontWeight={700}
+          >
+            <Text>View Category</Text>
+            <FaArrowRight size={11} />
+          </HStack>
+        ) : (
+          <HStack
+            justify="center"
+            gap={2}
+            bg="gray.100"
+            color="gray.500"
+            borderRadius="lg"
+            py={2}
+            fontSize="xs"
+            fontWeight={700}
+          >
+            <Text>Coming Soon</Text>
+          </HStack>
+        )}
       </Stack>
     </Box>
   )

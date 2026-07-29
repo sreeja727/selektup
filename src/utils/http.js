@@ -8,8 +8,8 @@ import {
 } from '../common/constant';
 import { _ } from '../common/lodash';
 import { ApiStatus } from '../app/ApiStatus';
-import { getCommonConfigSelector } from '../pages/common/selectors';
-import { actions as commonActions } from '../pages/common/slice';
+import { getCommonConfigSelector } from '../pages/selectors';
+import { actions as commonActions } from '../pages/slice';
 import { MIME_TO_EXT, RESPONSE_TYPE } from '../pages/others/fileDownload/constant';
 import { getFileObjFromBuffer } from '../pages/others/fileDownload/helpers';
 import { STORAGE_KEYS } from './constants';

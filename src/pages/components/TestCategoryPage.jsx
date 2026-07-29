@@ -8,9 +8,9 @@ import {
 } from 'react-icons/fa'
 import { getCategory } from '../../data/testSeries'
 import { isLoggedIn } from '../../utils/auth'
-import { fetchAccessStatus, requestAccess } from '../categoryAccess/actions'
-import { getRequestLoading, getStatusForCategory, getStatusLoading } from '../categoryAccess/selectors'
-import { ACCESS_STATUS } from '../categoryAccess/constants'
+import { fetchAccessStatus, requestAccess } from '../actions'
+import { getRequestLoading, getStatusForCategory, getStatusLoading } from '../selectors'
+import { ACCESS_STATUS } from '../constants'
 
 function InfoChip({ tile }) {
   return (
@@ -117,7 +117,7 @@ export default function TestCategoryPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categorySlug, loggedIn])
 
-  if (!category) return <Navigate to="/test-series" replace />
+  if (!category || category.available === false) return <Navigate to="/test-series" replace />
 
   const unlocked = status === ACCESS_STATUS.APPROVED
 

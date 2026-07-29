@@ -32,6 +32,7 @@ export const TEST_CATEGORIES = [
     colorKey: 'pink',
     ...TAG_COLORS.pink,
     price: 599,
+    available: true,
     features: [
       '10 Full-Length Mock Tests',
       'Previous Year Question Pattern',
@@ -48,6 +49,7 @@ export const TEST_CATEGORIES = [
     colorKey: 'blue',
     ...TAG_COLORS.blue,
     price: 599,
+    available: false,
     features: [
       '10 Full-Length Mock Tests',
       'Mentor-Curated Question Sets',
@@ -64,6 +66,7 @@ export const TEST_CATEGORIES = [
     colorKey: 'purple',
     ...TAG_COLORS.purple,
     price: 399,
+    available: false,
     features: [
       '10 Full-Length Mock Tests',
       'Child Psychology & Pedagogy Focus',
@@ -80,6 +83,7 @@ export const TEST_CATEGORIES = [
     colorKey: 'teal',
     ...TAG_COLORS.teal,
     price: 349,
+    available: false,
     features: [
       '10 Full-Length Mock Tests',
       'Projections, Sections & Surfaces',

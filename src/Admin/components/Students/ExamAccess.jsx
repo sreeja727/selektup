@@ -3,9 +3,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { Badge, Box, Button, HStack, Heading, Table, Text } from "@chakra-ui/react";
 import Breadcrumb from "../common/Breadcrumb";
 import Pagination from "../common/Pagination";
-import { fetchAdminRequests, approveRequest, rejectRequest } from "../../../pages/categoryAccess/actions";
-import { getAdminRequests, getAdminRequestsLoading, getActionLoading } from "../../../pages/categoryAccess/selectors";
-import { ACCESS_STATUS } from "../../../pages/categoryAccess/constants";
+import { fetchAdminRequests, approveRequest, rejectRequest } from "../../../pages/actions";
+import { getAdminRequests, getAdminRequestsLoading, getActionLoading } from "../../../pages/selectors";
+import { ACCESS_STATUS } from "../../../pages/constants";
 
 const PAGE_SIZE = 5;
 
