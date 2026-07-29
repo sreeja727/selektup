@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Box, Button, Input, Text, VStack } from '@chakra-ui/react'
 import { FaLock, FaEye, FaEyeSlash, FaExclamationTriangle } from 'react-icons/fa'
 import { resetPassword } from '../actions'
-import { getApiLoading } from '../common/selectors'
+import { getApiLoading } from '../selectors'
 
 export default function ResetPassword() {
   const dispatch = useDispatch()
@@ -140,7 +140,7 @@ export default function ResetPassword() {
             </Box>
 
             <Box w="100%" textAlign="left">
-              <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">Confirm New Password</Text>
+              <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">Confirm Password</Text>
               <Box position="relative">
                 <Box position="absolute" left={3} top="50%" transform="translateY(-50%)" color="gray.400" zIndex={1} pointerEvents="none">
                   <FaLock size={14} />

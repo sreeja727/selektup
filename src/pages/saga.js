@@ -1,19 +1,25 @@
+import { createAction } from '@reduxjs/toolkit';
 import {
-  all, takeLatest,  put, fork, take
+  all, takeLatest, put, fork, take, call, delay
 } from 'redux-saga/effects';
 import { _ } from '../common/lodash';
 import { handleAPIRequest } from '../utils/http';
 import { setAuthToken, setAuthUser } from '../utils/auth';
-import { actions as commonActions } from './common/slice';
+import { actions } from './slice';
 import { ACTION_TYPES, ACTIONS } from './actions';
 import * as api from './api';
 import { toaster } from '../components/ui/toaster';
 
 const ADMIN_ROLE = 'ADMIN';
+const MOCK_LATENCY_MS = 300;
+
+/* ===========================
+   AUTH SAGAS
+=========================== */
 
 export function* registerSaga({ payload = {} }) {
   const { fullName = '', mobile = '', password = '' } = payload;
-  yield put(commonActions.setApiLoading(true));
+  yield put(actions.setApiLoading(true));
   yield fork(handleAPIRequest, api.registerApi, payload);
   const {
     payload: { data: resPayload = {}, errorMessage = '' } = {},
@@ -31,7 +37,7 @@ export function* registerSaga({ payload = {} }) {
       closable: true
     });
     yield put(
-      commonActions.navigateTo({
+      actions.navigateTo({
         to: '/login',
         isSameModule: true,
         options: { state: { fullName, mobile, password } }
@@ -46,12 +52,12 @@ export function* registerSaga({ payload = {} }) {
       closable: true
     });
   }
-  yield put(commonActions.setApiLoading(false));
+  yield put(actions.setApiLoading(false));
 }
 
 
 export function* loginSaga({ payload = {} }) {
-  yield put(commonActions.setApiLoading(true));
+  yield put(actions.setApiLoading(true));
   yield fork(handleAPIRequest, api.loginApi, payload);
   const {
     payload: apiPayload = {},
@@ -82,7 +88,7 @@ export function* loginSaga({ payload = {} }) {
         closable: true
       });
       yield put(
-        commonActions.navigateTo({
+        actions.navigateTo({
           to: role === ADMIN_ROLE ? '/admin/dashboard' : '/test-series',
           options: { replace: true }
         })
@@ -97,13 +103,13 @@ export function* loginSaga({ payload = {} }) {
       });
     }
   }
-  yield put(commonActions.setApiLoading(false));
+  yield put(actions.setApiLoading(false));
 }
 
 
 
 export function* forgotPasswordSaga({ payload = {} }) {
-  yield put(commonActions.setApiLoading(true));
+  yield put(actions.setApiLoading(true));
   yield fork(handleAPIRequest, api.forgotPasswordApi, payload);
   const {
     payload: apiPayload = {},
@@ -141,11 +147,11 @@ export function* forgotPasswordSaga({ payload = {} }) {
       closable: true
     });
   }
-  yield put(commonActions.setApiLoading(false));
+  yield put(actions.setApiLoading(false));
 }
 
 export function* resetPasswordSaga({ payload = {} }) {
-  yield put(commonActions.setApiLoading(true));
+  yield put(actions.setApiLoading(true));
   yield fork(handleAPIRequest, api.resetPasswordApi, payload);
   const {
     payload: apiPayload = {},
@@ -159,13 +165,13 @@ export function* resetPasswordSaga({ payload = {} }) {
     const { success, message = '' } = apiPayload.data || {};
     if (success) {
       toaster.create({
-        title: 'Password reset',
-        description: 'Your password has been reset. Please log in with your new password.',
+        title: 'Password reset successfully.',
+        description: 'Please log in with your new password.',
         type: 'success',
         duration: 4000,
         closable: true
       });
-      yield put(commonActions.navigateTo({ to: '/login', isSameModule: true }));
+      yield put(actions.navigateTo({ to: '/login', isSameModule: true }));
     } else {
       toaster.create({
         title: 'Reset failed',
@@ -184,15 +190,101 @@ export function* resetPasswordSaga({ payload = {} }) {
       closable: true
     });
   }
-  yield put(commonActions.setApiLoading(false));
+  yield put(actions.setApiLoading(false));
 }
 
-export default function* partnerOnboardedRequestSaga() {
-  yield all([
+/* ===========================
+   CATEGORY ACCESS SAGAS
+=========================== */
 
+function* runRequest(actionKey, worker, payload) {
+  const [REQUEST, SUCCESS, FAILURE] = ACTION_TYPES[actionKey];
+  yield put(createAction(REQUEST)());
+  try {
+    yield delay(MOCK_LATENCY_MS);
+    const data = yield call(worker, payload);
+    yield put(createAction(SUCCESS)({ payload, data }));
+    return data;
+  } catch (error) {
+    yield put(createAction(FAILURE)({ payload, error: error.message }));
+    toaster.create({
+      title: 'Something went wrong',
+      description: error.message || 'Please try again.',
+      type: 'error',
+      duration: 4000,
+      closable: true
+    });
+    return undefined;
+  }
+}
+
+function* fetchAccessStatusSaga({ payload: categorySlug }) {
+  yield call(runRequest, ACTIONS.FETCH_ACCESS_STATUS, api.getAccessStatus, categorySlug);
+}
+
+function* requestAccessSaga({ payload }) {
+  const status = yield call(runRequest, ACTIONS.REQUEST_ACCESS, api.submitAccessRequest, payload);
+  if (status) {
+    toaster.create({
+      title: 'Request Submitted Successfully',
+      description: 'Our admin will verify your payment and approve access.',
+      type: 'success',
+      duration: 4500,
+      closable: true
+    });
+  }
+}
+
+function* fetchAdminRequestsSaga() {
+  yield call(runRequest, ACTIONS.FETCH_ADMIN_REQUESTS, api.getAllRequests);
+}
+
+function* approveRequestSaga({ payload: requestId }) {
+  const record = yield call(runRequest, ACTIONS.APPROVE_REQUEST, () => api.setRequestStatus(requestId, 'APPROVED'));
+  if (record) {
+    toaster.create({
+      title: 'Access approved',
+      description: `${record.studentName} now has access to ${record.categoryTitle}.`,
+      type: 'success',
+      duration: 4000,
+      closable: true
+    });
+  }
+}
+
+function* rejectRequestSaga({ payload: requestId }) {
+  const record = yield call(runRequest, ACTIONS.REJECT_REQUEST, () => api.setRequestStatus(requestId, 'REJECTED'));
+  if (record) {
+    toaster.create({
+      title: 'Access rejected',
+      description: `${record.studentName}'s request for ${record.categoryTitle} was rejected.`,
+      type: 'info',
+      duration: 4000,
+      closable: true
+    });
+  }
+}
+
+function* fetchTestCategoriesSaga() {
+  yield fork(handleAPIRequest, api.getTestCategoriesApi);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_TEST_CATEGORIES][1],
+    ACTION_TYPES[ACTIONS.FETCH_TEST_CATEGORIES][2]
+  ]);
+}
+
+export default function* pagesSaga() {
+  yield all([
     takeLatest(ACTIONS.REGISTER, registerSaga),
-    takeLatest(ACTIONS.LOGIN,loginSaga),
+    takeLatest(ACTIONS.LOGIN, loginSaga),
     takeLatest(ACTIONS.FORGOT_PASSWORD, forgotPasswordSaga),
-    takeLatest(ACTIONS.RESET_PASSWORD, resetPasswordSaga)
+    takeLatest(ACTIONS.RESET_PASSWORD, resetPasswordSaga),
+
+    takeLatest(ACTIONS.FETCH_ACCESS_STATUS, fetchAccessStatusSaga),
+    takeLatest(ACTIONS.REQUEST_ACCESS, requestAccessSaga),
+    takeLatest(ACTIONS.FETCH_ADMIN_REQUESTS, fetchAdminRequestsSaga),
+    takeLatest(ACTIONS.APPROVE_REQUEST, approveRequestSaga),
+    takeLatest(ACTIONS.REJECT_REQUEST, rejectRequestSaga),
+    takeLatest(ACTIONS.FETCH_TEST_CATEGORIES, fetchTestCategoriesSaga)
   ]);
 }

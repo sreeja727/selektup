@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Box, Button, HStack, Input, Text, VStack } from '@chakra-ui/react'
 import { FaLifeRing, FaPhoneAlt, FaEnvelope, FaCheckCircle, FaMobileAlt } from 'react-icons/fa'
 import { forgotPassword } from '../actions'
-import { getApiLoading } from '../common/selectors'
+import { getApiLoading } from '../selectors'
 
 const MOBILE_RE = /^[6-9]\d{9}$/
 

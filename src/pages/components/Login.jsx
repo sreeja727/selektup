@@ -153,10 +153,13 @@ export default function Login() {
               <Input
                 pl="36px"
                 autoComplete="off"
+                inputMode="numeric"
+                maxLength={10}
                 placeholder="Enter your mobile number"
                 value={mobile}
                 onChange={(e) => {
-                  setMobile(e.target.value)
+                  const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10)
+                  setMobile(digitsOnly)
                   setFieldErrors((f) => ({ ...f, mobile: '' }))
                 }}
                 onBlur={(e) => setFieldErrors((f) => ({ ...f, mobile: validateField('mobile', e.target.value) }))}

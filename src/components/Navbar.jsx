@@ -8,7 +8,7 @@ import {
 } from "react-icons/fa";
 import { selektup } from "../assets";
 import { isLoggedIn, logoutUser } from "../utils/auth";
-import { actions as categoryAccessActions } from "../pages/categoryAccess/slice";
+import { actions as pagesActions } from "../pages/slice";
 
 const NAV_LINKS = ["Home", "About Us", "Courses", "Test Series", "Contact", "Study Materials"];
 
@@ -36,7 +36,7 @@ export default function Navbar() {
 
   function handleLogout() {
     logoutUser();
-    dispatch(categoryAccessActions.clearAll());
+    dispatch(pagesActions.clearAll());
     navigate("/");
   }
 

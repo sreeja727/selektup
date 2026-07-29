@@ -17,9 +17,9 @@ import { useDisclosure } from "@chakra-ui/react";
 import SubmitModal from "./SubmitModal";
 import { getTest } from "../../../data/testSeries";
 import { isLoggedIn } from "../../../utils/auth";
-import { fetchAccessStatus } from "../../categoryAccess/actions";
-import { getRawStatusForCategory, getStatusLoading } from "../../categoryAccess/selectors";
-import { ACCESS_STATUS } from "../../categoryAccess/constants";
+import { fetchAccessStatus } from "../../actions";
+import { getRawStatusForCategory, getStatusLoading } from "../../selectors";
+import { ACCESS_STATUS } from "../../constants";
 import Loader from "../../../components/Loader";
 
 export default function TestScreen() {
