@@ -1,17 +1,34 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Box, Flex, Heading, Input, Table, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
-import { enquiries } from "../../data/mockAdminData";
 import Breadcrumb from "../common/Breadcrumb";
 import Pagination from "../common/Pagination";
+import { fetchAdminEnquiries } from "../../../pages/actions";
+import { getAdminEnquiries, getAdminEnquiriesLoading } from "../../../pages/selectors";
 
 const PAGE_SIZE = 5;
 
 export default function EnquiriesList() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const adminEnquiries = useSelector(getAdminEnquiries);
+  const enquiriesLoading = useSelector(getAdminEnquiriesLoading);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    dispatch(fetchAdminEnquiries());
+  }, [dispatch]);
+
+  // The backend doesn't return an id per enquiry — use the array index as a
+  // stable-enough key/route param, since EnquiryDetails reads from this same
+  // fetched list rather than looking the record up independently.
+  const enquiries = useMemo(
+    () => adminEnquiries.map((e, index) => ({ ...e, id: index })),
+    [adminEnquiries]
+  );
 
   const filtered = useMemo(() => {
     return enquiries.filter((e) => {
@@ -21,7 +38,7 @@ export default function EnquiriesList() {
         e.district.toLowerCase().includes(search.toLowerCase())
       );
     });
-  }, [search]);
+  }, [enquiries, search]);
 
   const paginated = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
@@ -81,7 +98,9 @@ export default function EnquiriesList() {
                   </Table.Cell>
                   <Table.Cell color="gray.600">{e.phone}</Table.Cell>
                   <Table.Cell color="gray.600">{e.district}</Table.Cell>
-                  <Table.Cell color="gray.600">{e.date}</Table.Cell>
+                  <Table.Cell color="gray.600">
+                    {e.submittedAt ? new Date(e.submittedAt).toLocaleDateString() : "—"}
+                  </Table.Cell>
                   <Table.Cell>
                     <Box
                       as="button"
@@ -97,7 +116,7 @@ export default function EnquiriesList() {
                 </Table.Row>
               ))}
 
-              {filtered.length === 0 && (
+              {!enquiriesLoading && filtered.length === 0 && (
                 <Table.Row>
                   <Table.Cell colSpan={5}>
                     <Text textAlign="center" color="gray.400" py={8}>

@@ -22,13 +22,13 @@ export function* registerSaga({ payload = {} }) {
   yield put(actions.setApiLoading(true));
   yield fork(handleAPIRequest, api.registerApi, payload);
   const {
-    payload: { data: resPayload = {}, errorMessage = '' } = {},
+    payload: { data: resPayload = {} } = {},
     type = ''
   } = yield take([
     ACTION_TYPES[ACTIONS.REGISTER_API][1],
     ACTION_TYPES[ACTIONS.REGISTER_API][2]
   ]);
-  if (type === ACTION_TYPES[ACTIONS.REGISTER_API][1] && !_.isEmpty(resPayload) && errorMessage === null) {
+  if (type === ACTION_TYPES[ACTIONS.REGISTER_API][1] && !_.isEmpty(resPayload)) {
     toaster.create({
       title: 'Registration',
       description: 'Registered successfully',
@@ -57,8 +57,9 @@ export function* registerSaga({ payload = {} }) {
 
 
 export function* loginSaga({ payload = {} }) {
+  const { redirect, ...credentials } = payload;
   yield put(actions.setApiLoading(true));
-  yield fork(handleAPIRequest, api.loginApi, payload);
+  yield fork(handleAPIRequest, api.loginApi, credentials);
   const {
     payload: apiPayload = {},
     type = ''
@@ -73,11 +74,11 @@ export function* loginSaga({ payload = {} }) {
 
     if (success && !_.isEmpty(userData)) {
       const {
-        token, userId, fullName, emailOrMobile, role
+        token, userId, fullName, mobile, role
       } = userData;
       setAuthToken(token);
       setAuthUser({
-        userId, fullName, emailOrMobile, role
+        userId, fullName, mobile, role
       });
 
       toaster.create({
@@ -89,7 +90,7 @@ export function* loginSaga({ payload = {} }) {
       });
       yield put(
         actions.navigateTo({
-          to: role === ADMIN_ROLE ? '/admin/dashboard' : '/test-series',
+          to: role === ADMIN_ROLE ? '/admin/dashboard' : (redirect || '/test-series'),
           options: { replace: true }
         })
       );
@@ -123,8 +124,8 @@ export function* forgotPasswordSaga({ payload = {} }) {
     const { success, message = '' } = apiPayload.data || {};
     if (success) {
       toaster.create({
-        title: 'Reset link sent',
-        description: 'Check the email linked to your account for a password reset link.',
+        title: 'OTP sent',
+        description: 'Check the email linked to your account for a one-time password.',
         type: 'success',
         duration: 4000,
         closable: true
@@ -141,6 +142,43 @@ export function* forgotPasswordSaga({ payload = {} }) {
   } else {
     toaster.create({
       title: 'Request failed',
+      description: 'Unable to reach the server right now. Please try again.',
+      type: 'error',
+      duration: 4000,
+      closable: true
+    });
+  }
+  yield put(actions.setApiLoading(false));
+}
+
+export function* verifyOtpSaga({ payload = {} }) {
+  const { mobile, otp } = payload;
+  yield put(actions.setApiLoading(true));
+  yield fork(handleAPIRequest, api.verifyOtpApi, payload);
+  const {
+    payload: apiPayload = {},
+    type = ''
+  } = yield take([
+    ACTION_TYPES[ACTIONS.VERIFY_OTP][1],
+    ACTION_TYPES[ACTIONS.VERIFY_OTP][2]
+  ]);
+
+  if (type === ACTION_TYPES[ACTIONS.VERIFY_OTP][1]) {
+    const { success, message = '' } = apiPayload.data || {};
+    if (success) {
+      yield put(actions.navigateTo({ to: '/reset-password', options: { state: { mobile, otp } } }));
+    } else {
+      toaster.create({
+        title: 'Invalid OTP',
+        description: message || 'That code is incorrect or has expired. Please try again.',
+        type: 'error',
+        duration: 4000,
+        closable: true
+      });
+    }
+  } else {
+    toaster.create({
+      title: 'Verification failed',
       description: 'Unable to reach the server right now. Please try again.',
       type: 'error',
       duration: 4000,
@@ -175,7 +213,7 @@ export function* resetPasswordSaga({ payload = {} }) {
     } else {
       toaster.create({
         title: 'Reset failed',
-        description: message || 'This reset link is invalid or has expired.',
+        description: message || 'This OTP is invalid or has expired.',
         type: 'error',
         duration: 4000,
         closable: true
@@ -236,15 +274,27 @@ function* requestAccessSaga({ payload }) {
 }
 
 function* fetchAdminRequestsSaga() {
-  yield call(runRequest, ACTIONS.FETCH_ADMIN_REQUESTS, api.getAllRequests);
+  yield fork(handleAPIRequest, api.getAdminCategoryAccessApi);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_REQUESTS][1],
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_REQUESTS][2]
+  ]);
 }
 
 function* approveRequestSaga({ payload: requestId }) {
-  const record = yield call(runRequest, ACTIONS.APPROVE_REQUEST, () => api.setRequestStatus(requestId, 'APPROVED'));
-  if (record) {
+  yield fork(handleAPIRequest, api.approveCategoryAccessApi, requestId);
+  const {
+    payload: apiPayload = {},
+    type = ''
+  } = yield take([
+    ACTION_TYPES[ACTIONS.APPROVE_REQUEST][1],
+    ACTION_TYPES[ACTIONS.APPROVE_REQUEST][2]
+  ]);
+  if (type === ACTION_TYPES[ACTIONS.APPROVE_REQUEST][1]) {
+    const record = apiPayload.data?.data;
     toaster.create({
       title: 'Access approved',
-      description: `${record.studentName} now has access to ${record.categoryTitle}.`,
+      description: record ? `${record.studentName} now has access to ${record.categoryTitle}.` : 'Request approved.',
       type: 'success',
       duration: 4000,
       closable: true
@@ -253,11 +303,19 @@ function* approveRequestSaga({ payload: requestId }) {
 }
 
 function* rejectRequestSaga({ payload: requestId }) {
-  const record = yield call(runRequest, ACTIONS.REJECT_REQUEST, () => api.setRequestStatus(requestId, 'REJECTED'));
-  if (record) {
+  yield fork(handleAPIRequest, api.rejectCategoryAccessApi, requestId);
+  const {
+    payload: apiPayload = {},
+    type = ''
+  } = yield take([
+    ACTION_TYPES[ACTIONS.REJECT_REQUEST][1],
+    ACTION_TYPES[ACTIONS.REJECT_REQUEST][2]
+  ]);
+  if (type === ACTION_TYPES[ACTIONS.REJECT_REQUEST][1]) {
+    const record = apiPayload.data?.data;
     toaster.create({
       title: 'Access rejected',
-      description: `${record.studentName}'s request for ${record.categoryTitle} was rejected.`,
+      description: record ? `${record.studentName}'s request for ${record.categoryTitle} was rejected.` : 'Request rejected.',
       type: 'info',
       duration: 4000,
       closable: true
@@ -273,11 +331,89 @@ function* fetchTestCategoriesSaga() {
   ]);
 }
 
+function* fetchAdminStudentsSaga({ payload }) {
+  yield fork(handleAPIRequest, api.getAdminStudentsApi, payload);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENTS][1],
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENTS][2]
+  ]);
+}
+
+function* fetchTestCategoryDetailSaga({ payload: categoryId }) {
+  yield fork(handleAPIRequest, api.getTestCategoryDetailApi, categoryId);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_TEST_CATEGORY_DETAIL][1],
+    ACTION_TYPES[ACTIONS.FETCH_TEST_CATEGORY_DETAIL][2]
+  ]);
+}
+
+function* requestCategoryAccessSaga({ payload: categoryId }) {
+  yield fork(handleAPIRequest, api.requestCategoryAccessApi, categoryId);
+  const { type } = yield take([
+    ACTION_TYPES[ACTIONS.REQUEST_CATEGORY_ACCESS][1],
+    ACTION_TYPES[ACTIONS.REQUEST_CATEGORY_ACCESS][2]
+  ]);
+  if (type === ACTION_TYPES[ACTIONS.REQUEST_CATEGORY_ACCESS][1]) {
+    toaster.create({
+      title: 'Request Submitted Successfully',
+      description: 'Our admin will verify your payment and approve access.',
+      type: 'success',
+      duration: 4500,
+      closable: true
+    });
+  }
+}
+
+function* blockStudentSaga({ payload: studentId }) {
+  yield fork(handleAPIRequest, api.blockStudentApi, studentId);
+  const { type } = yield take([
+    ACTION_TYPES[ACTIONS.BLOCK_STUDENT][1],
+    ACTION_TYPES[ACTIONS.BLOCK_STUDENT][2]
+  ]);
+  if (type === ACTION_TYPES[ACTIONS.BLOCK_STUDENT][1]) {
+    yield put(actions.setStudentBlocked({ id: studentId, blocked: true }));
+    toaster.create({
+      title: 'Student blocked',
+      description: 'The student can no longer log in.',
+      type: 'info',
+      duration: 3500,
+      closable: true
+    });
+  }
+}
+
+function* unblockStudentSaga({ payload: studentId }) {
+  yield fork(handleAPIRequest, api.unblockStudentApi, studentId);
+  const { type } = yield take([
+    ACTION_TYPES[ACTIONS.UNBLOCK_STUDENT][1],
+    ACTION_TYPES[ACTIONS.UNBLOCK_STUDENT][2]
+  ]);
+  if (type === ACTION_TYPES[ACTIONS.UNBLOCK_STUDENT][1]) {
+    yield put(actions.setStudentBlocked({ id: studentId, blocked: false }));
+    toaster.create({
+      title: 'Student unblocked',
+      description: 'The student can log in again.',
+      type: 'success',
+      duration: 3500,
+      closable: true
+    });
+  }
+}
+
+function* fetchAdminEnquiriesSaga() {
+  yield fork(handleAPIRequest, api.getAdminEnquiriesApi);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_ENQUIRIES][1],
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_ENQUIRIES][2]
+  ]);
+}
+
 export default function* pagesSaga() {
   yield all([
     takeLatest(ACTIONS.REGISTER, registerSaga),
     takeLatest(ACTIONS.LOGIN, loginSaga),
     takeLatest(ACTIONS.FORGOT_PASSWORD, forgotPasswordSaga),
+    takeLatest(ACTIONS.VERIFY_OTP, verifyOtpSaga),
     takeLatest(ACTIONS.RESET_PASSWORD, resetPasswordSaga),
 
     takeLatest(ACTIONS.FETCH_ACCESS_STATUS, fetchAccessStatusSaga),
@@ -285,6 +421,12 @@ export default function* pagesSaga() {
     takeLatest(ACTIONS.FETCH_ADMIN_REQUESTS, fetchAdminRequestsSaga),
     takeLatest(ACTIONS.APPROVE_REQUEST, approveRequestSaga),
     takeLatest(ACTIONS.REJECT_REQUEST, rejectRequestSaga),
-    takeLatest(ACTIONS.FETCH_TEST_CATEGORIES, fetchTestCategoriesSaga)
+    takeLatest(ACTIONS.FETCH_TEST_CATEGORIES, fetchTestCategoriesSaga),
+    takeLatest(ACTIONS.FETCH_TEST_CATEGORY_DETAIL, fetchTestCategoryDetailSaga),
+    takeLatest(ACTIONS.REQUEST_CATEGORY_ACCESS, requestCategoryAccessSaga),
+    takeLatest(ACTIONS.FETCH_ADMIN_STUDENTS, fetchAdminStudentsSaga),
+    takeLatest(ACTIONS.BLOCK_STUDENT, blockStudentSaga),
+    takeLatest(ACTIONS.UNBLOCK_STUDENT, unblockStudentSaga),
+    takeLatest(ACTIONS.FETCH_ADMIN_ENQUIRIES, fetchAdminEnquiriesSaga)
   ]);
 }

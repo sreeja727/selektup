@@ -1,15 +1,28 @@
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { Link as RouterLink } from 'react-router-dom'
-import { Box, Container, SimpleGrid, Stack, HStack, Text, Heading, Badge } from '@chakra-ui/react'
-import { FaArrowRight, FaClipboardList } from 'react-icons/fa'
-import { TEST_CATEGORIES } from '../../data/testSeries'
+import { Box, Container, SimpleGrid, Stack, HStack, Text, Heading } from '@chakra-ui/react'
+import { FaArrowRight, FaClipboardList, FaBookOpen } from 'react-icons/fa'
+import { fetchTestCategories } from '../actions'
+import { getTestCategories, getTestCategoriesLoading } from '../selectors'
+import Loader from '../../components/Loader'
+
+// Real categories carry no color/icon of their own — rotate a small fixed
+// palette by id so cards stay visually distinct without backend support for it.
+const PALETTE = [
+  { bg: 'rgba(233,30,140,0.10)', color: '#E91E8C' },
+  { bg: 'rgba(3,155,229,0.10)', color: '#039BE5' },
+  { bg: 'rgba(103,58,183,0.10)', color: '#673AB7' },
+  { bg: 'rgba(0,137,123,0.10)', color: '#00897B' },
+]
 
 function CategoryCard({ category }) {
-  const available = category.available !== false
+  const { bg, color } = PALETTE[category.id % PALETTE.length]
 
   return (
     <Box
-      as={available ? RouterLink : 'div'}
-      to={available ? `/test-series/${category.slug}` : undefined}
+      as={RouterLink}
+      to={`/test-series/${category.id}`}
       bg="white"
       borderRadius="2xl"
       p={7}
@@ -18,44 +31,24 @@ function CategoryCard({ category }) {
       transition="all 0.25s"
       display="block"
       position="relative"
-      opacity={available ? 1 : 0.6}
-      cursor={available ? 'pointer' : 'not-allowed'}
-      _hover={available ? {
+      _hover={{
         textDecoration: 'none',
         transform: 'translateY(-4px)',
         boxShadow: '0 14px 40px rgba(0,0,0,0.10)',
-        borderColor: category.color,
-      } : undefined}
+        borderColor: color,
+      }}
     >
-      {!available && (
-        <Badge
-          position="absolute"
-          top={4}
-          right={4}
-          colorPalette="gray"
-          bg="gray.100"
-          color="gray.600"
-          fontWeight={700}
-          fontSize="2xs"
-          px={2.5}
-          py={1}
-          borderRadius="full"
-        >
-          Coming Soon
-        </Badge>
-      )}
-
       <Stack gap={4}>
         <Box
           w={14} h={14}
           borderRadius="xl"
-          bg={category.bg}
+          bg={bg}
           display="flex"
           alignItems="center"
           justifyContent="center"
-          color={category.color}
+          color={color}
         >
-          <category.Icon size={26} />
+          <FaBookOpen size={26} />
         </Box>
 
         <Stack gap={1}>
@@ -70,45 +63,38 @@ function CategoryCard({ category }) {
         <HStack justify="space-between" pt={2} borderTop="1px solid" borderColor="gray.100">
           <HStack gap={2} color="gray.500">
             <FaClipboardList size={13} />
-            <Text fontSize="xs" fontWeight={600}>{category.tests.length} Tests</Text>
+            <Text fontSize="xs" fontWeight={600}>{category.totalTests} Tests</Text>
           </HStack>
           <Text fontSize="sm" fontWeight={800} color="#0C1222">₹{category.price}</Text>
         </HStack>
 
-        {available ? (
-          <HStack
-            justify="center"
-            gap={2}
-            bg={category.bg}
-            color={category.color}
-            borderRadius="lg"
-            py={2}
-            fontSize="xs"
-            fontWeight={700}
-          >
-            <Text>View Category</Text>
-            <FaArrowRight size={11} />
-          </HStack>
-        ) : (
-          <HStack
-            justify="center"
-            gap={2}
-            bg="gray.100"
-            color="gray.500"
-            borderRadius="lg"
-            py={2}
-            fontSize="xs"
-            fontWeight={700}
-          >
-            <Text>Coming Soon</Text>
-          </HStack>
-        )}
+        <HStack
+          justify="center"
+          gap={2}
+          bg={bg}
+          color={color}
+          borderRadius="lg"
+          py={2}
+          fontSize="xs"
+          fontWeight={700}
+        >
+          <Text>View Category</Text>
+          <FaArrowRight size={11} />
+        </HStack>
       </Stack>
     </Box>
   )
 }
 
 export default function TestSeriesPage() {
+  const dispatch = useDispatch()
+  const categories = useSelector(getTestCategories)
+  const loading = useSelector(getTestCategoriesLoading)
+
+  useEffect(() => {
+    dispatch(fetchTestCategories())
+  }, [dispatch])
+
   return (
     <Box>
       <Box
@@ -148,7 +134,7 @@ export default function TestSeriesPage() {
               </Box>
             </Text>
             <Text fontSize={{ base: 'md', md: 'lg' }} color="rgba(255,255,255,0.65)" maxW="560px" lineHeight="tall">
-              Choose a category to access 10 mock tests designed to match your exam pattern.
+              Choose a category to access mock tests designed to match your exam pattern.
             </Text>
           </Stack>
         </Container>
@@ -156,11 +142,17 @@ export default function TestSeriesPage() {
 
       <Box bg="#F8F9FA" py={{ base: 14, md: 20 }}>
         <Container maxW="7xl">
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={7}>
-            {TEST_CATEGORIES.map((category) => (
-              <CategoryCard key={category.slug} category={category} />
-            ))}
-          </SimpleGrid>
+          {loading && categories.length === 0 ? (
+            <Loader />
+          ) : categories.length === 0 ? (
+            <Text textAlign="center" color="gray.500">No test categories available yet.</Text>
+          ) : (
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} gap={7}>
+              {categories.map((category) => (
+                <CategoryCard key={category.id} category={category} />
+              ))}
+            </SimpleGrid>
+          )}
         </Container>
       </Box>
     </Box>

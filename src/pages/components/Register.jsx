@@ -1,32 +1,26 @@
 import { useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Box, Button, Input, Text, VStack } from '@chakra-ui/react'
 import { FaUser, FaPhoneAlt, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa'
 import { register } from '../actions'
-import { registerUser } from '../../utils/auth'
-import { toaster } from '../../components/ui/toaster'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MOBILE_RE = /^\d{10}$/
 const NAME_RE = /^[A-Za-z\s]{2,}$/
 
 export default function Register() {
-  const navigate = useNavigate()
   const dispatch = useDispatch()
   const [fullName, setFullName] = useState('')
   const [mobile, setMobile] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
   const [fieldErrors, setFieldErrors] = useState({})
-  const [error, setError] = useState('')
   const [emailReadOnly, setEmailReadOnly] = useState(true)
   const [passwordReadOnly, setPasswordReadOnly] = useState(true)
 
-  const validateField = (name, value, allValues = {}) => {
+  const validateField = (name, value) => {
     switch (name) {
       case 'fullName':
         if (!value.trim()) return 'Full name is required'
@@ -44,12 +38,6 @@ export default function Register() {
         if (!value) return 'Password is required'
         if (value.length < 6) return 'Password must be at least 6 characters'
         return ''
-      case 'confirmPassword': {
-        if (!value) return 'Please confirm your password'
-        const pwd = allValues.password ?? password
-        if (value !== pwd) return 'Passwords do not match'
-        return ''
-      }
       default:
         return ''
     }
@@ -61,12 +49,10 @@ export default function Register() {
     const mobileError = validateField('mobile', mobile)
     const emailError = validateField('email', email)
     const passwordError = validateField('password', password)
-    const confirmPasswordError = validateField('confirmPassword', confirmPassword, { password })
     if (fullNameError) errors.fullName = fullNameError
     if (mobileError) errors.mobile = mobileError
     if (emailError) errors.email = emailError
     if (passwordError) errors.password = passwordError
-    if (confirmPasswordError) errors.confirmPassword = confirmPasswordError
 
     return errors
   }
@@ -78,21 +64,7 @@ export default function Register() {
       return
     }
     setFieldErrors({})
-    setError('')
-
-    const localResult = registerUser({ name: fullName, identifier: mobile, email, password })
-    if (!localResult.success) {
-      setError(localResult.error)
-      toaster.create({ title: 'Registration failed', description: localResult.error, type: 'error', duration: 4000, closable: true })
-      return
-    }
-
-    setConfirmPassword('')
-    localStorage.setItem('selektup_has_registered', 'true')
-    // Best-effort: also let the backend know, if one is reachable.
     dispatch(register({ fullName, email, mobile, password }))
-    toaster.create({ title: 'Account created', description: 'Please log in to continue.', type: 'success', duration: 4000, closable: true })
-    navigate('/login')
   }
 
   return (
@@ -126,21 +98,6 @@ export default function Register() {
           <Text fontWeight={800} fontSize="xl" color="#0C1222">Create Your Account</Text>
           <Text fontSize="sm" color="gray.500">Join thousands of students on SeleKtUp</Text>
         </VStack>
-
-        {/* Error alert */}
-        {error && (
-          <Box
-            bg="red.50"
-            border="1px solid"
-            borderColor="red.200"
-            borderRadius="lg"
-            px={4}
-            py={3}
-            mb={5}
-          >
-            <Text color="red.600" fontSize="sm">{error}</Text>
-          </Box>
-        )}
 
         <VStack gap={5}>
           {/* Full Name */}
@@ -283,47 +240,6 @@ export default function Register() {
             </Box>
             {fieldErrors.password && (
               <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.password}</Text>
-            )}
-          </Box>
-
-          {/* Confirm Password */}
-          <Box w="100%">
-            <Text mb={2} fontSize="sm" fontWeight={600} color="#0C1222">Confirm Password</Text>
-            <Box position="relative">
-              <Box
-                position="absolute" left={3} top="50%" transform="translateY(-50%)"
-                color="gray.400" zIndex={1} pointerEvents="none"
-              >
-                <FaLock size={14} />
-              </Box>
-              <Input
-                pl="36px"
-                pr="40px"
-                type={showConfirm ? 'text' : 'password'}
-                placeholder="Re-enter your password"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value)
-                  setFieldErrors((f) => ({ ...f, confirmPassword: '' }))
-                }}
-                onBlur={(e) => setFieldErrors((f) => ({ ...f, confirmPassword: validateField('confirmPassword', e.target.value, { password }) }))}
-                borderColor={fieldErrors.confirmPassword ? 'red.400' : 'gray.200'}
-                borderWidth="2px"
-                borderRadius="lg"
-                _focus={{ borderColor: '#039BE5', boxShadow: '0 0 0 3px rgba(3,155,229,0.12)' }}
-                _hover={{ borderColor: '#039BE5' }}
-              />
-              <Box
-                position="absolute" right={3} top="50%" transform="translateY(-50%)"
-                color="gray.400" cursor="pointer" zIndex={1}
-                onClick={() => setShowConfirm((v) => !v)}
-                _hover={{ color: '#039BE5' }}
-              >
-                {showConfirm ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
-              </Box>
-            </Box>
-            {fieldErrors.confirmPassword && (
-              <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.confirmPassword}</Text>
             )}
           </Box>
 

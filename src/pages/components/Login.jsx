@@ -1,20 +1,15 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Box, Button, HStack, Input, Text, VStack } from '@chakra-ui/react'
 import { FaPhoneAlt, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa'
 import { login } from '../actions'
 import { getLoginData } from '../selectors'
 import { useDispatch, useSelector } from 'react-redux'
-import { loginAdmin } from '../../utils/adminAuth'
-import { loginUser } from '../../utils/auth'
-import { toaster } from '../../components/ui/toaster'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 const MOBILE_RE = /^\d{10}$/
 
 export default function Login() {
     const dispatch = useDispatch()
-    const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const redirect = searchParams.get('redirect')
     const loginData = useSelector(getLoginData)
@@ -66,23 +61,7 @@ export default function Login() {
     setFieldErrors({})
     setError('')
 
-    // Always hit the backend login API.
-    dispatch(login({  mobile, password }))
-
-    const adminResult = loginAdmin({ email: mobile, password })
-    if (adminResult.success) {
-      toaster.create({ title: 'Login successful', description: 'Welcome back, Admin!', type: 'success', duration: 4000, closable: true })
-      navigate('/admin/dashboard', { replace: true })
-      return
-    }
-
-    const localResult = loginUser({ identifier: mobile, password })
-    if (localResult.success) {
-      toaster.create({ title: 'Login successful', description: 'Welcome back!', type: 'success', duration: 4000, closable: true })
-      navigate(redirect || '/test-series', { replace: true })
-      return
-    }
-
+    dispatch(login({ mobile, password, redirect }))
   }
 
   return (

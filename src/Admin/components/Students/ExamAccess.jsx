@@ -61,7 +61,7 @@ export default function ExamAccess() {
             </Table.Header>
             <Table.Body>
               {paginated.map((r) => (
-                <Table.Row key={r.id} _hover={{ bg: "gray.50" }}>
+                <Table.Row key={r.requestId} _hover={{ bg: "gray.50" }}>
                   <Table.Cell fontWeight={600} color="#0C1222">
                     <Text fontSize="sm">{r.studentName}</Text>
                   </Table.Cell>
@@ -69,7 +69,7 @@ export default function ExamAccess() {
                   <Table.Cell color="gray.600">{r.studentMobile}</Table.Cell>
                   <Table.Cell color="gray.600">{r.categoryTitle}</Table.Cell>
                   <Table.Cell color="gray.600">
-                    {new Date(r.requestedDate).toLocaleDateString()}
+                    {new Date(r.requestedAt).toLocaleDateString()}
                   </Table.Cell>
                   <Table.Cell>
                     <Badge colorPalette={STATUS_COLOR[r.status]} rounded="md" px={2}>{r.status}</Badge>
@@ -81,7 +81,7 @@ export default function ExamAccess() {
                         rounded="full"
                         fontWeight={700}
                         disabled={actionLoading || r.status === ACCESS_STATUS.APPROVED}
-                        onClick={() => dispatch(approveRequest(r.id))}
+                        onClick={() => dispatch(approveRequest(r.requestId))}
                         bg={r.status === ACCESS_STATUS.APPROVED ? "green.500" : "gray.100"}
                         color={r.status === ACCESS_STATUS.APPROVED ? "white" : "green.700"}
                         _hover={{ bg: "green.500", color: "white" }}
@@ -93,7 +93,7 @@ export default function ExamAccess() {
                         rounded="full"
                         fontWeight={700}
                         disabled={actionLoading || r.status === ACCESS_STATUS.REJECTED || r.status === ACCESS_STATUS.APPROVED}
-                        onClick={() => dispatch(rejectRequest(r.id))}
+                        onClick={() => dispatch(rejectRequest(r.requestId))}
                         bg={r.status === ACCESS_STATUS.REJECTED ? "red.500" : "gray.100"}
                         color={r.status === ACCESS_STATUS.REJECTED ? "white" : "red.700"}
                         _hover={{ bg: "red.500", color: "white" }}

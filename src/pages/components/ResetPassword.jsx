@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { Box, Button, Input, Text, VStack } from '@chakra-ui/react'
 import { FaLock, FaEye, FaEyeSlash, FaExclamationTriangle } from 'react-icons/fa'
@@ -9,8 +9,8 @@ import { getApiLoading } from '../selectors'
 export default function ResetPassword() {
   const dispatch = useDispatch()
   const loading = useSelector(getApiLoading)
-  const [searchParams] = useSearchParams()
-  const token = searchParams.get('token')
+  const location = useLocation()
+  const { mobile, otp } = location.state || {}
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -34,7 +34,7 @@ export default function ResetPassword() {
       return
     }
     setFieldErrors({})
-    dispatch(resetPassword({ token, password }))
+    dispatch(resetPassword({ mobile, otp, password }))
   }
 
   return (
@@ -62,14 +62,14 @@ export default function ResetPassword() {
           <span style={{ color: '#E91E8C' }}>Up</span>
         </Text>
 
-        {!token ? (
+        {!mobile || !otp ? (
           <VStack gap={4} textAlign="center">
             <Box color="red.400" fontSize="48px">
               <FaExclamationTriangle />
             </Box>
-            <Text fontWeight={800} fontSize="xl" color="#0C1222">Invalid Reset Link</Text>
+            <Text fontWeight={800} fontSize="xl" color="#0C1222">OTP Verification Required</Text>
             <Text fontSize="sm" color="gray.500" maxW="320px">
-              This password reset link is missing or invalid. Please request a new one.
+              This page needs to be reached from the "Forgot Password" flow after verifying your OTP.
             </Text>
             <Button
               as={Link}
@@ -89,7 +89,7 @@ export default function ResetPassword() {
               }}
               transition="all 0.2s"
             >
-              Request New Link
+              Start Over
             </Button>
           </VStack>
         ) : (

@@ -1,53 +1,72 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Box, Button, Flex, Heading, Input, Table, Badge, Text } from "@chakra-ui/react";
 import { FaSearch } from "react-icons/fa";
-import { KeyRound } from "lucide-react";
 import {
-  students, examAccessRequests, passwordResetRequests, STATUS_COLOR,
+  examAccessRequests, STATUS_COLOR,
 } from "../../data/mockAdminData";
 import Breadcrumb from "../common/Breadcrumb";
 import Pagination from "../common/Pagination";
-import ResetPasswordDialog from "./ResetPasswordDialog";
 import { toaster } from "../../../components/ui/toaster";
+import { fetchAdminStudents } from "../../../pages/actions";
+import {
+  getAdminStudents, getAdminStudentsLoading, getAdminStudentsTotalPages, getAdminStudentsPageSize,
+} from "../../../pages/selectors";
 
 const FILTERS = ["All", "Active", "Blocked"];
 const PAGE_SIZE = 5;
+const STUDENTS_PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 400;
 
 export default function StudentsList() {
+  const dispatch = useDispatch();
+  const adminStudents = useSelector(getAdminStudents);
+  const studentsLoading = useSelector(getAdminStudentsLoading);
+  const adminStudentsTotalPages = useSelector(getAdminStudentsTotalPages);
+  const adminStudentsPageSize = useSelector(getAdminStudentsPageSize) || STUDENTS_PAGE_SIZE;
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [requests, setRequests] = useState(examAccessRequests);
-  const [pwRequests, setPwRequests] = useState(passwordResetRequests);
   const [requestsPage, setRequestsPage] = useState(1);
-  const [pwRequestsPage, setPwRequestsPage] = useState(1);
   const [studentsPage, setStudentsPage] = useState(1);
-  const [resetTarget, setResetTarget] = useState(null);
 
-  const filtered = useMemo(() => {
-    return students.filter((s) => {
-      const matchesFilter = filter === "All" || s.status === filter;
-      const matchesSearch =
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.email.toLowerCase().includes(search.toLowerCase()) ||
-        s.phone.toLowerCase().includes(search.toLowerCase());
-      return matchesFilter && matchesSearch;
-    });
-  }, [search, filter]);
+  // Debounce the search box so we don't hit the backend on every keystroke.
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+  }, [search]);
+
+  useEffect(() => {
+    dispatch(fetchAdminStudents({
+      search: debouncedSearch,
+      page: studentsPage - 1,
+      size: STUDENTS_PAGE_SIZE,
+    }));
+  }, [dispatch, debouncedSearch, studentsPage]);
+
+  // Normalize the backend's { id, fullName, mobile, email, lastLoginAt, joined, blocked }
+  // to the name/phone/lastLogin/status shape the filter below expects.
+  const students = useMemo(() => adminStudents.map((s) => ({
+    id: s.id,
+    name: s.fullName,
+    email: s.email,
+    phone: s.mobile,
+    lastLogin: s.lastLoginAt,
+    joined: s.joined,
+    status: s.blocked ? "Blocked" : "Active",
+  })), [adminStudents]);
+
+  // Search and pagination are server-side; only the status filter is applied
+  // client-side, within the current page returned by the backend.
+  const filtered = useMemo(() => (
+    students.filter((s) => filter === "All" || s.status === filter)
+  ), [students, filter]);
 
   const paginatedRequests = useMemo(() => {
     const start = (requestsPage - 1) * PAGE_SIZE;
     return requests.slice(start, start + PAGE_SIZE);
   }, [requests, requestsPage]);
-
-  const paginatedPwRequests = useMemo(() => {
-    const start = (pwRequestsPage - 1) * PAGE_SIZE;
-    return pwRequests.slice(start, start + PAGE_SIZE);
-  }, [pwRequests, pwRequestsPage]);
-
-  const paginatedStudents = useMemo(() => {
-    const start = (studentsPage - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, studentsPage]);
 
   const toggleAccess = (id) => {
     const target = requests.find((r) => r.id === id);
@@ -67,100 +86,12 @@ export default function StudentsList() {
     });
   };
 
-  const handleResolved = (target) => {
-    if (target?.__isPwRequest) {
-      setPwRequests((prev) =>
-        prev.map((r) => (r.id === target.id ? { ...r, status: "Resolved" } : r))
-      );
-      toaster.create({
-        title: "Password reset resolved",
-        description: `${target.name}'s reset request has been marked as resolved.`,
-        type: "success",
-        duration: 3500,
-        closable: true,
-      });
-    }
-  };
-
   return (
     <>
       <Breadcrumb items={[{ label: "Dashboard", to: "/admin/dashboard" }, { label: "Students" }]} />
 
       <Heading mb={1} color="#0C1222">Students</Heading>
       <Text color="gray.500" mb={8}>Manage exam access requests and view registered students</Text>
-
-      <Box
-        bg="white"
-        rounded="xl"
-        shadow="md"
-        p={6}
-        mb={8}
-        borderTop="4px solid"
-        borderColor="#039BE5"
-      >
-        <Heading size="md" color="#0C1222" mb={1}>Password Reset Requests</Heading>
-        <Text color="gray.500" fontSize="sm" mb={6}>
-          Students who clicked "Forgot Password" and asked support for a reset
-        </Text>
-
-        <Table.ScrollArea>
-          <Table.Root size="sm">
-            <Table.Header>
-              <Table.Row bg="gray.50">
-                <Table.ColumnHeader>Student</Table.ColumnHeader>
-                <Table.ColumnHeader>Contact</Table.ColumnHeader>
-                <Table.ColumnHeader>Requested</Table.ColumnHeader>
-                <Table.ColumnHeader>Status</Table.ColumnHeader>
-                <Table.ColumnHeader></Table.ColumnHeader>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {paginatedPwRequests.map((r) => (
-                <Table.Row key={r.id} _hover={{ bg: "gray.50" }}>
-                  <Table.Cell fontWeight={600} color="#0C1222">
-                    <Text fontSize="sm">{r.name}</Text>
-                  </Table.Cell>
-                  <Table.Cell color="gray.600">{r.contact}</Table.Cell>
-                  <Table.Cell color="gray.600">{r.requestedDate}</Table.Cell>
-                  <Table.Cell>
-                    <Badge colorPalette={STATUS_COLOR[r.status]} rounded="md" px={2}>{r.status}</Badge>
-                  </Table.Cell>
-                  <Table.Cell>
-                    {r.status !== "Resolved" && (
-                      <Box
-                        as="button"
-                        onClick={() => setResetTarget({ id: r.id, name: r.name, __isPwRequest: true })}
-                        display="flex"
-                        alignItems="center"
-                        gap={1}
-                        color="#039BE5"
-                        fontSize="sm"
-                        fontWeight={600}
-                        _hover={{ textDecoration: "underline" }}
-                      >
-                        <KeyRound size={14} />
-                        Reset &amp; Send
-                      </Box>
-                    )}
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-
-              {pwRequests.length === 0 && (
-                <Table.Row>
-                  <Table.Cell colSpan={5}>
-                    <Text textAlign="center" color="gray.400" py={8}>
-                      No password reset requests.
-                    </Text>
-                  </Table.Cell>
-                </Table.Row>
-              )}
-            </Table.Body>
-          </Table.Root>
-        </Table.ScrollArea>
-
-        <Pagination count={pwRequests.length} pageSize={PAGE_SIZE} page={pwRequestsPage} onPageChange={setPwRequestsPage} />
-      </Box>
 
       <Box
         bg="white"
@@ -306,43 +237,30 @@ export default function StudentsList() {
                 <Table.ColumnHeader>Last Login</Table.ColumnHeader>
                 <Table.ColumnHeader>Joined</Table.ColumnHeader>
                 <Table.ColumnHeader>Status</Table.ColumnHeader>
-                <Table.ColumnHeader></Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {paginatedStudents.map((s) => (
+              {filtered.map((s) => (
                 <Table.Row key={s.id} _hover={{ bg: "gray.50" }}>
                   <Table.Cell fontWeight={600} color="#0C1222">
                     <Text fontSize="sm">{s.name}</Text>
                   </Table.Cell>
                   <Table.Cell color="gray.600">{s.phone}</Table.Cell>
-                  <Table.Cell color="gray.600">{s.lastLogin}</Table.Cell>
-                  <Table.Cell color="gray.600">{s.joined}</Table.Cell>
-                  <Table.Cell>
-                    <Badge colorPalette={STATUS_COLOR[s.status]} rounded="md" px={2}>{s.status}</Badge>
+                  <Table.Cell color="gray.600">
+                    {s.lastLogin ? new Date(s.lastLogin).toLocaleString() : "—"}
+                  </Table.Cell>
+                  <Table.Cell color="gray.600">
+                    {s.joined ? new Date(s.joined).toLocaleDateString() : "—"}
                   </Table.Cell>
                   <Table.Cell>
-                    <Box
-                      as="button"
-                      onClick={() => setResetTarget(s)}
-                      display="flex"
-                      alignItems="center"
-                      gap={1}
-                      color="gray.500"
-                      fontSize="sm"
-                      fontWeight={600}
-                      _hover={{ color: "#039BE5" }}
-                    >
-                      <KeyRound size={14} />
-                      Reset Password
-                    </Box>
+                    <Badge colorPalette={STATUS_COLOR[s.status]} rounded="md" px={2}>{s.status}</Badge>
                   </Table.Cell>
                 </Table.Row>
               ))}
 
-              {filtered.length === 0 && (
+              {!studentsLoading && filtered.length === 0 && (
                 <Table.Row>
-                  <Table.Cell colSpan={6}>
+                  <Table.Cell colSpan={5}>
                     <Text textAlign="center" color="gray.400" py={8}>
                       No students found.
                     </Text>
@@ -353,15 +271,13 @@ export default function StudentsList() {
           </Table.Root>
         </Table.ScrollArea>
 
-        <Pagination count={filtered.length} pageSize={PAGE_SIZE} page={studentsPage} onPageChange={setStudentsPage} />
+        <Pagination
+          count={adminStudentsTotalPages * adminStudentsPageSize}
+          pageSize={adminStudentsPageSize}
+          page={studentsPage}
+          onPageChange={setStudentsPage}
+        />
       </Box>
-
-      <ResetPasswordDialog
-        student={resetTarget}
-        open={!!resetTarget}
-        onClose={() => setResetTarget(null)}
-        onResolved={handleResolved}
-      />
     </>
   );
 }
