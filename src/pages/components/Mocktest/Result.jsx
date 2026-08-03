@@ -7,7 +7,8 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useNavigate, Navigate } from "react-router-dom";
 import {
   FaTrophy,
   FaSadTear,
@@ -19,6 +20,7 @@ import {
   FaExclamationTriangle,
   FaClipboardCheck,
 } from "react-icons/fa";
+import { getTestAttempt } from "../../selectors";
 
 function StatTile({ tile }) {
   return (
@@ -36,20 +38,24 @@ function StatTile({ tile }) {
 
 export default function Result() {
   const navigate = useNavigate();
+  const attempt = useSelector(getTestAttempt);
+
+  if (!attempt) return <Navigate to="/test-series" replace />;
 
   const result = {
-    totalQuestions: 100,
-    attempted: 90,
-    correct: 72,
-    wrong: 18,
-    skipped: 10,
-    negativeMarks: 12,
-    finalScore: 60,
-    cutoff: 35,
+    totalQuestions: attempt.totalQuestions,
+    attempted: attempt.correct + attempt.wrong,
+    correct: attempt.correct,
+    wrong: attempt.wrong,
+    skipped: attempt.unanswered,
+    negativeMarks: attempt.penalty,
+    finalScore: attempt.score,
+    totalMarks: attempt.totalMarks,
+    cutoff: attempt.cutOffMarks,
   };
 
   const pass = result.finalScore >= result.cutoff;
-  const scorePercent = Math.round((result.finalScore / result.totalQuestions) * 100);
+  const scorePercent = result.totalMarks > 0 ? Math.round((result.finalScore / result.totalMarks) * 100) : 0;
 
   return (
     <Box bg="#F8F9FA" minH="100vh" py={{ base: 10, md: 14 }}>
@@ -92,7 +98,7 @@ export default function Result() {
               </Text>
               <Heading color="white" fontWeight={900} fontSize="4xl">
                 {result.finalScore}
-                <Text as="span" fontSize="xl" color="gray.400" fontWeight={600}> / {result.totalQuestions}</Text>
+                <Text as="span" fontSize="xl" color="gray.400" fontWeight={600}> / {result.totalMarks}</Text>
               </Heading>
               <Box mt={4} bg="whiteAlpha.200" borderRadius="full" h="8px" overflow="hidden">
                 <Box

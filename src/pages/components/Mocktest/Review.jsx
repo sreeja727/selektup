@@ -8,39 +8,20 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { useState } from "react";
+import { useSelector } from "react-redux";
+import { Navigate } from "react-router-dom";
 import { FaArrowLeft, FaArrowRight, FaCheckCircle, FaTimesCircle, FaLightbulb } from "react-icons/fa";
+import { getTestAttempt } from "../../selectors";
 
 export default function Review() {
-  const questions = [
-    {
-      id: 1,
-      question: "What is the capital of India?",
-      options: ["Delhi", "Mumbai", "Chennai", "Kolkata"],
-      selected: "Mumbai",
-      correct: "Delhi",
-      explanation:
-        "Delhi is the capital city of India.",
-    },
-    {
-      id: 2,
-      question: "Who is known as the Father of the Nation?",
-      options: [
-        "Jawaharlal Nehru",
-        "Mahatma Gandhi",
-        "Subhash Chandra Bose",
-        "Dr. B.R. Ambedkar",
-      ],
-      selected: "Mahatma Gandhi",
-      correct: "Mahatma Gandhi",
-      explanation:
-        "Mahatma Gandhi is known as the Father of the Nation.",
-    },
-  ];
-
+  const attempt = useSelector(getTestAttempt);
   const [current, setCurrent] = useState(0);
 
+  if (!attempt) return <Navigate to="/test-series" replace />;
+
+  const questions = attempt.questions;
   const q = questions[current];
-  const isCorrect = q.selected === q.correct;
+  const isCorrect = q.selected === q.correctAnswer;
 
   return (
     <Box bg="#F8F9FA" minH="100vh" py={{ base: 10, md: 14 }}>
@@ -94,7 +75,7 @@ export default function Review() {
 
           <Stack align="stretch" gap={3}>
             {q.options.map((option) => {
-              const isCorrectOption = option === q.correct;
+              const isCorrectOption = option === q.correctAnswer;
               const isSelectedOption = option === q.selected;
               return (
                 <HStack
@@ -129,14 +110,14 @@ export default function Review() {
           <Stack gap={3} mt={6}>
             <HStack fontSize="sm">
               <Text fontWeight={700} color="#0C1222">Your Answer:</Text>
-              <Text fontWeight={600} color={isCorrect ? "green.500" : "red.500"}>
-                {q.selected}
+              <Text fontWeight={600} color={q.selected ? (isCorrect ? "green.500" : "red.500") : "gray.500"}>
+                {q.selected || "Not Answered"}
               </Text>
             </HStack>
 
             <HStack fontSize="sm">
               <Text fontWeight={700} color="#0C1222">Correct Answer:</Text>
-              <Text fontWeight={600} color="green.500">{q.correct}</Text>
+              <Text fontWeight={600} color="green.500">{q.correctAnswer}</Text>
             </HStack>
 
             <HStack

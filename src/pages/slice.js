@@ -29,6 +29,8 @@ const initialState = {
   testCategoriesLoading: false,
   testCategoryDetail: null,
   testCategoryDetailLoading: false,
+  testDetail: null,
+  testDetailLoading: false,
   requestCategoryAccessLoading: false,
   adminStudents: [],
   adminStudentsLoading: false,
@@ -36,7 +38,13 @@ const initialState = {
   adminStudentsPageSize: 10,
   adminStudentsCurrentPage: 0,
   adminEnquiries: [],
-  adminEnquiriesLoading: false
+  adminEnquiriesLoading: false,
+  contactSubmitting: false,
+  contactSuccessMessage: '',
+  contactError: '',
+
+  // mock test attempt (frontend-only until a submit-attempt backend exists)
+  testAttempt: null,
 };
 
 const pagesSlice = createSlice({
@@ -55,6 +63,13 @@ const pagesSlice = createSlice({
     },
     navigateTo: (state, { payload = {} }) => {
       state.navigation = payload;
+    },
+    setTestAttempt: (state, { payload = null }) => {
+      state.testAttempt = payload;
+    },
+    clearContactStatus: (state) => {
+      state.contactSuccessMessage = '';
+      state.contactError = '';
     },
     setStudentBlocked: (state, { payload = {} }) => {
       const { id, blocked } = payload;
@@ -199,6 +214,18 @@ const pagesSlice = createSlice({
         state.testCategoryDetailLoading = false;
       })
 
+      // Fetch test detail (GET /api/test-categories/{categoryId}/tests/{testId})
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_TEST_DETAIL][0], (state) => {
+        state.testDetailLoading = true;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_TEST_DETAIL][1], (state, { payload = {} }) => {
+        state.testDetail = payload.data?.data || null;
+        state.testDetailLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_TEST_DETAIL][2], (state) => {
+        state.testDetailLoading = false;
+      })
+
       // Request category access (POST /api/test-categories/{id}/request-access)
       .addCase(ACTION_TYPES[ACTIONS.REQUEST_CATEGORY_ACCESS][0], (state) => {
         state.requestCategoryAccessLoading = true;
@@ -269,6 +296,22 @@ const pagesSlice = createSlice({
       })
       .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_ENQUIRIES][2], (state) => {
         state.adminEnquiriesLoading = false;
+      })
+
+      // Submit contact/enquiry form (POST /api/home/contact)
+      .addCase(ACTION_TYPES[ACTIONS.SUBMIT_CONTACT][0], (state) => {
+        state.contactSubmitting = true;
+        state.contactSuccessMessage = '';
+        state.contactError = '';
+      })
+      .addCase(ACTION_TYPES[ACTIONS.SUBMIT_CONTACT][1], (state, { payload = {} }) => {
+        state.contactSuccessMessage = payload.data?.message || "Thanks! We'll get back to you soon.";
+        state.contactSubmitting = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.SUBMIT_CONTACT][2], (state, { payload = {} }) => {
+        const errorData = payload.errorData || {};
+        state.contactError = errorData.message || errorData.errorMessage || 'Something went wrong. Please try again.';
+        state.contactSubmitting = false;
       });
   }
 });

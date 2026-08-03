@@ -11,6 +11,7 @@ import {
   FaChevronDown,
   FaUserCheck,
   FaIdCard,
+  FaChartBar,
 } from "react-icons/fa";
 
 const menu = [
@@ -32,6 +33,7 @@ const menu = [
       { name: "Questions", path: "/admin/questions", icon: FaQuestionCircle },
     ],
   },
+  { name: "Results", path: "/admin/results", icon: FaChartBar },
 ];
 
 function isGroupActive(item, pathname) {

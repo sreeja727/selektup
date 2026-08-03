@@ -11,6 +11,8 @@ import QuestionsEdit from "../components/Questions/QuestionsEdit";
 import QuestionsView from "../components/Questions/QuestionsView";
 import ExamAccess from "../components/Students/ExamAccess";
 import StudentDetails from "../components/Students/StudentDetails";
+import ResultsList from "../components/Results/ResultsList";
+import ResultDetails from "../components/Results/ResultDetails";
 
 export default function AdminRoutes() {
   return (
@@ -33,6 +35,9 @@ export default function AdminRoutes() {
         <Route path="students" element={<Navigate to="exam-access" replace />} />
         <Route path="students/exam-access" element={<ExamAccess />} />
         <Route path="students/details" element={<StudentDetails />} />
+
+        <Route path="results" element={<ResultsList />} />
+        <Route path="results/:id" element={<ResultDetails />} />
       </Route>
     </Routes>
   );

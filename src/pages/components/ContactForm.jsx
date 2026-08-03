@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import {
   Box,
   Button,
@@ -11,28 +12,54 @@ import {
   VStack,
 } from '@chakra-ui/react'
 import { toaster } from '../../components/ui/toaster'
-
-// TODO: update VITE_API_BASE_URL in .env to match your backend port (currently 8081)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081'
+import { submitContact } from '../actions'
+import { actions } from '../slice'
+import { getContactError, getContactSubmitting, getContactSuccessMessage } from '../selectors'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const EMPTY_FORM = { name: '', email: '', phone: '', district: '', message: '' }
 
 export default function ContactForm() {
+  const dispatch = useDispatch()
   const [form, setForm] = useState(EMPTY_FORM)
   const [fieldErrors, setFieldErrors] = useState({})
-  const [apiError, setApiError] = useState('')
-  const [successMsg, setSuccessMsg] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [handledSuccessMsg, setHandledSuccessMsg] = useState('')
+  const loading = useSelector(getContactSubmitting)
+  const successMsg = useSelector(getContactSuccessMessage)
+  const apiError = useSelector(getContactError)
+
+  // Reset the form the moment a new success message arrives — an "adjust
+  // state during render" sync rather than a setState-in-effect, per React's
+  // guidance for reacting to a value change without an extra render.
+  if (successMsg && successMsg !== handledSuccessMsg) {
+    setHandledSuccessMsg(successMsg)
+    setForm(EMPTY_FORM)
+  }
+
+  useEffect(() => {
+    // Clear any status left over from a previous visit to this page.
+    dispatch(actions.clearContactStatus())
+  }, [dispatch])
+
+  useEffect(() => {
+    if (successMsg) {
+      toaster.create({ title: 'Enquiry submitted', description: successMsg, type: 'success', duration: 4000, closable: true })
+    }
+  }, [successMsg])
+
+  useEffect(() => {
+    if (apiError) {
+      toaster.create({ title: 'Submission failed', description: apiError, type: 'error', duration: 4000, closable: true })
+    }
+  }, [apiError])
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm((f) => ({ ...f, [name]: value }))
     // Clear the inline error for this field as the user types
     if (fieldErrors[name]) setFieldErrors((fe) => ({ ...fe, [name]: '' }))
-    if (apiError) setApiError('')
-    if (successMsg) setSuccessMsg('')
+    if (apiError || successMsg) dispatch(actions.clearContactStatus())
   }
 
   const validate = () => {
@@ -46,47 +73,20 @@ export default function ContactForm() {
     return errors
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     const errors = validate()
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors)
       return
     }
     setFieldErrors({})
-    setApiError('')
-    setSuccessMsg('')
-    setLoading(true)
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/home/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name:     form.name.trim(),
-          email:    form.email.trim() || null,
-          phone:    form.phone.trim(),
-          district: form.district.trim(),
-          message:  form.message.trim(),
-        }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setForm(EMPTY_FORM)
-        const message = data.message || "Thanks! We'll get back to you soon."
-        setSuccessMsg(message)
-        toaster.create({ title: 'Enquiry submitted', description: message, type: 'success', duration: 4000, closable: true })
-      } else {
-        const message = data.message || 'Something went wrong. Please try again.'
-        setApiError(message)
-        toaster.create({ title: 'Submission failed', description: message, type: 'error', duration: 4000, closable: true })
-      }
-    } catch {
-      const message = 'Unable to connect to server. Please try again.'
-      setApiError(message)
-      toaster.create({ title: 'Submission failed', description: message, type: 'error', duration: 4000, closable: true })
-    } finally {
-      setLoading(false)
-    }
+    dispatch(submitContact({
+      name:     form.name.trim(),
+      email:    form.email.trim() || null,
+      phone:    form.phone.trim(),
+      district: form.district.trim(),
+      message:  form.message.trim(),
+    }))
   }
 
   return (

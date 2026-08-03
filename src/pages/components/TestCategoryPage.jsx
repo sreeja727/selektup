@@ -243,10 +243,12 @@ export default function TestCategoryPage() {
             <Stack gap={4}>
               <Heading fontSize="md" fontWeight={800} color="#0C1222">Mock Tests</Heading>
 
-              {/* Real per-test titles need the authed detail call; until that's
-                  loaded, show locked placeholder rows using the public totalTests
-                  count so the list still reads as "10 tests, locked" like before. */}
-              {detailMatches ? tests.map((test) => (
+              {/* Real per-test titles need the authed detail call, and the backend
+                  only returns the real tests[] once access is approved — until
+                  then (or while it's still loading), show locked placeholder rows
+                  using the public totalTests count so the list still reads as
+                  "10 tests, locked" instead of looking empty. */}
+              {detailMatches && tests.length > 0 ? tests.map((test) => (
                 <HStack
                   key={test.id}
                   justify="space-between"
@@ -322,7 +324,7 @@ export default function TestCategoryPage() {
                 </HStack>
               ))}
 
-              {detailMatches && tests.length === 0 && (
+              {(category.totalTests || 0) === 0 && (
                 <Text color="gray.500" fontSize="sm">No mock tests published in this category yet.</Text>
               )}
             </Stack>

@@ -1,0 +1,79 @@
+import { useParams } from "react-router-dom";
+import { Box, Flex, Heading, SimpleGrid, Stack, Text, Badge } from "@chakra-ui/react";
+import { FaCheckCircle, FaTimesCircle, FaMinusCircle, FaStar } from "react-icons/fa";
+import { testResults, STATUS_COLOR } from "../../data/mockAdminData";
+import Breadcrumb from "../common/Breadcrumb";
+import BackButton from "../common/BackButton";
+
+function StatTile({ tile }) {
+  return (
+    <Stack gap={2} align="center" textAlign="center" bg="gray.50" borderRadius="xl" p={5}>
+      <Box color={tile.color}><tile.Icon size={18} /></Box>
+      <Text fontSize="lg" fontWeight={800} color="#0C1222">{tile.value}</Text>
+      <Text fontSize="xs" color="gray.500" fontWeight={600} textTransform="uppercase" letterSpacing="0.06em">
+        {tile.label}
+      </Text>
+    </Stack>
+  );
+}
+
+export default function ResultDetails() {
+  const { id } = useParams();
+  const result = testResults.find((r) => String(r.id) === id);
+
+  if (!result) {
+    return (
+      <Box bg="white" p={8} borderRadius="xl" boxShadow="md">
+        <Text color="gray.500">Result not found.</Text>
+        <BackButton to="/admin/results" label="Back to Results" />
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <Breadcrumb
+        items={[
+          { label: "Dashboard", to: "/admin/dashboard" },
+          { label: "Results", to: "/admin/results" },
+          { label: result.studentName },
+        ]}
+      />
+      <BackButton to="/admin/results" label="Back to Results" />
+
+      <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="900px" borderTop="4px solid" borderColor="#E91E8C">
+        <Flex justify="space-between" align="flex-start" wrap="wrap" gap={4} mb={6}>
+          <Box>
+            <Heading size="lg" color="#0C1222" mb={1}>{result.studentName}</Heading>
+            <Text color="gray.500" fontSize="sm">{result.studentEmail}</Text>
+          </Box>
+          <Badge colorPalette={STATUS_COLOR[result.status]} rounded="md" px={3} py={1} fontSize="sm">
+            {result.status}
+          </Badge>
+        </Flex>
+
+        <Flex gap={8} wrap="wrap" mb={8}>
+          <Box>
+            <Text fontSize="xs" color="gray.400">Category</Text>
+            <Text fontWeight={600} color="#0C1222">{result.category}</Text>
+          </Box>
+          <Box>
+            <Text fontSize="xs" color="gray.400">Test</Text>
+            <Text fontWeight={600} color="#0C1222">{result.testName}</Text>
+          </Box>
+          <Box>
+            <Text fontSize="xs" color="gray.400">Submitted</Text>
+            <Text fontWeight={600} color="#0C1222">{result.submittedAt}</Text>
+          </Box>
+        </Flex>
+
+        <SimpleGrid columns={{ base: 2, md: 4 }} gap={4}>
+          <StatTile tile={{ Icon: FaStar, label: "Score", value: `${result.score} / ${result.totalMarks}`, color: "#E91E8C" }} />
+          <StatTile tile={{ Icon: FaCheckCircle, label: "Correct", value: result.correct, color: "#22C55E" }} />
+          <StatTile tile={{ Icon: FaTimesCircle, label: "Wrong", value: result.wrong, color: "#DC2626" }} />
+          <StatTile tile={{ Icon: FaMinusCircle, label: "Unanswered", value: result.unanswered, color: "gray.400" }} />
+        </SimpleGrid>
+      </Box>
+    </Box>
+  );
+}

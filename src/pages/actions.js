@@ -17,11 +17,13 @@ const ACTIONS = {
   REJECT_REQUEST: `${STATE_REDUCER_KEY}/REJECT_REQUEST`,
   FETCH_TEST_CATEGORIES: `${STATE_REDUCER_KEY}/FETCH_TEST_CATEGORIES`,
   FETCH_TEST_CATEGORY_DETAIL: `${STATE_REDUCER_KEY}/FETCH_TEST_CATEGORY_DETAIL`,
+  FETCH_TEST_DETAIL: `${STATE_REDUCER_KEY}/FETCH_TEST_DETAIL`,
   REQUEST_CATEGORY_ACCESS: `${STATE_REDUCER_KEY}/REQUEST_CATEGORY_ACCESS`,
   FETCH_ADMIN_STUDENTS: `${STATE_REDUCER_KEY}/FETCH_ADMIN_STUDENTS`,
   BLOCK_STUDENT: `${STATE_REDUCER_KEY}/BLOCK_STUDENT`,
   UNBLOCK_STUDENT: `${STATE_REDUCER_KEY}/UNBLOCK_STUDENT`,
-  FETCH_ADMIN_ENQUIRIES: `${STATE_REDUCER_KEY}/FETCH_ADMIN_ENQUIRIES`
+  FETCH_ADMIN_ENQUIRIES: `${STATE_REDUCER_KEY}/FETCH_ADMIN_ENQUIRIES`,
+  SUBMIT_CONTACT: `${STATE_REDUCER_KEY}/SUBMIT_CONTACT`
 };
 
 const ACTION_TYPES = getApiActionType(ACTIONS);
@@ -47,6 +49,9 @@ const fetchTestCategories = createAction(ACTIONS.FETCH_TEST_CATEGORIES);
 // payload: categoryId - fetches real detail + tests[] + accessStatus from
 // GET /api/test-categories/{id} (requires auth)
 const fetchTestCategoryDetail = createAction(ACTIONS.FETCH_TEST_CATEGORY_DETAIL);
+// payload: { categoryId, testId } - fetches real duration/marks/cutoff/negative
+// marking from GET /api/test-categories/{categoryId}/tests/{testId} (requires auth)
+const fetchTestDetail = createAction(ACTIONS.FETCH_TEST_DETAIL);
 // payload: categoryId - POST /api/test-categories/{id}/request-access
 const requestCategoryAccess = createAction(ACTIONS.REQUEST_CATEGORY_ACCESS);
 // payload: { search, page, size } (admin) - fetches a page from GET /api/admin/students/paginated
@@ -57,6 +62,8 @@ const blockStudent = createAction(ACTIONS.BLOCK_STUDENT);
 const unblockStudent = createAction(ACTIONS.UNBLOCK_STUDENT);
 // payload: none (admin) - fetches the live list from GET /api/admin/enquiries
 const fetchAdminEnquiries = createAction(ACTIONS.FETCH_ADMIN_ENQUIRIES);
+// payload: { name, email, phone, district, message } - POST /api/home/contact
+const submitContact = createAction(ACTIONS.SUBMIT_CONTACT);
 
 export {
   ACTIONS,
@@ -73,9 +80,11 @@ export {
   rejectRequest,
   fetchTestCategories,
   fetchTestCategoryDetail,
+  fetchTestDetail,
   requestCategoryAccess,
   fetchAdminStudents,
   blockStudent,
   unblockStudent,
-  fetchAdminEnquiries
+  fetchAdminEnquiries,
+  submitContact
 };

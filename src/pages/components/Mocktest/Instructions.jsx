@@ -23,10 +23,11 @@ import {
 } from "react-icons/fa";
 import { getTest } from "../../../data/testSeries";
 import { isLoggedIn } from "../../../utils/auth";
-import { fetchAccessStatus, fetchTestCategories, fetchTestCategoryDetail } from "../../actions";
+import { fetchAccessStatus, fetchTestCategories, fetchTestCategoryDetail, fetchTestDetail } from "../../actions";
 import {
   getRawStatusForCategory, getStatusLoading,
   getTestCategories, getTestCategoryDetail, getTestCategoryDetailLoading,
+  getTestDetail, getTestDetailLoading,
 } from "../../selectors";
 import { ACCESS_STATUS } from "../../constants";
 import Loader from "../../../components/Loader";
@@ -60,6 +61,8 @@ export default function Instructions() {
   const realCategories = useSelector(getTestCategories);
   const realDetail = useSelector(getTestCategoryDetail);
   const realDetailLoading = useSelector(getTestCategoryDetailLoading);
+  const realTestDetail = useSelector(getTestDetail);
+  const realTestDetailLoading = useSelector(getTestDetailLoading);
   const mockStatus = useSelector(getRawStatusForCategory(categorySlug));
   const mockStatusLoading = useSelector(getStatusLoading);
 
@@ -77,20 +80,25 @@ export default function Instructions() {
     if (!loggedIn || !categorySlug) return;
     if (isReal) {
       dispatch(fetchTestCategoryDetail(categorySlug));
+      dispatch(fetchTestDetail({ categoryId: categorySlug, testId: testSlug }));
     } else {
       dispatch(fetchAccessStatus(categorySlug));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categorySlug, loggedIn, isReal]);
+  }, [categorySlug, testSlug, loggedIn, isReal]);
 
   const realDetailMatches = realDetail && String(realDetail.id) === categorySlug;
   const realTest = realDetailMatches ? realDetail.tests?.find((t) => String(t.id) === testSlug) : null;
   const result = mockResult || (isReal && realTest ? { category: realCategory, test: realTest } : null);
 
+  const realTestDetailMatches = realTestDetail && String(realTestDetail.id) === testSlug;
+
   // undefined = haven't checked this category yet; distinct from a resolved
   // NOT_REQUESTED, so we don't flash-redirect before the fetch completes.
   const status = isReal ? (realDetailMatches ? realDetail.accessStatus : undefined) : mockStatus;
-  const statusLoading = isReal ? (realDetailLoading && !realDetailMatches) : mockStatusLoading;
+  const statusLoading = isReal
+    ? (realDetailLoading && !realDetailMatches) || (realTestDetailLoading && !realTestDetailMatches)
+    : mockStatusLoading;
 
   if (!result) return <Navigate to="/test-series" replace />;
 
@@ -108,16 +116,21 @@ export default function Instructions() {
 
   const { category, test } = result;
   const color = category.color || CATEGORY_COLOR;
-  const questionCount = test.questions ?? test.questionCount ?? 0;
-  const duration = test.duration ?? 120;
-  const marks = test.marks ?? questionCount;
+  const questionCount = isReal
+    ? (realTestDetailMatches ? realTestDetail.totalQuestions : (test.questionCount ?? 0))
+    : (test.questions ?? 0);
+  const duration = isReal && realTestDetailMatches ? realTestDetail.durationMinutes : (test.duration ?? 120);
+  const marks = isReal && realTestDetailMatches ? realTestDetail.totalMarks : (test.marks ?? questionCount);
+  const cutOffMarks = isReal && realTestDetailMatches ? realTestDetail.cutOffMarks : 35;
+  const negativeWrongCount = isReal && realTestDetailMatches ? realTestDetail.negativeMarkingWrongCount : 3;
+  const negativeDeduction = isReal && realTestDetailMatches ? realTestDetail.negativeMarkingDeduction : 2;
 
   const instructions = [
     "Read every question carefully before answering.",
     `The test contains ${questionCount} multiple-choice questions.`,
     `Duration of the test is ${duration} minutes.`,
     "Each question has only one correct answer.",
-    "Every 3 wrong answers will reduce 2 marks.",
+    `Every ${negativeWrongCount} wrong answers will reduce ${negativeDeduction} marks.`,
     "Do not refresh or close the browser during the exam.",
     "The test will be submitted automatically when the timer ends.",
     "You can navigate between questions anytime.",
@@ -164,7 +177,7 @@ export default function Instructions() {
               <InfoTile tile={{ Icon: FaClipboardList, label: "Questions", value: questionCount, color }} />
               <InfoTile tile={{ Icon: FaClock, label: "Duration", value: `${duration} min`, color }} />
               <InfoTile tile={{ Icon: FaStar, label: "Total Marks", value: marks, color }} />
-              <InfoTile tile={{ Icon: FaBullseye, label: "Cut Off", value: "35 Marks", color }} />
+              <InfoTile tile={{ Icon: FaBullseye, label: "Cut Off", value: `${cutOffMarks} Marks`, color }} />
             </SimpleGrid>
 
             <HStack
@@ -185,7 +198,7 @@ export default function Instructions() {
                   Negative Marking
                 </Text>
                 <Text fontSize="sm" color="#7A2020">
-                  Every <b>3 wrong answers</b> will reduce <b>2 marks</b>.
+                  Every <b>{negativeWrongCount} wrong answers</b> will reduce <b>{negativeDeduction} marks</b>.
                 </Text>
               </Stack>
             </HStack>

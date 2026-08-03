@@ -86,7 +86,10 @@ export const getTestCategories = flow(getPagesData, (state) => state.testCategor
 export const getTestCategoriesLoading = flow(getPagesData, (state) => state.testCategoriesLoading);
 export const getTestCategoryDetail = flow(getPagesData, (state) => state.testCategoryDetail);
 export const getTestCategoryDetailLoading = flow(getPagesData, (state) => state.testCategoryDetailLoading);
+export const getTestDetail = flow(getPagesData, (state) => state.testDetail);
+export const getTestDetailLoading = flow(getPagesData, (state) => state.testDetailLoading);
 export const getRequestCategoryAccessLoading = flow(getPagesData, (state) => state.requestCategoryAccessLoading);
+export const getTestAttempt = flow(getPagesData, (state) => state.testAttempt);
 export const getAdminStudents = flow(getPagesData, (state) => state.adminStudents);
 export const getAdminStudentsLoading = flow(getPagesData, (state) => state.adminStudentsLoading);
 export const getAdminStudentsTotalPages = flow(getPagesData, (state) => state.adminStudentsTotalPages);
@@ -94,3 +97,6 @@ export const getAdminStudentsPageSize = flow(getPagesData, (state) => state.admi
 export const getAdminStudentsCurrentPage = flow(getPagesData, (state) => state.adminStudentsCurrentPage);
 export const getAdminEnquiries = flow(getPagesData, (state) => state.adminEnquiries);
 export const getAdminEnquiriesLoading = flow(getPagesData, (state) => state.adminEnquiriesLoading);
+export const getContactSubmitting = flow(getPagesData, (state) => state.contactSubmitting);
+export const getContactSuccessMessage = flow(getPagesData, (state) => state.contactSuccessMessage);
+export const getContactError = flow(getPagesData, (state) => state.contactError);
