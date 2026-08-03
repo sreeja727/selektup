@@ -347,6 +347,14 @@ function* fetchTestCategoryDetailSaga({ payload: categoryId }) {
   ]);
 }
 
+function* fetchTestDetailSaga({ payload }) {
+  yield fork(handleAPIRequest, api.getTestDetailApi, payload);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_TEST_DETAIL][1],
+    ACTION_TYPES[ACTIONS.FETCH_TEST_DETAIL][2]
+  ]);
+}
+
 function* requestCategoryAccessSaga({ payload: categoryId }) {
   yield fork(handleAPIRequest, api.requestCategoryAccessApi, categoryId);
   const { type } = yield take([
@@ -408,6 +416,14 @@ function* fetchAdminEnquiriesSaga() {
   ]);
 }
 
+function* submitContactSaga({ payload }) {
+  yield fork(handleAPIRequest, api.submitContactApi, payload);
+  yield take([
+    ACTION_TYPES[ACTIONS.SUBMIT_CONTACT][1],
+    ACTION_TYPES[ACTIONS.SUBMIT_CONTACT][2]
+  ]);
+}
+
 export default function* pagesSaga() {
   yield all([
     takeLatest(ACTIONS.REGISTER, registerSaga),
@@ -423,10 +439,12 @@ export default function* pagesSaga() {
     takeLatest(ACTIONS.REJECT_REQUEST, rejectRequestSaga),
     takeLatest(ACTIONS.FETCH_TEST_CATEGORIES, fetchTestCategoriesSaga),
     takeLatest(ACTIONS.FETCH_TEST_CATEGORY_DETAIL, fetchTestCategoryDetailSaga),
+    takeLatest(ACTIONS.FETCH_TEST_DETAIL, fetchTestDetailSaga),
     takeLatest(ACTIONS.REQUEST_CATEGORY_ACCESS, requestCategoryAccessSaga),
     takeLatest(ACTIONS.FETCH_ADMIN_STUDENTS, fetchAdminStudentsSaga),
     takeLatest(ACTIONS.BLOCK_STUDENT, blockStudentSaga),
     takeLatest(ACTIONS.UNBLOCK_STUDENT, unblockStudentSaga),
-    takeLatest(ACTIONS.FETCH_ADMIN_ENQUIRIES, fetchAdminEnquiriesSaga)
+    takeLatest(ACTIONS.FETCH_ADMIN_ENQUIRIES, fetchAdminEnquiriesSaga),
+    takeLatest(ACTIONS.SUBMIT_CONTACT, submitContactSaga)
   ]);
 }

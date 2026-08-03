@@ -181,6 +181,18 @@ function getTestCategoryDetailApi(categoryId) {
   };
 }
 
+// Real Spring Boot backend (GET /api/test-categories/{categoryId}/tests/{testId}) —
+// per-test detail: duration, marks, cut-off, negative marking. Requires auth.
+function getTestDetailApi({ categoryId, testId }) {
+  return {
+    url: `${API_URL.TEST_CATEGORIES}/${categoryId}/tests/${testId}`,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_TEST_DETAIL]
+    }
+  };
+}
+
 // Real Spring Boot backend (POST /api/test-categories/{id}/request-access) —
 // the real counterpart to submitAccessRequest() above; returns no data body.
 function requestCategoryAccessApi(categoryId) {
@@ -240,6 +252,20 @@ function unblockStudentApi(id) {
   };
 }
 
+// Real Spring Boot backend (POST /api/home/contact) — the public contact/
+// enquiry form submission. Same request-descriptor shape as registerApi/
+// loginApi above.
+function submitContactApi(data) {
+  return {
+    url: API_URL.HOME_CONTACT,
+    method: REQUEST_METHOD.POST,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.SUBMIT_CONTACT],
+      data
+    }
+  };
+}
+
 // Real Spring Boot backend (GET /api/admin/enquiries) — same shape again.
 function getAdminEnquiriesApi() {
   return {
@@ -264,6 +290,7 @@ export {
   submitAccessRequest,
   getTestCategoriesApi,
   getTestCategoryDetailApi,
+  getTestDetailApi,
   requestCategoryAccessApi,
   getAdminCategoryAccessApi,
   approveCategoryAccessApi,
@@ -272,4 +299,5 @@ export {
   blockStudentApi,
   unblockStudentApi,
   getAdminEnquiriesApi,
+  submitContactApi,
 };

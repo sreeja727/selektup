@@ -10,5 +10,6 @@ export const API_URL={
     ADMIN_CATEGORY_ACCESS:'admin/category-access',
     ADMIN_STUDENTS:'admin/students',
     ADMIN_STUDENTS_PAGINATED:'admin/students/paginated',
-    ADMIN_ENQUIRIES:'admin/enquiries'
+    ADMIN_ENQUIRIES:'admin/enquiries',
+    HOME_CONTACT:'home/contact'
 }
