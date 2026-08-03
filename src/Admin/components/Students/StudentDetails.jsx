@@ -1,20 +1,40 @@
-import { useMemo, useState } from "react";
-import { Badge, Box, Flex, Heading, Input, Table, Text } from "@chakra-ui/react";
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Badge, Box, Button, Flex, Heading, Input, Table, Text } from "@chakra-ui/react";
 import { FaSearch } from "react-icons/fa";
-import { KeyRound } from "lucide-react";
-import { students, STATUS_COLOR } from "../../data/mockAdminData";
+import { STATUS_COLOR } from "../../data/mockAdminData";
 import Breadcrumb from "../common/Breadcrumb";
 import Pagination from "../common/Pagination";
-import ResetPasswordDialog from "./ResetPasswordDialog";
+import { blockStudent, fetchAdminStudents, unblockStudent } from "../../../pages/actions";
+import { getActionLoading, getAdminStudents, getAdminStudentsLoading } from "../../../pages/selectors";
 
 const FILTERS = ["All", "Active", "Blocked"];
 const PAGE_SIZE = 5;
 
 export default function StudentDetails() {
+  const dispatch = useDispatch();
+  const adminStudents = useSelector(getAdminStudents);
+  const studentsLoading = useSelector(getAdminStudentsLoading);
+  const actionLoading = useSelector(getActionLoading);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [page, setPage] = useState(1);
-  const [resetTarget, setResetTarget] = useState(null);
+
+  useEffect(() => {
+    dispatch(fetchAdminStudents());
+  }, [dispatch]);
+
+  // Normalize the backend's { id, fullName, mobile, email, lastLoginAt, joined, blocked }
+  // to the name/phone/lastLogin/status shape the search and filter below expect.
+  const students = useMemo(() => adminStudents.map((s) => ({
+    id: s.id,
+    name: s.fullName,
+    email: s.email,
+    phone: s.mobile,
+    lastLogin: s.lastLoginAt,
+    joined: s.joined,
+    status: s.blocked ? "Blocked" : "Active",
+  })), [adminStudents]);
 
   const filtered = useMemo(() => {
     return students.filter((s) => {
@@ -25,7 +45,7 @@ export default function StudentDetails() {
         s.phone.toLowerCase().includes(search.toLowerCase());
       return matchesFilter && matchesSearch;
     });
-  }, [search, filter]);
+  }, [students, search, filter]);
 
   const paginated = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
@@ -117,37 +137,42 @@ export default function StudentDetails() {
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {paginated.map((s) => (
-                <Table.Row key={s.id} _hover={{ bg: "gray.50" }}>
-                  <Table.Cell fontWeight={600} color="#0C1222">
-                    <Text fontSize="sm">{s.name}</Text>
-                  </Table.Cell>
-                  <Table.Cell color="gray.600">{s.phone}</Table.Cell>
-                  <Table.Cell color="gray.600">{s.lastLogin}</Table.Cell>
-                  <Table.Cell color="gray.600">{s.joined}</Table.Cell>
-                  <Table.Cell>
-                    <Badge colorPalette={STATUS_COLOR[s.status]} rounded="md" px={2}>{s.status}</Badge>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Box
-                      as="button"
-                      onClick={() => setResetTarget(s)}
-                      display="flex"
-                      alignItems="center"
-                      gap={1}
-                      color="gray.500"
-                      fontSize="sm"
-                      fontWeight={600}
-                      _hover={{ color: "#039BE5" }}
-                    >
-                      <KeyRound size={14} />
-                      Reset Password
-                    </Box>
-                  </Table.Cell>
-                </Table.Row>
-              ))}
+              {paginated.map((s) => {
+                const isBlocked = s.status === "Blocked";
+                return (
+                  <Table.Row key={s.id} _hover={{ bg: "gray.50" }}>
+                    <Table.Cell fontWeight={600} color="#0C1222">
+                      <Text fontSize="sm">{s.name}</Text>
+                    </Table.Cell>
+                    <Table.Cell color="gray.600">{s.phone}</Table.Cell>
+                    <Table.Cell color="gray.600">
+                      {s.lastLogin ? new Date(s.lastLogin).toLocaleString() : "—"}
+                    </Table.Cell>
+                    <Table.Cell color="gray.600">
+                      {s.joined ? new Date(s.joined).toLocaleDateString() : "—"}
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Badge colorPalette={STATUS_COLOR[s.status]} rounded="md" px={2}>{s.status}</Badge>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Button
+                        size="xs"
+                        rounded="full"
+                        fontWeight={700}
+                        disabled={actionLoading}
+                        onClick={() => dispatch(isBlocked ? unblockStudent(s.id) : blockStudent(s.id))}
+                        bg={isBlocked ? "gray.100" : "red.50"}
+                        color={isBlocked ? "green.700" : "red.700"}
+                        _hover={{ bg: isBlocked ? "green.500" : "red.500", color: "white" }}
+                      >
+                        {isBlocked ? "Unblock" : "Block"}
+                      </Button>
+                    </Table.Cell>
+                  </Table.Row>
+                );
+              })}
 
-              {filtered.length === 0 && (
+              {!studentsLoading && filtered.length === 0 && (
                 <Table.Row>
                   <Table.Cell colSpan={6}>
                     <Text textAlign="center" color="gray.400" py={8}>
@@ -162,13 +187,6 @@ export default function StudentDetails() {
 
         <Pagination count={filtered.length} pageSize={PAGE_SIZE} page={page} onPageChange={setPage} />
       </Box>
-
-      <ResetPasswordDialog
-        student={resetTarget}
-        open={!!resetTarget}
-        onClose={() => setResetTarget(null)}
-        onResolved={() => {}}
-      />
     </>
   );
 }

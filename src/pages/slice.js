@@ -26,7 +26,17 @@ const initialState = {
   adminRequestsLoading: false,
   actionLoading: false,
   testCategories: [],
-  testCategoriesLoading: false
+  testCategoriesLoading: false,
+  testCategoryDetail: null,
+  testCategoryDetailLoading: false,
+  requestCategoryAccessLoading: false,
+  adminStudents: [],
+  adminStudentsLoading: false,
+  adminStudentsTotalPages: 0,
+  adminStudentsPageSize: 10,
+  adminStudentsCurrentPage: 0,
+  adminEnquiries: [],
+  adminEnquiriesLoading: false
 };
 
 const pagesSlice = createSlice({
@@ -45,6 +55,13 @@ const pagesSlice = createSlice({
     },
     navigateTo: (state, { payload = {} }) => {
       state.navigation = payload;
+    },
+    setStudentBlocked: (state, { payload = {} }) => {
+      const { id, blocked } = payload;
+      const index = state.adminStudents.findIndex((s) => s.id === id);
+      if (index >= 0) {
+        state.adminStudents[index] = { ...state.adminStudents[index], blocked };
+      }
     }
   },
   extraReducers: (builder) => {
@@ -129,7 +146,7 @@ const pagesSlice = createSlice({
         state.adminRequestsLoading = true;
       })
       .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_REQUESTS][1], (state, { payload = {} }) => {
-        state.adminRequests = payload.data || [];
+        state.adminRequests = payload.data?.data || [];
         state.adminRequestsLoading = false;
       })
       .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_REQUESTS][2], (state) => {
@@ -141,7 +158,7 @@ const pagesSlice = createSlice({
         state.actionLoading = true;
       })
       .addCase(ACTION_TYPES[ACTIONS.APPROVE_REQUEST][1], (state, { payload = {} }) => {
-        applyAdminStatusUpdate(state, payload.data, ACCESS_STATUS.APPROVED);
+        applyAdminStatusUpdate(state, payload.data?.data);
         state.actionLoading = false;
       })
       .addCase(ACTION_TYPES[ACTIONS.APPROVE_REQUEST][2], (state) => {
@@ -151,7 +168,7 @@ const pagesSlice = createSlice({
         state.actionLoading = true;
       })
       .addCase(ACTION_TYPES[ACTIONS.REJECT_REQUEST][1], (state, { payload = {} }) => {
-        applyAdminStatusUpdate(state, payload.data, ACCESS_STATUS.REJECTED);
+        applyAdminStatusUpdate(state, payload.data?.data);
         state.actionLoading = false;
       })
       .addCase(ACTION_TYPES[ACTIONS.REJECT_REQUEST][2], (state) => {
@@ -168,15 +185,99 @@ const pagesSlice = createSlice({
       })
       .addCase(ACTION_TYPES[ACTIONS.FETCH_TEST_CATEGORIES][2], (state) => {
         state.testCategoriesLoading = false;
+      })
+
+      // Fetch test category detail (GET /api/test-categories/{id})
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_TEST_CATEGORY_DETAIL][0], (state) => {
+        state.testCategoryDetailLoading = true;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_TEST_CATEGORY_DETAIL][1], (state, { payload = {} }) => {
+        state.testCategoryDetail = payload.data?.data || null;
+        state.testCategoryDetailLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_TEST_CATEGORY_DETAIL][2], (state) => {
+        state.testCategoryDetailLoading = false;
+      })
+
+      // Request category access (POST /api/test-categories/{id}/request-access)
+      .addCase(ACTION_TYPES[ACTIONS.REQUEST_CATEGORY_ACCESS][0], (state) => {
+        state.requestCategoryAccessLoading = true;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.REQUEST_CATEGORY_ACCESS][1], (state) => {
+        // The endpoint returns no body, so reflect the pending state locally
+        // rather than waiting on a re-fetch of the detail endpoint.
+        if (state.testCategoryDetail) {
+          state.testCategoryDetail.accessStatus = ACCESS_STATUS.PENDING;
+        }
+        state.requestCategoryAccessLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.REQUEST_CATEGORY_ACCESS][2], (state) => {
+        state.requestCategoryAccessLoading = false;
+      })
+
+      // Fetch admin students (GET /api/admin/students/paginated)
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENTS][0], (state) => {
+        state.adminStudentsLoading = true;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENTS][1], (state, { payload = {} }) => {
+        const raw = payload.data?.data;
+        // Today the backend returns a flat array (no pagination metadata).
+        // If it later returns a Spring-style page ({ content, totalPages, ... }),
+        // that shape is picked up here without needing another change.
+        const {
+          content = [], totalPages = 0, pageSize = 10, currentPage = 0
+        } = Array.isArray(raw) ? { content: raw } : (raw || {});
+        state.adminStudents = content;
+        state.adminStudentsTotalPages = totalPages;
+        state.adminStudentsPageSize = pageSize;
+        state.adminStudentsCurrentPage = currentPage;
+        state.adminStudentsLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENTS][2], (state) => {
+        state.adminStudentsLoading = false;
+      })
+
+      // Block / unblock student (admin) — the actual adminStudents update
+      // happens via setStudentBlocked, dispatched from the saga once the
+      // POST resolves, since these endpoints return no student data back.
+      .addCase(ACTION_TYPES[ACTIONS.BLOCK_STUDENT][0], (state) => {
+        state.actionLoading = true;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.BLOCK_STUDENT][1], (state) => {
+        state.actionLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.BLOCK_STUDENT][2], (state) => {
+        state.actionLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.UNBLOCK_STUDENT][0], (state) => {
+        state.actionLoading = true;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.UNBLOCK_STUDENT][1], (state) => {
+        state.actionLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.UNBLOCK_STUDENT][2], (state) => {
+        state.actionLoading = false;
+      })
+
+      // Fetch admin enquiries (GET /api/admin/enquiries)
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_ENQUIRIES][0], (state) => {
+        state.adminEnquiriesLoading = true;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_ENQUIRIES][1], (state, { payload = {} }) => {
+        state.adminEnquiries = payload.data?.data || [];
+        state.adminEnquiriesLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_ENQUIRIES][2], (state) => {
+        state.adminEnquiriesLoading = false;
       });
   }
 });
 
-function applyAdminStatusUpdate(state, record, status) {
+function applyAdminStatusUpdate(state, record) {
   if (!record) return;
-  const index = _.findIndex(state.adminRequests, (r) => r.id === record.id);
+  const index = _.findIndex(state.adminRequests, (r) => r.requestId === record.requestId);
   if (index >= 0) {
-    state.adminRequests[index] = { ...state.adminRequests[index], status };
+    state.adminRequests[index] = { ...state.adminRequests[index], ...record };
   }
 }
 

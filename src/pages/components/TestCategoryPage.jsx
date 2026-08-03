@@ -1,16 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link as RouterLink, useParams, useNavigate, Navigate } from 'react-router-dom'
 import { Box, Container, Stack, HStack, Text, Heading, Button, SimpleGrid, Badge } from '@chakra-ui/react'
 import {
-  FaArrowLeft, FaClipboardList, FaClock, FaPlayCircle, FaLock, FaStar,
+  FaArrowLeft, FaClipboardList, FaBookOpen, FaLock, FaStar, FaPlayCircle,
   FaCheckCircle, FaHourglassHalf, FaTimesCircle, FaSyncAlt, FaEnvelope,
 } from 'react-icons/fa'
-import { getCategory } from '../../data/testSeries'
 import { isLoggedIn } from '../../utils/auth'
-import { fetchAccessStatus, requestAccess } from '../actions'
-import { getRequestLoading, getStatusForCategory, getStatusLoading } from '../selectors'
+import { fetchTestCategories, fetchTestCategoryDetail, requestCategoryAccess } from '../actions'
+import {
+  getTestCategories, getTestCategoriesLoading,
+  getTestCategoryDetail, getTestCategoryDetailLoading,
+  getRequestCategoryAccessLoading,
+} from '../selectors'
 import { ACCESS_STATUS } from '../constants'
+import Loader from '../../components/Loader'
+
+const CATEGORY_COLOR = '#E91E8C'
 
 function InfoChip({ tile }) {
   return (
@@ -22,7 +28,7 @@ function InfoChip({ tile }) {
   )
 }
 
-function AccessPanel({ category, status, justSubmitted, requestLoading, statusLoading, onRequest, onRefresh }) {
+function AccessPanel({ price, status, justSubmitted, requestLoading, detailLoading, onRequest, onRefresh }) {
   if (status === ACCESS_STATUS.APPROVED) {
     return (
       <HStack bg="rgba(34,197,94,0.08)" border="1px solid" borderColor="rgba(34,197,94,0.3)" borderRadius="xl" p={5} gap={3}>
@@ -49,11 +55,11 @@ function AccessPanel({ category, status, justSubmitted, requestLoading, statusLo
             : 'Your request is under verification. Please wait until the admin approves it.'}
         </Text>
         <HStack gap={3}>
-          <Button size="sm" variant="outline" onClick={onRefresh} loading={statusLoading}>
+          <Button size="sm" variant="outline" onClick={onRefresh} loading={detailLoading}>
             <FaSyncAlt size={12} /> Refresh Status
           </Button>
           {justSubmitted && (
-            <Button as={RouterLink} to="/test-series" size="sm" bg={category.color} color="white" _hover={{ opacity: 0.9 }}>
+            <Button as={RouterLink} to="/test-series" size="sm" bg={CATEGORY_COLOR} color="white" _hover={{ opacity: 0.9 }}>
               Back to Categories
             </Button>
           )}
@@ -74,7 +80,7 @@ function AccessPanel({ category, status, justSubmitted, requestLoading, statusLo
           <Button as="a" href="mailto:selektup@gmail.com" size="sm" variant="outline">
             <FaEnvelope size={12} /> Contact Admin
           </Button>
-          <Button size="sm" bg={category.color} color="white" _hover={{ opacity: 0.9 }} onClick={onRequest} loading={requestLoading}>
+          <Button size="sm" bg={CATEGORY_COLOR} color="white" _hover={{ opacity: 0.9 }} onClick={onRequest} loading={requestLoading}>
             Request Again
           </Button>
         </HStack>
@@ -82,7 +88,7 @@ function AccessPanel({ category, status, justSubmitted, requestLoading, statusLo
     )
   }
 
-  // NOT_REQUESTED
+  // NOT_REQUESTED (or not yet known)
   return (
     <Stack gap={4} bg="white" borderRadius="2xl" border="1px solid" borderColor="gray.100" boxShadow="0 2px 14px rgba(0,0,0,0.06)" p={{ base: 6, md: 8 }} align="center" textAlign="center">
       <Box color="gray.400"><FaLock size={28} /></Box>
@@ -90,8 +96,8 @@ function AccessPanel({ category, status, justSubmitted, requestLoading, statusLo
       <Text color="gray.600" fontSize="sm" maxW="480px">
         This category requires approval before attending mock tests.
       </Text>
-      <Text fontWeight={900} fontSize="2xl" color={category.color}>₹{category.price}</Text>
-      <Button size="lg" bg={category.color} color="white" fontWeight={700} borderRadius="xl" _hover={{ opacity: 0.9 }} onClick={onRequest} loading={requestLoading}>
+      <Text fontWeight={900} fontSize="2xl" color={CATEGORY_COLOR}>₹{price}</Text>
+      <Button size="lg" bg={CATEGORY_COLOR} color="white" fontWeight={700} borderRadius="xl" _hover={{ opacity: 0.9 }} onClick={onRequest} loading={requestLoading}>
         <FaLock size={12} /> Request Category Access
       </Button>
     </Stack>
@@ -99,45 +105,48 @@ function AccessPanel({ category, status, justSubmitted, requestLoading, statusLo
 }
 
 export default function TestCategoryPage() {
-  const { categorySlug } = useParams()
-  const category = getCategory(categorySlug)
-  const navigate = useNavigate()
+  const { categoryId } = useParams()
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const loggedIn = isLoggedIn()
 
-  const status = useSelector(getStatusForCategory(categorySlug))
-  const statusLoading = useSelector(getStatusLoading)
-  const requestLoading = useSelector(getRequestLoading)
+  const categories = useSelector(getTestCategories)
+  const categoriesLoading = useSelector(getTestCategoriesLoading)
+  const detail = useSelector(getTestCategoryDetail)
+  const detailLoading = useSelector(getTestCategoryDetailLoading)
+  const requestLoading = useSelector(getRequestCategoryAccessLoading)
   const [justSubmitted, setJustSubmitted] = useState(false)
 
   useEffect(() => {
-    if (loggedIn && categorySlug) {
-      dispatch(fetchAccessStatus(categorySlug))
+    dispatch(fetchTestCategories())
+  }, [dispatch])
+
+  useEffect(() => {
+    if (loggedIn && categoryId) {
+      dispatch(fetchTestCategoryDetail(categoryId))
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categorySlug, loggedIn])
+  }, [dispatch, categoryId, loggedIn])
 
-  if (!category || category.available === false) return <Navigate to="/test-series" replace />
+  const category = useMemo(
+    () => categories.find((c) => String(c.id) === categoryId),
+    [categories, categoryId]
+  )
 
+  const detailMatches = detail && String(detail.id) === categoryId
+  const status = detailMatches ? detail.accessStatus : undefined
+  const tests = detailMatches ? (detail.tests || []) : []
   const unlocked = status === ACCESS_STATUS.APPROVED
 
-  function goToTest(test) {
-    if (!loggedIn) {
-      navigate(`/login?redirect=/test-series/${category.slug}`)
-      return
-    }
-    if (unlocked) {
-      navigate(`/test-series/${category.slug}/${test.slug}`)
-    }
-  }
+  if (categoriesLoading && !category) return <Loader fullScreen />
+  if (!categoriesLoading && !category) return <Navigate to="/test-series" replace />
 
   function handleRequest() {
     setJustSubmitted(true)
-    dispatch(requestAccess({ categorySlug: category.slug, categoryTitle: category.title, categoryPrice: category.price }))
+    dispatch(requestCategoryAccess(categoryId))
   }
 
   function handleRefresh() {
-    dispatch(fetchAccessStatus(category.slug))
+    dispatch(fetchTestCategoryDetail(categoryId))
   }
 
   return (
@@ -162,14 +171,14 @@ export default function TestCategoryPage() {
               <Box
                 w={14} h={14}
                 borderRadius="xl"
-                bg={category.bg}
+                bg="rgba(233,30,140,0.10)"
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
-                color={category.color}
+                color={CATEGORY_COLOR}
                 flexShrink={0}
               >
-                <category.Icon size={26} />
+                <FaBookOpen size={26} />
               </Box>
               <Stack gap={2}>
                 <Heading fontSize={{ base: 'xl', md: '2xl' }} fontWeight={900} color="white">
@@ -178,13 +187,6 @@ export default function TestCategoryPage() {
                 <Text fontSize="sm" color="rgba(255,255,255,0.65)" maxW="640px" lineHeight="tall">
                   {category.description}
                 </Text>
-                <HStack gap={2} flexWrap="wrap">
-                  {category.features.map((feature) => (
-                    <Badge key={feature} bg="rgba(255,255,255,0.08)" color="rgba(255,255,255,0.8)" fontWeight={500} px={3} py={1} borderRadius="full">
-                      {feature}
-                    </Badge>
-                  ))}
-                </HStack>
               </Stack>
             </HStack>
           </Stack>
@@ -195,8 +197,8 @@ export default function TestCategoryPage() {
         <Container maxW="7xl">
           <Stack gap={8}>
             <SimpleGrid columns={{ base: 2, md: 3 }} gap={4}>
-              <InfoChip tile={{ Icon: FaStar, label: 'Price', value: `₹${category.price}`, color: category.color }} />
-              <InfoChip tile={{ Icon: FaClipboardList, label: 'Total Tests', value: category.tests.length, color: category.color }} />
+              <InfoChip tile={{ Icon: FaStar, label: 'Price', value: `₹${category.price}`, color: CATEGORY_COLOR }} />
+              <InfoChip tile={{ Icon: FaClipboardList, label: 'Total Tests', value: category.totalTests, color: CATEGORY_COLOR }} />
               <InfoChip
                 tile={{
                   Icon: unlocked ? FaCheckCircle : FaLock,
@@ -209,11 +211,11 @@ export default function TestCategoryPage() {
 
             {loggedIn ? (
               <AccessPanel
-                category={category}
+                price={category.price}
                 status={status}
                 justSubmitted={justSubmitted}
                 requestLoading={requestLoading}
-                statusLoading={statusLoading}
+                detailLoading={detailLoading}
                 onRequest={handleRequest}
                 onRefresh={handleRefresh}
               />
@@ -227,7 +229,7 @@ export default function TestCategoryPage() {
                 </HStack>
                 <Button
                   as={RouterLink}
-                  to={`/login?redirect=/test-series/${category.slug}`}
+                  to={`/login?redirect=/test-series/${categoryId}`}
                   size="sm"
                   bg="#039BE5"
                   color="white"
@@ -240,10 +242,13 @@ export default function TestCategoryPage() {
 
             <Stack gap={4}>
               <Heading fontSize="md" fontWeight={800} color="#0C1222">Mock Tests</Heading>
-              {category.tests.map((test) => (
+
+              {/* Real per-test titles need the authed detail call; until that's
+                  loaded, show locked placeholder rows using the public totalTests
+                  count so the list still reads as "10 tests, locked" like before. */}
+              {detailMatches ? tests.map((test) => (
                 <HStack
-                  key={test.slug}
-                  onClick={() => goToTest(test)}
+                  key={test.id}
                   justify="space-between"
                   align="center"
                   bg="white"
@@ -252,14 +257,6 @@ export default function TestCategoryPage() {
                   borderColor="gray.100"
                   boxShadow="0 2px 10px rgba(0,0,0,0.04)"
                   p={{ base: 4, md: 6 }}
-                  cursor={unlocked || !loggedIn ? 'pointer' : 'not-allowed'}
-                  opacity={loggedIn && !unlocked ? 0.75 : 1}
-                  transition="all 0.2s"
-                  _hover={unlocked || !loggedIn ? {
-                    borderColor: category.color,
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-                    transform: 'translateY(-2px)',
-                  } : undefined}
                 >
                   <Stack gap={1}>
                     <HStack gap={2}>
@@ -275,26 +272,59 @@ export default function TestCategoryPage() {
                     <HStack gap={4} color="gray.500" fontSize="xs">
                       <HStack gap={1}>
                         <FaClipboardList size={11} />
-                        <Text>{test.questions} Questions</Text>
-                      </HStack>
-                      <HStack gap={1}>
-                        <FaClock size={11} />
-                        <Text>{test.duration} Minutes</Text>
+                        <Text>{test.questionCount} Questions</Text>
                       </HStack>
                     </HStack>
                   </Stack>
 
-                  <Button
-                    size="sm"
-                    bg={unlocked ? category.color : 'gray.200'}
-                    color={unlocked ? 'white' : 'gray.500'}
-                    _hover={{ opacity: 0.9 }}
-                  >
-                    {unlocked ? <FaPlayCircle /> : <FaLock size={12} />}
-                    {unlocked ? 'Start' : 'Locked'}
+                  {unlocked ? (
+                    <Button
+                      size="sm"
+                      bg={CATEGORY_COLOR}
+                      color="white"
+                      _hover={{ opacity: 0.9 }}
+                      onClick={() => navigate(`/test-series/${categoryId}/${test.id}`)}
+                    >
+                      <FaPlayCircle size={12} />
+                      Start
+                    </Button>
+                  ) : (
+                    <Button size="sm" bg="gray.200" color="gray.500" disabled>
+                      Locked
+                    </Button>
+                  )}
+                </HStack>
+              )) : Array.from({ length: category.totalTests || 0 }, (_, i) => (
+                <HStack
+                  key={i}
+                  justify="space-between"
+                  align="center"
+                  bg="white"
+                  borderRadius="xl"
+                  border="1px solid"
+                  borderColor="gray.100"
+                  boxShadow="0 2px 10px rgba(0,0,0,0.04)"
+                  p={{ base: 4, md: 6 }}
+                  opacity={0.75}
+                >
+                  <HStack gap={2}>
+                    <Text fontWeight={700} color="#0C1222">
+                      Mock Test {i + 1}
+                    </Text>
+                    <Box color="gray.400">
+                      <FaLock size={11} />
+                    </Box>
+                  </HStack>
+
+                  <Button size="sm" bg="gray.200" color="gray.500" disabled>
+                    Locked
                   </Button>
                 </HStack>
               ))}
+
+              {detailMatches && tests.length === 0 && (
+                <Text color="gray.500" fontSize="sm">No mock tests published in this category yet.</Text>
+              )}
             </Stack>
           </Stack>
         </Container>

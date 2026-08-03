@@ -133,23 +133,6 @@ export const examAccessRequests = [
   },
 ]
 
-export const passwordResetRequests = [
-  {
-    id: 1,
-    name: 'Amit Kumar',
-    contact: 'amit.kumar@gmail.com',
-    requestedDate: '2026-07-21',
-    status: 'Pending',
-  },
-  {
-    id: 2,
-    name: 'Sneha Iyer',
-    contact: '+91 90000 11223',
-    requestedDate: '2026-07-19',
-    status: 'Resolved',
-  },
-]
-
 export const questionCategories = [
   'General Studies',
   'CSAT',

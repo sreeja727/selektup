@@ -10,7 +10,6 @@ import {
   FaQuestionCircle,
   FaChevronDown,
   FaUserCheck,
-  FaKey,
   FaIdCard,
 } from "react-icons/fa";
 
@@ -21,7 +20,6 @@ const menu = [
     icon: FaUserGraduate,
     children: [
       { name: "Category Access", path: "/admin/students/exam-access", icon: FaUserCheck },
-      { name: "Password Reset", path: "/admin/students/password-reset", icon: FaKey },
       { name: "Student Details", path: "/admin/students/details", icon: FaIdCard },
     ],
   },

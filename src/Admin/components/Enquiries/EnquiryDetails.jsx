@@ -1,12 +1,24 @@
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Box, Flex, Heading, Text, VStack } from "@chakra-ui/react";
 import { useParams } from "react-router-dom";
-import { enquiries } from "../../data/mockAdminData";
 import Breadcrumb from "../common/Breadcrumb";
 import BackButton from "../common/BackButton";
+import { fetchAdminEnquiries } from "../../../pages/actions";
+import { getAdminEnquiries } from "../../../pages/selectors";
 
 export default function EnquiryDetails() {
   const { id } = useParams();
-  const enquiry = enquiries.find((e) => String(e.id) === id);
+  const dispatch = useDispatch();
+  const adminEnquiries = useSelector(getAdminEnquiries);
+
+  useEffect(() => {
+    dispatch(fetchAdminEnquiries());
+  }, [dispatch]);
+
+  // Same index-as-id convention as EnquiriesList — the backend doesn't
+  // return a per-enquiry id, so this only resolves once the list is fetched.
+  const enquiry = adminEnquiries[Number(id)];
 
   if (!enquiry) {
     return (
@@ -47,7 +59,9 @@ export default function EnquiryDetails() {
             </Box>
             <Box>
               <Text fontSize="xs" color="gray.400">Date</Text>
-              <Text fontWeight={600} color="#0C1222">{enquiry.date}</Text>
+              <Text fontWeight={600} color="#0C1222">
+                {enquiry.submittedAt ? new Date(enquiry.submittedAt).toLocaleDateString() : "—"}
+              </Text>
             </Box>
           </Flex>
 

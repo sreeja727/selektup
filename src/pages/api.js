@@ -41,6 +41,17 @@ const forgotPasswordApi = (data) => {
   };
 };
 
+const verifyOtpApi = (data) => {
+  return {
+    url: API_URL.VERIFY_OTP,
+    method: REQUEST_METHOD.POST,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.VERIFY_OTP],
+      data,
+    },
+  };
+};
+
 const resetPasswordApi = (data) => {
   return {
     url: API_URL.RESET_PASSWORD,
@@ -81,9 +92,12 @@ function requestId(categorySlug, mobile) {
 
 async function getAccessStatus(categorySlug) {
   const user = getUser();
-  if (!user) return ACCESS_STATUS.NOT_REQUESTED;
+  // Without a real identifier every such user would collide on the same
+  // "<slug>::undefined" record, making one approval look like everyone's
+  // approval. Treat a missing identifier as "can't tell yet", not a match.
+  if (!user || !user.mobile) return ACCESS_STATUS.NOT_REQUESTED;
   const found = readAll().find(
-    (r) => r.id === requestId(categorySlug, user.identifier)
+    (r) => r.id === requestId(categorySlug, user.mobile)
   );
   return found ? found.status : ACCESS_STATUS.NOT_REQUESTED;
 }
@@ -91,15 +105,18 @@ async function getAccessStatus(categorySlug) {
 async function submitAccessRequest({ categorySlug, categoryTitle, categoryPrice }) {
   const user = getUser();
   if (!user) throw new Error('You must be logged in to request access.');
+  if (!user.mobile) throw new Error('Your session is missing a mobile number — please log in again.');
 
   const all = readAll();
-  const id = requestId(categorySlug, user.identifier);
+  const id = requestId(categorySlug, user.mobile);
   const existingIndex = all.findIndex((r) => r.id === id);
   const record = {
     id,
-    studentName: user.name,
-    studentEmail: user.email,
-    studentMobile: user.identifier,
+    studentName: user.fullName,
+    // The login response only returns a mobile number, not a separate email
+    // address — the backend would need to return one for this to be populated.
+    studentEmail: '',
+    studentMobile: user.mobile,
     categorySlug,
     categoryTitle,
     categoryPrice,
@@ -116,19 +133,26 @@ async function submitAccessRequest({ categorySlug, categoryTitle, categoryPrice 
   return record.status;
 }
 
-async function getAllRequests() {
-  return readAll().sort(
-    (a, b) => new Date(b.requestedDate) - new Date(a.requestedDate)
-  );
+// Real Spring Boot backend (POST /api/admin/category-access/{requestId}/approve
+// and .../reject) — replaces the setRequestStatus() localStorage mock above.
+function approveCategoryAccessApi(requestId) {
+  return {
+    url: `${API_URL.ADMIN_CATEGORY_ACCESS}/${requestId}/approve`,
+    method: REQUEST_METHOD.POST,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.APPROVE_REQUEST]
+    }
+  };
 }
 
-async function setRequestStatus(id, status) {
-  const all = readAll();
-  const index = all.findIndex((r) => r.id === id);
-  if (index === -1) throw new Error('Request not found.');
-  all[index] = { ...all[index], status };
-  writeAll(all);
-  return all[index];
+function rejectCategoryAccessApi(requestId) {
+  return {
+    url: `${API_URL.ADMIN_CATEGORY_ACCESS}/${requestId}/reject`,
+    method: REQUEST_METHOD.POST,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.REJECT_REQUEST]
+    }
+  };
 }
 
 // This one hits the real Spring Boot backend (GET /api/test-categories),
@@ -144,19 +168,108 @@ function getTestCategoriesApi() {
   };
 }
 
-/* ===========================
-   EXPORTS
-=========================== */
+// Real Spring Boot backend (GET /api/test-categories/{id}) — category detail,
+// including the real tests list and the current student's accessStatus.
+// Requires auth (returns 403 without a token), unlike getTestCategoriesApi above.
+function getTestCategoryDetailApi(categoryId) {
+  return {
+    url: `${API_URL.TEST_CATEGORIES}/${categoryId}`,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_TEST_CATEGORY_DETAIL]
+    }
+  };
+}
+
+// Real Spring Boot backend (POST /api/test-categories/{id}/request-access) —
+// the real counterpart to submitAccessRequest() above; returns no data body.
+function requestCategoryAccessApi(categoryId) {
+  return {
+    url: `${API_URL.TEST_CATEGORIES}/${categoryId}/request-access`,
+    method: REQUEST_METHOD.POST,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.REQUEST_CATEGORY_ACCESS]
+    }
+  };
+}
+
+// Real Spring Boot backend (GET /api/admin/category-access) — replaces the
+// getAllRequests() localStorage mock above for the admin requests table.
+// Same request-descriptor shape as getTestCategoriesApi.
+function getAdminCategoryAccessApi() {
+  return {
+    url: API_URL.ADMIN_CATEGORY_ACCESS,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_REQUESTS]
+    }
+  };
+}
+
+// Real Spring Boot backend (GET /api/admin/students/paginated?search=&page=&size=) —
+// same shape again, with query params for search + pagination.
+function getAdminStudentsApi({ search = '', page = 0, size = 10 } = {}) {
+  return {
+    url: API_URL.ADMIN_STUDENTS_PAGINATED,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENTS],
+      params: { search, page, size }
+    }
+  };
+}
+
+// Real Spring Boot backend (POST /api/admin/students/{id}/block and .../unblock).
+function blockStudentApi(id) {
+  return {
+    url: `${API_URL.ADMIN_STUDENTS}/${id}/block`,
+    method: REQUEST_METHOD.POST,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.BLOCK_STUDENT]
+    }
+  };
+}
+
+function unblockStudentApi(id) {
+  return {
+    url: `${API_URL.ADMIN_STUDENTS}/${id}/unblock`,
+    method: REQUEST_METHOD.POST,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.UNBLOCK_STUDENT]
+    }
+  };
+}
+
+// Real Spring Boot backend (GET /api/admin/enquiries) — same shape again.
+function getAdminEnquiriesApi() {
+  return {
+    url: API_URL.ADMIN_ENQUIRIES,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_ENQUIRIES]
+    }
+  };
+}
+
+
 
 export {
   registerApi,
   loginApi,
   forgotPasswordApi,
+  verifyOtpApi,
   resetPasswordApi,
 
   getAccessStatus,
   submitAccessRequest,
-  getAllRequests,
-  setRequestStatus,
   getTestCategoriesApi,
+  getTestCategoryDetailApi,
+  requestCategoryAccessApi,
+  getAdminCategoryAccessApi,
+  approveCategoryAccessApi,
+  rejectCategoryAccessApi,
+  getAdminStudentsApi,
+  blockStudentApi,
+  unblockStudentApi,
+  getAdminEnquiriesApi,
 };

@@ -4,6 +4,11 @@ export const API_URL={
     REGISTER:'auth/register',
     LOGIN:'auth/login',
     FORGOT_PASSWORD:'auth/forgot-password',
+    VERIFY_OTP:'auth/verify-otp',
     RESET_PASSWORD:'auth/reset-password',
-    TEST_CATEGORIES:'test-categories'
+    TEST_CATEGORIES:'test-categories',
+    ADMIN_CATEGORY_ACCESS:'admin/category-access',
+    ADMIN_STUDENTS:'admin/students',
+    ADMIN_STUDENTS_PAGINATED:'admin/students/paginated',
+    ADMIN_ENQUIRIES:'admin/enquiries'
 }

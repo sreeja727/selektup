@@ -93,7 +93,7 @@ export default function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/courses" element={<CoursesPage />} />
         <Route path="/test-series" element={<TestSeriesPage />} />
-        <Route path="/test-series/:categorySlug" element={<TestCategoryPage />} />
+        <Route path="/test-series/:categoryId" element={<TestCategoryPage />} />
         <Route path="/test-series/:categorySlug/:testSlug" element={<Instructions />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />}/>
         <Route path="/terms-of-service" element={<TermsOfService />}/>
