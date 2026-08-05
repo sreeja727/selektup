@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
   Button,
@@ -6,90 +7,79 @@ import {
   Heading,
   HStack,
   Input,
-  NativeSelect,
   Text,
   Textarea,
   VStack,
 } from "@chakra-ui/react";
-import { useNavigate, useParams } from "react-router-dom";
-import { TEST_CATEGORIES } from "../../../data/testSeries";
-import { useQuestions } from "../../context/QuestionsContext";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Breadcrumb from "../common/Breadcrumb";
 import BackButton from "../common/BackButton";
 import { toaster } from "../../../components/ui/toaster";
-
-const DIFFICULTIES = ["Easy", "Medium", "Hard"];
-
-const fieldStyle = {
-  borderColor: "gray.200",
-  borderWidth: "2px",
-  borderRadius: "lg",
-  _focus: { borderColor: "#039BE5", boxShadow: "0 0 0 3px rgba(3,155,229,0.12)" },
-  _hover: { borderColor: "#039BE5" },
-};
+import QuestionTypeFields from "./QuestionTypeFields";
+import QuestionTypeBadge from "./QuestionTypeBadge";
+import { fieldStyle } from "./fieldStyle";
+import {
+  toFormFields, getTypeConfig, isSaveable, validate as validateQuestion,
+} from "../../../pages/questionTypes";
+import { updateQuestion } from "../../../pages/actions";
+import { getUpdateQuestionLoading, getUpdateQuestionResult } from "../../../pages/selectors";
 
 export default function QuestionsEdit() {
-  const navigate = useNavigate();
   const { id } = useParams();
-  const { getQuestion, updateQuestion } = useQuestions();
-  const question = getQuestion(id);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const dispatch = useDispatch();
 
-  const [categorySlug, setCategorySlug] = useState(question?.categorySlug || TEST_CATEGORIES[0].slug);
-  const category = TEST_CATEGORIES.find((c) => c.slug === categorySlug);
-  const [mockTestNumber, setMockTestNumber] = useState(question?.mockTestNumber || 1);
-  const [difficulty, setDifficulty] = useState(question?.difficulty || DIFFICULTIES[0]);
-  const [text, setText] = useState(question?.text || "");
-  const [options, setOptions] = useState(question?.options || ["", "", "", ""]);
-  const [correctIndex, setCorrectIndex] = useState(question?.correctIndex ?? 0);
-  const [explanation, setExplanation] = useState(question?.explanation || "");
+  // Comes from QuestionsList's Edit action — a question is edited in place
+  // under the mock test it already belongs to, so there's no "fetch by id"
+  // endpoint to fall back on for a direct link/refresh here.
+  const { question, testId, categoryId, testTitle } = location.state || {};
+  const updateLoading = useSelector(getUpdateQuestionLoading);
+  const updateResult = useSelector(getUpdateQuestionResult);
+
+  const type = question?.type || "SINGLE_CORRECT_MCQ";
+  const typeConfig = getTypeConfig(type);
+  const [fields, setFields] = useState(() => (question ? toFormFields(question) : null));
   const [fieldErrors, setFieldErrors] = useState({});
 
-  if (!question) {
+  // Once the save succeeds, head back to the list for this test.
+  useEffect(() => {
+    if (updateResult) {
+      navigate("/admin/questions", { state: { categoryId, testId } });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [updateResult]);
+
+  if (!question || String(question.id) !== String(id) || !fields) {
     return (
       <Box bg="white" p={8} borderRadius="xl" boxShadow="md">
-        <Text color="gray.500">Question not found.</Text>
+        <Text color="gray.500">Open this question from the Questions list to edit it.</Text>
         <BackButton to="/admin/questions" label="Back to Questions" />
       </Box>
     );
   }
 
-  const handleCategoryChange = (slug) => {
-    setCategorySlug(slug);
-    setMockTestNumber(1);
-  };
-
-  const updateOption = (index, value) => {
-    setOptions((prev) => prev.map((opt, i) => (i === index ? value : opt)));
-    setFieldErrors((f) => ({ ...f, options: undefined }));
-  };
-
-  const validate = () => {
-    const errors = {};
-    if (!text.trim()) errors.text = "Question text is required";
-    if (options.some((opt) => !opt.trim())) errors.options = "All 4 options must be filled in";
-    if (!explanation.trim()) errors.explanation = "An explanation is required";
-    return errors;
+  const clearError = (key) => {
+    setFieldErrors((f) => ({ ...f, [key]: undefined }));
   };
 
   const handleSave = () => {
-    const errors = validate();
+    if (!isSaveable(type)) {
+      toaster.create({ title: "Not available yet", description: `"${typeConfig.label}" isn't supported by the backend yet — it can't be saved until that's added.`, type: "error", duration: 4000, closable: true });
+      return;
+    }
+    const errors = validateQuestion(type, fields);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       toaster.create({ title: "Missing information", description: "Please fill in all required fields before saving.", type: "error", duration: 3500, closable: true });
       return;
     }
     setFieldErrors({});
-    updateQuestion(id, {
-      categorySlug,
-      mockTestNumber,
-      difficulty,
-      text,
-      options,
-      correctIndex,
-      explanation,
-    });
-    toaster.create({ title: "Question updated", description: "Your changes have been saved.", type: "success", duration: 3500, closable: true });
-    navigate("/admin/questions");
+    dispatch(updateQuestion({
+      testId,
+      questionId: question.id,
+      question: { type, ...fields },
+    }));
   };
 
   return (
@@ -104,68 +94,40 @@ export default function QuestionsEdit() {
       <BackButton to="/admin/questions" label="Back to Questions" />
 
       <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="800px">
-        <Heading mb={6} color="#0C1222">Edit Question</Heading>
+        <HStack justify="space-between" align="center" mb={6}>
+          <Heading color="#0C1222">Edit Question</Heading>
+          <HStack gap={3}>
+            {testTitle && <Text color="gray.500" fontWeight={600}>{testTitle}</Text>}
+            <QuestionTypeBadge type={type} />
+          </HStack>
+        </HStack>
 
         <VStack gap={5} align="stretch">
-          <HStack gap={5} align="stretch">
-            <Field.Root flex={1}>
-              <Field.Label>Category</Field.Label>
-              <NativeSelect.Root>
-                <NativeSelect.Field
-                  value={categorySlug}
-                  onChange={(e) => handleCategoryChange(e.target.value)}
-                  {...fieldStyle}
-                >
-                  {TEST_CATEGORIES.map((c) => (
-                    <option key={c.slug} value={c.slug}>{c.title}</option>
-                  ))}
-                </NativeSelect.Field>
-                <NativeSelect.Indicator />
-              </NativeSelect.Root>
-            </Field.Root>
-
-            <Field.Root flex={1}>
-              <Field.Label>Mock Test Number</Field.Label>
-              <NativeSelect.Root>
-                <NativeSelect.Field
-                  value={mockTestNumber}
-                  onChange={(e) => setMockTestNumber(Number(e.target.value))}
-                  {...fieldStyle}
-                >
-                  {category.tests.map((t, i) => (
-                    <option key={t.slug} value={i + 1}>Mock Test {i + 1}</option>
-                  ))}
-                </NativeSelect.Field>
-                <NativeSelect.Indicator />
-              </NativeSelect.Root>
-            </Field.Root>
-
-            <Field.Root flex={1}>
-              <Field.Label>Difficulty</Field.Label>
-              <NativeSelect.Root>
-                <NativeSelect.Field
-                  value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value)}
-                  {...fieldStyle}
-                >
-                  {DIFFICULTIES.map((d) => (
-                    <option key={d} value={d}>{d}</option>
-                  ))}
-                </NativeSelect.Field>
-                <NativeSelect.Indicator />
-              </NativeSelect.Root>
-            </Field.Root>
-          </HStack>
+          <Field.Root maxW="160px">
+            <Field.Label>Marks</Field.Label>
+            <Input
+              type="number"
+              min={1}
+              value={fields.marks}
+              onChange={(e) => {
+                setFields((prev) => ({ ...prev, marks: Number(e.target.value) }));
+                clearError("marks");
+              }}
+              {...fieldStyle}
+              borderColor={fieldErrors.marks ? "red.400" : fieldStyle.borderColor}
+            />
+            {fieldErrors.marks && <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.marks}</Text>}
+          </Field.Root>
 
           <Field.Root>
-            <Field.Label>Question</Field.Label>
+            <Field.Label>{typeConfig.hasAssertionReason ? "Assertion" : "Question"}</Field.Label>
             <Textarea
-              placeholder="Enter the full question, including any numbered statements, assertion/reason, match-the-following pairs, etc."
-              rows={10}
-              value={text}
+              placeholder={typeConfig.hasAssertionReason ? "State the assertion" : "Enter the full question text"}
+              rows={6}
+              value={fields.text}
               onChange={(e) => {
-                setText(e.target.value);
-                setFieldErrors((f) => ({ ...f, text: undefined }));
+                setFields((prev) => ({ ...prev, text: e.target.value }));
+                clearError("text");
               }}
               {...fieldStyle}
               borderColor={fieldErrors.text ? "red.400" : fieldStyle.borderColor}
@@ -173,47 +135,23 @@ export default function QuestionsEdit() {
             {fieldErrors.text && <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.text}</Text>}
           </Field.Root>
 
-          {options.map((opt, index) => (
-            <Field.Root key={index}>
-              <Field.Label>
-                Option {index + 1}
-                {correctIndex === index && (
-                  <Box as="span" color="green.500" ml={2} fontSize="xs">
-                    (Correct Answer)
-                  </Box>
-                )}
-              </Field.Label>
-              <HStack gap={3}>
-                <Input
-                  placeholder={`Option ${index + 1}`}
-                  value={opt}
-                  onChange={(e) => updateOption(index, e.target.value)}
-                  {...fieldStyle}
-                  borderColor={fieldErrors.options && !opt.trim() ? "red.400" : fieldStyle.borderColor}
-                />
-                <Button
-                  size="sm"
-                  variant={correctIndex === index ? "solid" : "outline"}
-                  colorPalette="green"
-                  onClick={() => setCorrectIndex(index)}
-                  flexShrink={0}
-                >
-                  Mark Correct
-                </Button>
-              </HStack>
-            </Field.Root>
-          ))}
-          {fieldErrors.options && <Text color="red.500" fontSize="xs" mt={-3}>{fieldErrors.options}</Text>}
+          <QuestionTypeFields
+            type={type}
+            fields={fields}
+            setFields={setFields}
+            errors={fieldErrors}
+            clearError={clearError}
+          />
 
           <Field.Root>
             <Field.Label>Solution / Explanation</Field.Label>
             <Textarea
-              placeholder="Explain why the correct answer is right (shown to students after they attempt the question). One point per line works well for statement-based questions."
+              placeholder="Explain why the correct answer is right (shown to students after they attempt the question)."
               rows={6}
-              value={explanation}
+              value={fields.explanation}
               onChange={(e) => {
-                setExplanation(e.target.value);
-                setFieldErrors((f) => ({ ...f, explanation: undefined }));
+                setFields((prev) => ({ ...prev, explanation: e.target.value }));
+                clearError("explanation");
               }}
               {...fieldStyle}
               borderColor={fieldErrors.explanation ? "red.400" : fieldStyle.borderColor}
@@ -221,7 +159,7 @@ export default function QuestionsEdit() {
             {fieldErrors.explanation && <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.explanation}</Text>}
           </Field.Root>
 
-          <Button colorPalette="blue" size="lg" onClick={handleSave}>
+          <Button colorPalette="blue" size="lg" onClick={handleSave} loading={updateLoading} disabled={typeConfig.comingSoon}>
             Save Changes
           </Button>
         </VStack>

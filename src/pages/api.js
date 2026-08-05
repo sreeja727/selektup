@@ -3,6 +3,7 @@ import { REQUEST_METHOD } from '../common/constant';
 import { API_URL } from '../common/url';
 import { ACTION_TYPES, ACTIONS } from './actions';
 import { ACCESS_STATUS, REQUESTS_STORAGE_KEY } from './constants';
+import * as questionsApi from './questionTypes';
 
 /* ===========================
    AUTH APIs
@@ -266,6 +267,188 @@ function submitContactApi(data) {
   };
 }
 
+// Real Spring Boot backend (GET /api/tests/{testId}/questions) — the question
+// set for a specific test (student-facing exam view). Requires auth.
+function getTestQuestionsApi(testId) {
+  return {
+    url: `${API_URL.TESTS}/${testId}/questions`,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_TEST_QUESTIONS]
+    }
+  };
+}
+
+// Real Spring Boot backend (GET /api/admin/tests/{testId}/questions?type=&search=) —
+// the admin-only question list for a mock test (includes correctOption,
+// unlike the student-facing endpoint above). Confirmed via /v3/api-docs:
+// listQuestions takes optional `type` (a QUESTION_TYPES key) and `search`
+// query params; response is { data: { total, questions: [AdminQuestionDto] } }.
+// Raw rows are normalized to the app's canonical question shape in slice.js.
+function getAdminTestQuestionsApi({ testId, search, type }) {
+  return {
+    url: `${API_URL.ADMIN_TESTS}/${testId}/questions`,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_TEST_QUESTIONS],
+      params: { ...(search ? { search } : {}), ...(type ? { type } : {}) }
+    }
+  };
+}
+
+// Real Spring Boot backend (POST /api/tests/{testId}/submit) — submits the
+// student's answers and gets back the computed score/result.
+function submitTestApi({ testId, answers }) {
+  return {
+    url: `${API_URL.TESTS}/${testId}/submit`,
+    method: REQUEST_METHOD.POST,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.SUBMIT_TEST],
+      data: { answers }
+    }
+  };
+}
+
+// Real Spring Boot backend (POST /api/tests/{testId}/start) — marks a new
+// attempt as started for the given test (student-facing). Fired when the
+// exam screen mounts; the UI doesn't block on its result.
+function startTestApi(testId) {
+  return {
+    url: `${API_URL.TESTS}/${testId}/start`,
+    method: REQUEST_METHOD.POST,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.START_TEST]
+    }
+  };
+}
+
+// Real Spring Boot backend (GET /api/tests/submissions/{submissionId}) — the
+// persisted result summary for a completed attempt, expected to mirror
+// submitTestApi's response shape (totalMarks, cutOffMarks, correct, wrong,
+// unanswered, penalty, score, ...). Backs the Result screen when it's
+// reached via a submissionId (real tests) instead of local Redux state.
+function getSubmissionApi(submissionId) {
+  return {
+    url: `${API_URL.TESTS}/submissions/${submissionId}`,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_SUBMISSION]
+    }
+  };
+}
+
+// Real Spring Boot backend (GET /api/tests/submissions/{submissionId}/review) —
+// the per-question breakdown (question/options/correctOption/selectedOption)
+// for a completed attempt. Backs the Review screen the same way
+// getSubmissionApi backs Result.
+function getSubmissionReviewApi(submissionId) {
+  return {
+    url: `${API_URL.TESTS}/submissions/${submissionId}/review`,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_SUBMISSION_REVIEW]
+    }
+  };
+}
+
+// Converts the app's canonical question shape (see questionTypes.js) to the
+// backend's wire shape — confirmed against the live OpenAPI spec
+// (GET /v3/api-docs, CreateQuestionRequest schema) for all 7 types.
+// questionTypes.js is the single place a future question TYPE needs a
+// new branch.
+const toWireQuestion = questionsApi.toWireQuestion;
+
+// Real Spring Boot backend (POST /api/admin/tests/{testId}/questions) — adds a
+// single question under the given mock test (admin only). Expected response:
+// { data: { question, nextQuestionNumber } }, letting the admin form move on
+// to the next question without tracking all ~100 of them itself.
+function addQuestionApi({ testId, question }) {
+  return {
+    url: `${API_URL.ADMIN_TESTS}/${testId}/questions`,
+    method: REQUEST_METHOD.POST,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.ADD_QUESTION],
+      data: toWireQuestion(question)
+    }
+  };
+}
+
+// Real Spring Boot backend (PUT /api/admin/tests/{testId}/questions/{questionId}) —
+// edits an existing question (admin only), same body shape as addQuestionApi.
+// Expected response: { data: { question } }.
+function updateQuestionApi({ testId, questionId, question }) {
+  return {
+    url: `${API_URL.ADMIN_TESTS}/${testId}/questions/${questionId}`,
+    method: REQUEST_METHOD.PUT,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.UPDATE_QUESTION],
+      data: toWireQuestion(question)
+    }
+  };
+}
+
+// Real Spring Boot backend (POST /api/admin/tests/{testId}/questions/bulk,
+// multipart) — uploads one .xlsx file (the same columns as the downloadable
+// template) and lets the backend parse, validate and save every row under the
+// mock test in one go. Expected response:
+// { data: { questions: [...], errors: [{ row, message }] } }, so the admin
+// sees both what was saved and which rows failed.
+function bulkUploadQuestionsApi({ testId, file }) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return {
+    url: `${API_URL.ADMIN_TESTS}/${testId}/questions/bulk`,
+    method: REQUEST_METHOD.MULTIPART,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.BULK_UPLOAD_QUESTIONS],
+      data: formData
+    }
+  };
+}
+
+// Real Spring Boot backend (GET /api/admin/tests/{testId}/questions/template) —
+// downloads the backend-generated .xlsx template admins fill in for bulk
+// upload. Uses the existing blob-download path in utils/http.js (isDocument),
+// so the response comes back as a Blob rather than JSON.
+function downloadQuestionTemplateApi(testId) {
+  return {
+    url: `${API_URL.ADMIN_TESTS}/${testId}/questions/template`,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.DOWNLOAD_QUESTION_TEMPLATE],
+      isDocument: true
+    }
+  };
+}
+
+// Real Spring Boot backend (DELETE /api/admin/tests/{testId}/questions/{questionId}) —
+// admin-only. Returns no body; the saga removes the row from adminTestQuestions
+// locally (same pattern as blockStudentApi/unblockStudentApi above).
+function deleteQuestionApi({ testId, questionId }) {
+  return {
+    url: `${API_URL.ADMIN_TESTS}/${testId}/questions/${questionId}`,
+    method: REQUEST_METHOD.DELETE,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.DELETE_QUESTION]
+    }
+  };
+}
+
+// Real Spring Boot backend (DELETE /api/admin/tests/{testId}/questions) —
+// confirmed via /v3/api-docs: no body, no query params — unconditionally
+// deletes every question under the test. Only usable when the admin isn't
+// looking at a filtered subset (see deleteAllQuestionsSaga in saga.js),
+// since there's no way to scope it to a search/type filter.
+function deleteAllQuestionsApi(testId) {
+  return {
+    url: `${API_URL.ADMIN_TESTS}/${testId}/questions`,
+    method: REQUEST_METHOD.DELETE,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.DELETE_ALL_QUESTIONS]
+    }
+  };
+}
+
 // Real Spring Boot backend (GET /api/admin/enquiries) — same shape again.
 function getAdminEnquiriesApi() {
   return {
@@ -273,6 +456,19 @@ function getAdminEnquiriesApi() {
     method: REQUEST_METHOD.GET,
     payload: {
       types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_ENQUIRIES]
+    }
+  };
+}
+
+// Real Spring Boot backend (GET /api/admin/dashboard/summary) — the Admin
+// Dashboard's headline counts. Expected response:
+// { success, message, data: { testSeriesCount, mockTestsCount, studentsCount } }.
+function getAdminDashboardSummaryApi() {
+  return {
+    url: API_URL.ADMIN_DASHBOARD_SUMMARY,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_DASHBOARD_SUMMARY]
     }
   };
 }
@@ -300,4 +496,17 @@ export {
   unblockStudentApi,
   getAdminEnquiriesApi,
   submitContactApi,
+  getTestQuestionsApi,
+  getAdminTestQuestionsApi,
+  submitTestApi,
+  startTestApi,
+  getSubmissionApi,
+  getSubmissionReviewApi,
+  addQuestionApi,
+  updateQuestionApi,
+  bulkUploadQuestionsApi,
+  deleteQuestionApi,
+  deleteAllQuestionsApi,
+  getAdminDashboardSummaryApi,
+  downloadQuestionTemplateApi,
 };

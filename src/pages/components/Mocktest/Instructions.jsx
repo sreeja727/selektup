@@ -34,6 +34,14 @@ import Loader from "../../../components/Loader";
 
 const CATEGORY_COLOR = "#E91E8C";
 
+function formatDuration(minutes) {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours === 0) return `${mins} min`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h ${mins}m`;
+}
+
 function InfoTile({ tile }) {
   return (
     <Stack gap={2} align="center" textAlign="center" bg="gray.50" borderRadius="xl" p={5}>
@@ -116,21 +124,24 @@ export default function Instructions() {
 
   const { category, test } = result;
   const color = category.color || CATEGORY_COLOR;
+  // Falls back to placeholder values whenever the backend test-detail
+  // response leaves a field null (seen on tests where duration/marks/cutoff
+  // haven't been configured yet) so the screen never shows a literal "null".
   const questionCount = isReal
-    ? (realTestDetailMatches ? realTestDetail.totalQuestions : (test.questionCount ?? 0))
+    ? (realTestDetailMatches ? (realTestDetail.totalQuestions ?? test.questionCount ?? 100) : (test.questionCount ?? 0))
     : (test.questions ?? 0);
-  const duration = isReal && realTestDetailMatches ? realTestDetail.durationMinutes : (test.duration ?? 120);
-  const marks = isReal && realTestDetailMatches ? realTestDetail.totalMarks : (test.marks ?? questionCount);
-  const cutOffMarks = isReal && realTestDetailMatches ? realTestDetail.cutOffMarks : 35;
-  const negativeWrongCount = isReal && realTestDetailMatches ? realTestDetail.negativeMarkingWrongCount : 3;
-  const negativeDeduction = isReal && realTestDetailMatches ? realTestDetail.negativeMarkingDeduction : 2;
+  const duration = isReal && realTestDetailMatches ? (realTestDetail.durationMinutes ?? 75) : (test.duration ?? 120);
+  const marks = isReal && realTestDetailMatches ? (realTestDetail.totalMarks ?? questionCount) : (test.marks ?? questionCount);
+  const cutOffMarks = isReal && realTestDetailMatches ? (realTestDetail.cutOffMarks ?? 35) : 35;
 
   const instructions = [
     "Read every question carefully before answering.",
     `The test contains ${questionCount} multiple-choice questions.`,
-    `Duration of the test is ${duration} minutes.`,
+    `Duration of the test is ${formatDuration(duration)}.`,
     "Each question has only one correct answer.",
-    `Every ${negativeWrongCount} wrong answers will reduce ${negativeDeduction} marks.`,
+    "Each correct answer awards 1 mark.",
+    "Each incorrect answer results in a penalty deduction of 0.33 marks (1/3rd mark).",
+    "No marks are deducted for unattempted questions.",
     "Do not refresh or close the browser during the exam.",
     "The test will be submitted automatically when the timer ends.",
     "You can navigate between questions anytime.",
@@ -175,7 +186,7 @@ export default function Instructions() {
 
             <SimpleGrid columns={{ base: 2, md: 4 }} gap={4} mb={8}>
               <InfoTile tile={{ Icon: FaClipboardList, label: "Questions", value: questionCount, color }} />
-              <InfoTile tile={{ Icon: FaClock, label: "Duration", value: `${duration} min`, color }} />
+              <InfoTile tile={{ Icon: FaClock, label: "Duration", value: formatDuration(duration), color }} />
               <InfoTile tile={{ Icon: FaStar, label: "Total Marks", value: marks, color }} />
               <InfoTile tile={{ Icon: FaBullseye, label: "Cut Off", value: `${cutOffMarks} Marks`, color }} />
             </SimpleGrid>
@@ -198,7 +209,8 @@ export default function Instructions() {
                   Negative Marking
                 </Text>
                 <Text fontSize="sm" color="#7A2020">
-                  Every <b>{negativeWrongCount} wrong answers</b> will reduce <b>{negativeDeduction} marks</b>.
+                  Each correct answer awards <b>1 mark</b>, while each incorrect response results in a penalty
+                  deduction of <b>0.33 marks (1/3rd mark)</b>. No marks are deducted for unattempted questions.
                 </Text>
               </Stack>
             </HStack>

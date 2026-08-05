@@ -207,14 +207,9 @@ export default function Navbar() {
             {/* Desktop CTA buttons */}
             <HStack gap={3} display={{ base: "none", lg: "flex" }}>
               {loggedIn ? (
-                <>
-                  <Button as={Link} to="/dashboard" size="sm" bg="#039BE5" color="white" _hover={{ bg: "#0284C7" }}>
-                    Dashboard
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={handleLogout}>
-                    Logout
-                  </Button>
-                </>
+                <Button size="sm" variant="outline" onClick={handleLogout}>
+                  Logout
+                </Button>
               ) : (
                 <Button as={Link} to="/login" size="sm" bg="#039BE5" color="white" _hover={{ bg: "#0284C7" }}>
                   Students Login
@@ -321,31 +316,17 @@ export default function Navbar() {
 
                 <HStack gap={3} pt={3} mt={1} borderTop="1px solid" borderColor="gray.100">
                   {loggedIn ? (
-                    <>
-                      <Button
-                        as={Link}
-                        to="/dashboard"
-                        size="sm"
-                        flex={1}
-                        bg="#039BE5"
-                        color="white"
-                        _hover={{ bg: "#0284C7" }}
-                        onClick={() => setOpen(false)}
-                      >
-                        Dashboard
-                      </Button>
-                      <Button
-                        size="sm"
-                        flex={1}
-                        variant="outline"
-                        onClick={() => {
-                          handleLogout();
-                          setOpen(false);
-                        }}
-                      >
-                        Logout
-                      </Button>
-                    </>
+                    <Button
+                      size="sm"
+                      flex={1}
+                      variant="outline"
+                      onClick={() => {
+                        handleLogout();
+                        setOpen(false);
+                      }}
+                    >
+                      Logout
+                    </Button>
                   ) : (
                     <Button
                       as={Link}

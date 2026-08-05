@@ -8,8 +8,11 @@ export const API_URL={
     RESET_PASSWORD:'auth/reset-password',
     TEST_CATEGORIES:'test-categories',
     ADMIN_CATEGORY_ACCESS:'admin/category-access',
+    ADMIN_DASHBOARD_SUMMARY:'admin/dashboard/summary',
     ADMIN_STUDENTS:'admin/students',
     ADMIN_STUDENTS_PAGINATED:'admin/students/paginated',
     ADMIN_ENQUIRIES:'admin/enquiries',
-    HOME_CONTACT:'home/contact'
+    HOME_CONTACT:'home/contact',
+    TESTS:'tests',
+    ADMIN_TESTS:'admin/tests'
 }
