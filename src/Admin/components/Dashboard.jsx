@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
   Heading,
@@ -10,34 +12,44 @@ import {
   ClipboardList,
   Users,
 } from "lucide-react";
+import { fetchAdminDashboardSummary } from "../../pages/actions";
+import { getAdminDashboardSummary, getAdminDashboardSummaryLoading } from "../../pages/selectors";
 
 const ACCENTS = {
   blue: { fg: "#039BE5", bg: "rgba(3,155,229,0.1)" },
   pink: { fg: "#E91E8C", bg: "rgba(233,30,140,0.1)" },
 };
 
-const dashboardCards = [
-  {
-    title: "Test Series",
-    value: "12",
-    icon: BookOpen,
-    accent: "blue",
-  },
-  {
-    title: "Mock Tests",
-    value: "48",
-    icon: ClipboardList,
-    accent: "pink",
-  },
-  {
-    title: "Students",
-    value: "1,240",
-    icon: Users,
-    accent: "blue",
-  },
-];
-
 export default function Dashboard() {
+  const dispatch = useDispatch();
+  const summary = useSelector(getAdminDashboardSummary);
+  const loading = useSelector(getAdminDashboardSummaryLoading);
+
+  useEffect(() => {
+    dispatch(fetchAdminDashboardSummary());
+  }, [dispatch]);
+
+  const dashboardCards = [
+    {
+      title: "Test Series",
+      value: summary?.testSeriesCount,
+      icon: BookOpen,
+      accent: "blue",
+    },
+    {
+      title: "Mock Tests",
+      value: summary?.mockTestsCount,
+      icon: ClipboardList,
+      accent: "pink",
+    },
+    {
+      title: "Students",
+      value: summary?.studentsCount,
+      icon: Users,
+      accent: "blue",
+    },
+  ];
+
   return (
     <Box>
       <Heading mb={8} color="#0C1222">Admin Dashboard</Heading>
@@ -75,7 +87,7 @@ export default function Dashboard() {
                 </Text>
 
                 <Heading size="lg" color="#0C1222">
-                  {card.value}
+                  {loading ? "—" : (card.value ?? 0).toLocaleString()}
                 </Heading>
               </VStack>
             </Box>

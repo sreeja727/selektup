@@ -105,7 +105,9 @@ export default function App() {
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route path="/mock-test/:categorySlug/:testSlug" element={<TestScreen />} />
         <Route path="/result" element={<Result />} />
+        <Route path="/result/:submissionId" element={<Result />} />
         <Route path="/review" element={<Review/>}/>
+        <Route path="/review/:submissionId" element={<Review/>}/>
      </Routes>
 
       {!isAdminRoute && <Footer />}

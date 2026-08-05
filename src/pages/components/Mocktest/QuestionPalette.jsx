@@ -1,10 +1,31 @@
 import { Grid, Box, HStack, Text } from "@chakra-ui/react";
 
+const STATUS_COLOR = {
+  answeredMarked: "#7C3AED",
+  marked: "#B8860B",
+  answered: "#2E7D32",
+  skipped: "#D32F2F",
+  notVisited: "gray.300",
+};
+
 const LEGEND = [
-  { label: "Answered", bg: "#2E7D32" },
-  { label: "Marked for Review", bg: "#B8860B" },
-  { label: "Not Answered", bg: "gray.300" },
+  { label: "Answered", bg: STATUS_COLOR.answered },
+  { label: "Marked for Review", bg: STATUS_COLOR.marked },
+  { label: "Answered & Marked", bg: STATUS_COLOR.answeredMarked },
+  { label: "Skipped", bg: STATUS_COLOR.skipped },
+  { label: "Not Visited", bg: STATUS_COLOR.notVisited },
 ];
+
+// Four-state status per question — the standard competitive-exam palette
+// convention: Not Visited (never navigated to), Skipped (visited but left
+// unanswered), Answered, and Marked for Review (with or without an answer).
+function getStatus(isAnswered, isMarked, isVisited) {
+  if (isMarked && isAnswered) return "answeredMarked";
+  if (isMarked) return "marked";
+  if (isAnswered) return "answered";
+  if (isVisited) return "skipped";
+  return "notVisited";
+}
 
 export default function QuestionPalette({
   totalQuestions,
@@ -12,27 +33,18 @@ export default function QuestionPalette({
   onSelect,
   answers = {},
   marked = {},
+  visited = {},
 }) {
   return (
     <>
       <Grid templateColumns="repeat(5, 1fr)" gap={2.5} mb={4}>
         {Array.from({ length: totalQuestions }, (_, i) => {
           const active = currentQuestion === i;
-          const isAnswered = Boolean(answers[i]);
-          const isMarked = Boolean(marked[i]);
+          const status = getStatus(Boolean(answers[i]), Boolean(marked[i]), Boolean(visited[i]));
 
-          let bg = "gray.100";
-          let color = "gray.600";
-          let borderColor = "gray.200";
-          if (isMarked) {
-            bg = "#B8860B";
-            color = "white";
-            borderColor = "#B8860B";
-          } else if (isAnswered) {
-            bg = "#2E7D32";
-            color = "white";
-            borderColor = "#2E7D32";
-          }
+          let bg = STATUS_COLOR[status];
+          let color = status === "notVisited" ? "gray.700" : "white";
+          let borderColor = STATUS_COLOR[status];
           if (active) {
             bg = "#039BE5";
             color = "white";

@@ -7,8 +7,9 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { useSelector } from "react-redux";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams, Navigate } from "react-router-dom";
 import {
   FaTrophy,
   FaSadTear,
@@ -20,7 +21,9 @@ import {
   FaExclamationTriangle,
   FaClipboardCheck,
 } from "react-icons/fa";
-import { getTestAttempt } from "../../selectors";
+import { getTestAttempt, getSubmission } from "../../selectors";
+import { fetchSubmission } from "../../actions";
+import Loader from "../../../components/Loader";
 
 function StatTile({ tile }) {
   return (
@@ -38,20 +41,33 @@ function StatTile({ tile }) {
 
 export default function Result() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { submissionId } = useParams();
   const attempt = useSelector(getTestAttempt);
+  const submission = useSelector(getSubmission);
 
-  if (!attempt) return <Navigate to="/test-series" replace />;
+  useEffect(() => {
+    if (submissionId) dispatch(fetchSubmission(submissionId));
+  }, [dispatch, submissionId]);
+
+  if (submissionId) {
+    if (!submission) return <Loader fullScreen />;
+  } else if (!attempt) {
+    return <Navigate to="/test-series" replace />;
+  }
+
+  const source = submissionId ? submission : attempt;
 
   const result = {
-    totalQuestions: attempt.totalQuestions,
-    attempted: attempt.correct + attempt.wrong,
-    correct: attempt.correct,
-    wrong: attempt.wrong,
-    skipped: attempt.unanswered,
-    negativeMarks: attempt.penalty,
-    finalScore: attempt.score,
-    totalMarks: attempt.totalMarks,
-    cutoff: attempt.cutOffMarks,
+    totalQuestions: source.totalQuestions,
+    attempted: (source.correct ?? 0) + (source.wrong ?? 0),
+    correct: source.correct ?? 0,
+    wrong: source.wrong ?? 0,
+    skipped: source.unanswered ?? 0,
+    negativeMarks: source.penalty ?? 0,
+    finalScore: source.score ?? 0,
+    totalMarks: source.totalMarks,
+    cutoff: source.cutOffMarks,
   };
 
   const pass = result.finalScore >= result.cutoff;
@@ -131,7 +147,7 @@ export default function Result() {
               borderRadius="lg"
               _hover={{ bg: "#0277BD", transform: "translateY(-2px)" }}
               transition="all 0.2s"
-              onClick={() => navigate("/review")}
+              onClick={() => navigate(submissionId ? `/review/${submissionId}` : "/review")}
             >
               <FaCheck size={14} />
               Review Answers

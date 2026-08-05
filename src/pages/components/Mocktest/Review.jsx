@@ -1,148 +1,240 @@
 import {
   Box,
   Button,
-  Container,
+  Flex,
+  Grid,
   Heading,
   HStack,
   Stack,
   Text,
 } from "@chakra-ui/react";
-import { useState } from "react";
-import { useSelector } from "react-redux";
-import { Navigate } from "react-router-dom";
-import { FaArrowLeft, FaArrowRight, FaCheckCircle, FaTimesCircle, FaLightbulb } from "react-icons/fa";
-import { getTestAttempt } from "../../selectors";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
+import {
+  FaArrowLeft,
+  FaArrowRight,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaLightbulb,
+  FaClipboardCheck,
+} from "react-icons/fa";
+import { getTestAttempt, getSubmissionReview } from "../../selectors";
+import { fetchSubmissionReview } from "../../actions";
+import Loader from "../../../components/Loader";
+import {
+  QUESTION_KIND, getTypeConfig, isAnswered, isCorrect, getCorrectAnswerLabel, getSelectedAnswerLabel,
+} from "../../questionTypes";
+
+const LEGEND = [
+  { label: "Correct", bg: "#2E7D32" },
+  { label: "Incorrect", bg: "#D32F2F" },
+  { label: "Not Answered", bg: "gray.300" },
+];
 
 export default function Review() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { submissionId } = useParams();
   const attempt = useSelector(getTestAttempt);
+  const submissionReview = useSelector(getSubmissionReview);
   const [current, setCurrent] = useState(0);
 
-  if (!attempt) return <Navigate to="/test-series" replace />;
+  useEffect(() => {
+    if (submissionId) dispatch(fetchSubmissionReview(submissionId));
+  }, [dispatch, submissionId]);
 
-  const questions = attempt.questions;
+  if (submissionId) {
+    if (!submissionReview) return <Loader fullScreen />;
+  } else if (!attempt) {
+    return <Navigate to="/test-series" replace />;
+  }
+
+  const questions = submissionId ? submissionReview : attempt.questions;
   const q = questions[current];
-  const isCorrect = q.selected === q.correctAnswer;
+  const config = getTypeConfig(q.type);
+  const answered = isAnswered(q, q.selected);
+  const correct = isCorrect(q, q.selected);
+  const selectedValues = config.kind === QUESTION_KIND.MULTI_SELECT && Array.isArray(q.selected) ? q.selected : [];
+  const progressPercent = ((current + 1) / questions.length) * 100;
+
+  const goPrevious = () => setCurrent((c) => Math.max(0, c - 1));
+  const goNext = () => setCurrent((c) => Math.min(questions.length - 1, c + 1));
 
   return (
-    <Box bg="#F8F9FA" minH="100vh" py={{ base: 10, md: 14 }}>
-      <Container maxW="4xl">
+    <Box bg="#F8F9FA" minH="100vh" p={{ base: 4, md: 6 }}>
+      {/* Header */}
+      <Flex
+        bg="white"
+        p={5}
+        borderRadius="xl"
+        border="1px solid"
+        borderColor="gray.100"
+        justify="space-between"
+        align="center"
+        boxShadow="0 2px 10px rgba(0,0,0,0.05)"
+        mb={5}
+        wrap="wrap"
+        gap={3}
+      >
+        <Heading size="md" color="#0C1222" fontWeight={800}>
+          Review Answers
+        </Heading>
+
+        <Button
+          variant="outline"
+          borderRadius="lg"
+          size="sm"
+          onClick={() => navigate(submissionId ? `/result/${submissionId}` : "/result")}
+        >
+          <FaClipboardCheck size={12} />
+          Back to Result
+        </Button>
+      </Flex>
+
+      <Grid templateColumns={{ base: "1fr", lg: "3fr 1fr" }} gap={5}>
+        {/* Question Section */}
         <Box
           bg="white"
-          borderRadius="2xl"
+          p={{ base: 5, md: 7 }}
+          borderRadius="xl"
           border="1px solid"
           borderColor="gray.100"
-          boxShadow="0 2px 14px rgba(0,0,0,0.06)"
-          p={{ base: 6, md: 10 }}
+          boxShadow="0 2px 10px rgba(0,0,0,0.05)"
         >
-          <HStack justify="space-between" align="center" mb={6} wrap="wrap" gap={3}>
-            <Heading size="md" color="#0C1222" fontWeight={800}>
-              Review Answers
-            </Heading>
+          <Flex justify="space-between" align="center" mb={2} wrap="wrap" gap={2}>
+            <Text color="#039BE5" fontWeight={700} fontSize="sm" letterSpacing="0.02em">
+              QUESTION {current + 1} OF {questions.length}
+            </Text>
+            <Text
+              fontSize="xs"
+              fontWeight={700}
+              px={2.5}
+              py={0.5}
+              borderRadius="full"
+              bg={!answered ? "gray.100" : correct ? "green.50" : "red.50"}
+              color={!answered ? "gray.500" : correct ? "green.600" : "red.600"}
+            >
+              {!answered ? "Not Answered" : correct ? "Correct" : "Incorrect"}
+            </Text>
+          </Flex>
 
-            <HStack gap={1.5}>
-              {questions.map((item, index) => (
-                <Box
-                  key={item.id}
-                  as="button"
-                  onClick={() => setCurrent(index)}
-                  w="8px"
-                  h="8px"
-                  borderRadius="full"
-                  bg={index === current ? "#039BE5" : "gray.200"}
-                  transition="all 0.15s"
-                />
-              ))}
-            </HStack>
-          </HStack>
+          <Box bg="gray.100" borderRadius="full" h="6px" overflow="hidden" mb={6}>
+            <Box
+              h="100%"
+              borderRadius="full"
+              bg="#039BE5"
+              w={`${progressPercent}%`}
+              transition="width 0.3s ease"
+            />
+          </Box>
 
-          <Text
-            display="inline-block"
-            bg="blue.50"
-            color="#039BE5"
-            fontSize="xs"
-            fontWeight={700}
-            px={3}
-            py={1}
-            borderRadius="full"
-            mb={4}
-          >
-            Question {current + 1} of {questions.length}
-          </Text>
-
-          <Text fontWeight={700} fontSize="lg" color="#0C1222" mb={6} lineHeight="1.5">
+          <Heading size="md" color="#0C1222" fontWeight={700} mb={6} lineHeight="1.5">
             {q.question}
-          </Text>
+          </Heading>
 
-          <Stack align="stretch" gap={3}>
-            {q.options.map((option) => {
-              const isCorrectOption = option === q.correctAnswer;
-              const isSelectedOption = option === q.selected;
-              return (
-                <HStack
-                  key={option}
-                  justify="space-between"
-                  p={4}
-                  border="2px solid"
-                  borderColor={
-                    isCorrectOption
-                      ? "green.400"
-                      : isSelectedOption
-                      ? "red.400"
-                      : "gray.200"
-                  }
-                  borderRadius="lg"
-                  bg={
-                    isCorrectOption
-                      ? "green.50"
-                      : isSelectedOption
-                      ? "red.50"
-                      : "white"
-                  }
-                >
-                  <Text color="#0C1222" fontWeight={500}>{option}</Text>
-                  {isCorrectOption && <FaCheckCircle color="#22C55E" size={16} />}
-                  {!isCorrectOption && isSelectedOption && <FaTimesCircle color="#EF5350" size={16} />}
-                </HStack>
-              );
-            })}
-          </Stack>
+          {config.hasAssertionReason && (
+            <Stack gap={1} mb={5} bg="gray.50" borderRadius="lg" p={4}>
+              <Text color="#0C1222"><Text as="span" fontWeight={700}>Reason (R): </Text>{q.reason}</Text>
+            </Stack>
+          )}
+
+          {config.kind === QUESTION_KIND.TEXT_ANSWER ? (
+            <Stack align="stretch" gap={3}>
+              <Flex
+                justify="space-between"
+                align="center"
+                gap={3}
+                p={4}
+                border="2px solid"
+                borderColor={!answered ? "gray.200" : correct ? "green.400" : "red.400"}
+                borderRadius="lg"
+                bg={!answered ? "white" : correct ? "green.50" : "red.50"}
+              >
+                <Text color="#0C1222" fontWeight={500}>{q.selected || "Not Answered"}</Text>
+                {answered && (correct
+                  ? <FaCheckCircle color="#22C55E" size={16} style={{ flexShrink: 0 }} />
+                  : <FaTimesCircle color="#EF5350" size={16} style={{ flexShrink: 0 }} />)}
+              </Flex>
+            </Stack>
+          ) : (
+            <Stack align="stretch" gap={3}>
+              {(q.options || []).map((option, index) => {
+                const isCorrectOption = (q.correctOptionIndexes || []).includes(index);
+                const isSelectedOption = config.kind === QUESTION_KIND.MULTI_SELECT
+                  ? selectedValues.includes(option)
+                  : q.selected === option;
+                return (
+                  <Flex
+                    key={option}
+                    justify="space-between"
+                    align="center"
+                    gap={3}
+                    p={4}
+                    border="2px solid"
+                    borderColor={
+                      isCorrectOption
+                        ? "green.400"
+                        : isSelectedOption
+                        ? "red.400"
+                        : "gray.200"
+                    }
+                    borderRadius="lg"
+                    bg={
+                      isCorrectOption
+                        ? "green.50"
+                        : isSelectedOption
+                        ? "red.50"
+                        : "white"
+                    }
+                  >
+                    <Text color="#0C1222" fontWeight={500}>{option}</Text>
+                    {isCorrectOption && <FaCheckCircle color="#22C55E" size={16} style={{ flexShrink: 0 }} />}
+                    {!isCorrectOption && isSelectedOption && <FaTimesCircle color="#EF5350" size={16} style={{ flexShrink: 0 }} />}
+                  </Flex>
+                );
+              })}
+            </Stack>
+          )}
 
           <Stack gap={3} mt={6}>
-            <HStack fontSize="sm">
+            <Flex fontSize="sm" wrap="wrap" gap={2}>
               <Text fontWeight={700} color="#0C1222">Your Answer:</Text>
-              <Text fontWeight={600} color={q.selected ? (isCorrect ? "green.500" : "red.500") : "gray.500"}>
-                {q.selected || "Not Answered"}
+              <Text fontWeight={600} color={answered ? (correct ? "green.500" : "red.500") : "gray.500"}>
+                {getSelectedAnswerLabel(q, q.selected) || "Not Answered"}
               </Text>
-            </HStack>
+            </Flex>
 
-            <HStack fontSize="sm">
+            <Flex fontSize="sm" wrap="wrap" gap={2}>
               <Text fontWeight={700} color="#0C1222">Correct Answer:</Text>
-              <Text fontWeight={600} color="green.500">{q.correctAnswer}</Text>
-            </HStack>
+              <Text fontWeight={600} color="green.500">{getCorrectAnswerLabel(q)}</Text>
+            </Flex>
 
-            <HStack
-              align="flex-start"
-              gap={3}
-              bg="blue.50"
-              p={4}
-              borderRadius="lg"
-            >
-              <Box color="#039BE5" mt={0.5}>
+            <Flex align="flex-start" gap={3} bg="blue.50" p={4} borderRadius="lg">
+              <Box color="#039BE5" mt={0.5} flexShrink={0}>
                 <FaLightbulb size={16} />
               </Box>
               <Box>
-                <Text fontWeight={700} color="#0C1222" fontSize="sm" mb={1}>Explanation</Text>
-                <Text fontSize="sm" color="gray.600">{q.explanation}</Text>
+                <Text fontWeight={700} color="#0C1222" fontSize="sm" mb={1}>Solution / Explanation</Text>
+                <Text fontSize="sm" color="gray.600">
+                  {q.explanation || "No explanation provided for this question."}
+                </Text>
               </Box>
-            </HStack>
+            </Flex>
           </Stack>
 
-          <HStack mt={8} justify="space-between">
+          <Flex mt={8} justify="space-between" wrap="wrap" gap={3}>
             <Button
-              variant="outline"
+              border="2px solid"
+              borderColor="gray.300"
+              color="#0C1222"
+              bg="white"
+              fontWeight={700}
               borderRadius="lg"
+              _hover={{ borderColor: "#039BE5", color: "#039BE5" }}
               disabled={current === 0}
-              onClick={() => setCurrent(current - 1)}
+              onClick={goPrevious}
+              flex={{ base: "1 1 100%", sm: "0 1 auto" }}
             >
               <FaArrowLeft size={12} />
               Previous
@@ -155,14 +247,94 @@ export default function Review() {
               borderRadius="lg"
               _hover={{ bg: "#0277BD" }}
               disabled={current === questions.length - 1}
-              onClick={() => setCurrent(current + 1)}
+              onClick={goNext}
+              flex={{ base: "1 1 100%", sm: "0 1 auto" }}
             >
               Next
               <FaArrowRight size={12} />
             </Button>
-          </HStack>
+          </Flex>
         </Box>
-      </Container>
+
+        {/* Question Palette */}
+        <Box
+          bg="white"
+          p={5}
+          borderRadius="xl"
+          border="1px solid"
+          borderColor="gray.100"
+          boxShadow="0 2px 10px rgba(0,0,0,0.05)"
+          alignSelf="start"
+          position={{ lg: "sticky" }}
+          top={{ lg: "24px" }}
+        >
+          <Heading size="sm" color="#0C1222" fontWeight={700} mb={4}>
+            Question Palette
+          </Heading>
+
+          <Grid
+            templateColumns="repeat(5, 1fr)"
+            gap={2.5}
+            mb={4}
+            maxH={{ base: "220px", lg: "440px" }}
+            overflowY="auto"
+            pr={1}
+          >
+            {questions.map((item, index) => {
+              const active = current === index;
+              const itemAnswered = isAnswered(item, item.selected);
+              const itemCorrect = isCorrect(item, item.selected);
+
+              let bg = "gray.300";
+              let color = "gray.700";
+              let borderColor = "gray.300";
+              if (itemAnswered) {
+                bg = itemCorrect ? "#2E7D32" : "#D32F2F";
+                color = "white";
+                borderColor = bg;
+              }
+              if (active) {
+                bg = "#039BE5";
+                color = "white";
+                borderColor = "#039BE5";
+              }
+
+              return (
+                <Box
+                  key={item.id ?? index}
+                  as="button"
+                  onClick={() => setCurrent(index)}
+                  h="38px"
+                  borderRadius="md"
+                  fontSize="sm"
+                  fontWeight={700}
+                  bg={bg}
+                  color={color}
+                  border="1px solid"
+                  borderColor={borderColor}
+                  boxShadow={active ? "0 2px 8px rgba(3,155,229,0.35)" : "none"}
+                  transition="all 0.15s"
+                  _hover={{
+                    borderColor: "#039BE5",
+                    color: active ? "white" : "#039BE5",
+                  }}
+                >
+                  {index + 1}
+                </Box>
+              );
+            })}
+          </Grid>
+
+          <Grid gap={1.5}>
+            {LEGEND.map((item) => (
+              <HStack key={item.label} gap={2}>
+                <Box w="10px" h="10px" borderRadius="sm" bg={item.bg} flexShrink={0} />
+                <Text fontSize="xs" color="gray.500">{item.label}</Text>
+              </HStack>
+            ))}
+          </Grid>
+        </Box>
+      </Grid>
     </Box>
   );
 }

@@ -1,36 +1,42 @@
-import { Badge, Box, Button, Flex, Heading, HStack, Text, VStack } from "@chakra-ui/react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Pencil, Trash2, CheckCircle2 } from "lucide-react";
-import { useQuestions } from "../../context/QuestionsContext";
-import { TEST_CATEGORIES } from "../../../data/testSeries";
+import { useDispatch } from "react-redux";
+import { Box, Button, Flex, Heading, HStack, Text } from "@chakra-ui/react";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { Pencil, Trash2 } from "lucide-react";
 import Breadcrumb from "../common/Breadcrumb";
 import BackButton from "../common/BackButton";
-
-const DIFFICULTY_COLOR = { Easy: "green", Medium: "orange", Hard: "red" };
+import QuestionTypeBadge from "./QuestionTypeBadge";
+import QuestionAnswerView from "./QuestionAnswerView";
+import { getTypeConfig } from "../../../pages/questionTypes";
+import { deleteQuestion } from "../../../pages/actions";
 
 export default function QuestionsView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getQuestion, deleteQuestion } = useQuestions();
-  const question = getQuestion(id);
+  const location = useLocation();
+  const dispatch = useDispatch();
 
-  if (!question) {
+  // Comes from QuestionsList's Preview action — this page doesn't have a
+  // "fetch one question" endpoint of its own, so a direct link/refresh here
+  // (without having come from the list) has nothing to show.
+  const { question, testId, categoryId, testTitle } = location.state || {};
+
+  if (!question || String(question.id) !== String(id)) {
     return (
       <Box bg="white" p={8} borderRadius="xl" boxShadow="md">
-        <Text color="gray.500">Question not found.</Text>
+        <Text color="gray.500">Open this question from the Questions list to preview it.</Text>
         <BackButton to="/admin/questions" label="Back to Questions" />
       </Box>
     );
   }
 
-  const categoryTitle = TEST_CATEGORIES.find((c) => c.slug === question.categorySlug)?.title || question.categorySlug;
-
   const handleDelete = () => {
     if (window.confirm("Delete this question? This cannot be undone.")) {
-      deleteQuestion(id);
-      navigate("/admin/questions");
+      dispatch(deleteQuestion({ testId, questionId: question.id }));
+      navigate("/admin/questions", { state: { categoryId, testId } });
     }
   };
+
+  const typeConfig = getTypeConfig(question.type);
 
   return (
     <Box>
@@ -46,16 +52,18 @@ export default function QuestionsView() {
       <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="800px">
         <Flex justify="space-between" align="flex-start" mb={6} gap={4} wrap="wrap">
           <Box>
-            <Badge colorPalette={DIFFICULTY_COLOR[question.difficulty]} rounded="md" px={2} mb={2}>{question.difficulty}</Badge>
-            <Heading size="lg" color="#0C1222">{categoryTitle}</Heading>
-            <Text color="gray.500" mt={1}>Mock Test {question.mockTestNumber}</Text>
+            {testTitle && <Heading size="lg" color="#0C1222" mb={2}>{testTitle}</Heading>}
+            <HStack gap={3}>
+              <QuestionTypeBadge type={question.type} />
+              <Text fontSize="xs" color="gray.500" fontWeight={600}>{question.marks ?? 1} mark(s)</Text>
+            </HStack>
           </Box>
 
           <HStack gap={3}>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => navigate(`/admin/questions/edit/${question.id}`)}
+              onClick={() => navigate(`/admin/questions/edit/${question.id}`, { state: { question, testId, categoryId, testTitle } })}
             >
               <Pencil size={16} style={{ marginRight: 6 }} />
               Edit
@@ -68,30 +76,11 @@ export default function QuestionsView() {
         </Flex>
 
         <Box borderTop="1px solid" borderColor="gray.100" pt={5}>
-          <Text fontSize="xs" color="gray.400" mb={2}>Question</Text>
+          <Text fontSize="xs" color="gray.400" mb={2}>{typeConfig.hasAssertionReason ? "Assertion" : "Question"}</Text>
           <Text color="#0C1222" fontWeight={600} whiteSpace="pre-wrap">{question.text}</Text>
         </Box>
 
-        <VStack align="stretch" gap={2} mt={5}>
-          <Text fontSize="xs" color="gray.400">Options</Text>
-          {question.options.map((opt, index) => (
-            <Flex
-              key={index}
-              align="center"
-              gap={2}
-              p={3}
-              rounded="lg"
-              bg={index === question.correctIndex ? "green.50" : "gray.50"}
-              border="1px solid"
-              borderColor={index === question.correctIndex ? "green.200" : "gray.100"}
-            >
-              {index === question.correctIndex && <CheckCircle2 size={16} color="#38A169" />}
-              <Text color="#0C1222" fontWeight={index === question.correctIndex ? 600 : 400}>
-                {opt}
-              </Text>
-            </Flex>
-          ))}
-        </VStack>
+        <QuestionAnswerView question={question} />
 
         {question.explanation && (
           <Box borderTop="1px solid" borderColor="gray.100" pt={5} mt={5}>

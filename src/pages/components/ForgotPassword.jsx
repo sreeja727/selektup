@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { Box, Button, HStack, Input, Text, VStack } from '@chakra-ui/react'
-import { FaPhoneAlt, FaEnvelope, FaMobileAlt, FaShieldAlt } from 'react-icons/fa'
+import { FaMobileAlt, FaShieldAlt } from 'react-icons/fa'
 import { forgotPassword, verifyOtp } from '../actions'
 import { getApiLoading, getForgotPasswordData } from '../selectors'
 
@@ -100,7 +100,7 @@ export default function ForgotPassword() {
 
             <Text fontSize="sm" color="gray.500" maxW="340px">
               Enter your registered mobile number. We'll email a one-time
-              password (OTP) to the address linked to your account.
+              password (OTP) to the email address linked to your account.
             </Text>
 
             <Box w="100%">
@@ -156,50 +156,6 @@ export default function ForgotPassword() {
               Send OTP
             </Button>
 
-            <Text fontSize="xs" color="gray.400" mt={1}>Or reach us directly:</Text>
-
-            <VStack gap={3} w="100%">
-              <HStack
-                as="a"
-                href="tel:+918089712121"
-                w="100%"
-                justify="center"
-                gap={2}
-                py={3}
-                borderRadius="lg"
-                border="1px solid"
-                borderColor="gray.200"
-                color="#0C1222"
-                fontWeight={600}
-                fontSize="sm"
-                _hover={{ borderColor: '#039BE5', color: '#039BE5' }}
-                transition="all 0.15s"
-              >
-                <FaPhoneAlt size={13} />
-                <Text>+91 8089712121</Text>
-              </HStack>
-
-              <HStack
-                as="a"
-                href="mailto:selektup@gmail.com"
-                w="100%"
-                justify="center"
-                gap={2}
-                py={3}
-                borderRadius="lg"
-                border="1px solid"
-                borderColor="gray.200"
-                color="#0C1222"
-                fontWeight={600}
-                fontSize="sm"
-                _hover={{ borderColor: '#039BE5', color: '#039BE5' }}
-                transition="all 0.15s"
-              >
-                <FaEnvelope size={13} />
-                <Text>selektup@gmail.com</Text>
-              </HStack>
-            </VStack>
-
             <Text fontSize="sm" color="gray.500" mt={2}>
               Remember your password?{' '}
               <Box as={Link} to="/login" color="#039BE5" fontWeight={700} _hover={{ textDecoration: 'underline' }}>
@@ -218,7 +174,7 @@ export default function ForgotPassword() {
             </Text>
 
             <Text fontSize="sm" color="gray.500" maxW="340px">
-              We've emailed a 6-digit code to the address linked to{' '}
+              We've emailed a 6-digit code to the email address linked to{' '}
               <Text as="span" fontWeight={700} color="#0C1222">{mobile}</Text>.
               Enter it below to continue.
             </Text>

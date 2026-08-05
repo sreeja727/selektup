@@ -1,6 +1,6 @@
 import { createAction } from '@reduxjs/toolkit';
 import {
-  all, takeLatest, put, fork, take, call, delay
+  all, takeLatest, put, fork, take, call, delay, select
 } from 'redux-saga/effects';
 import { _ } from '../common/lodash';
 import { handleAPIRequest } from '../utils/http';
@@ -9,6 +9,8 @@ import { actions } from './slice';
 import { ACTION_TYPES, ACTIONS } from './actions';
 import * as api from './api';
 import { toaster } from '../components/ui/toaster';
+import { getAdminRequests } from './selectors';
+import { ACCESS_STATUS } from './constants';
 
 const ADMIN_ROLE = 'ADMIN';
 const MOCK_LATENCY_MS = 300;
@@ -281,20 +283,23 @@ function* fetchAdminRequestsSaga() {
   ]);
 }
 
+// approve/reject return no body (ApiResponseVoid), so the row's studentName/
+// categoryTitle for the toast — and the id/status to patch adminRequests
+// with — come from what's already in Redux, not the response.
 function* approveRequestSaga({ payload: requestId }) {
+  const requests = yield select(getAdminRequests);
+  const target = requests.find((r) => r.requestId === requestId);
+
   yield fork(handleAPIRequest, api.approveCategoryAccessApi, requestId);
-  const {
-    payload: apiPayload = {},
-    type = ''
-  } = yield take([
+  const { type } = yield take([
     ACTION_TYPES[ACTIONS.APPROVE_REQUEST][1],
     ACTION_TYPES[ACTIONS.APPROVE_REQUEST][2]
   ]);
   if (type === ACTION_TYPES[ACTIONS.APPROVE_REQUEST][1]) {
-    const record = apiPayload.data?.data;
+    yield put(actions.setAdminRequestStatus({ requestId, status: ACCESS_STATUS.APPROVED }));
     toaster.create({
       title: 'Access approved',
-      description: record ? `${record.studentName} now has access to ${record.categoryTitle}.` : 'Request approved.',
+      description: target ? `${target.studentName} now has access to ${target.categoryTitle}.` : 'Request approved.',
       type: 'success',
       duration: 4000,
       closable: true
@@ -303,19 +308,19 @@ function* approveRequestSaga({ payload: requestId }) {
 }
 
 function* rejectRequestSaga({ payload: requestId }) {
+  const requests = yield select(getAdminRequests);
+  const target = requests.find((r) => r.requestId === requestId);
+
   yield fork(handleAPIRequest, api.rejectCategoryAccessApi, requestId);
-  const {
-    payload: apiPayload = {},
-    type = ''
-  } = yield take([
+  const { type } = yield take([
     ACTION_TYPES[ACTIONS.REJECT_REQUEST][1],
     ACTION_TYPES[ACTIONS.REJECT_REQUEST][2]
   ]);
   if (type === ACTION_TYPES[ACTIONS.REJECT_REQUEST][1]) {
-    const record = apiPayload.data?.data;
+    yield put(actions.setAdminRequestStatus({ requestId, status: ACCESS_STATUS.REJECTED }));
     toaster.create({
       title: 'Access rejected',
-      description: record ? `${record.studentName}'s request for ${record.categoryTitle} was rejected.` : 'Request rejected.',
+      description: target ? `${target.studentName}'s request for ${target.categoryTitle} was rejected.` : 'Request rejected.',
       type: 'info',
       duration: 4000,
       closable: true
@@ -416,12 +421,247 @@ function* fetchAdminEnquiriesSaga() {
   ]);
 }
 
+function* fetchAdminDashboardSummarySaga() {
+  yield fork(handleAPIRequest, api.getAdminDashboardSummaryApi);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_DASHBOARD_SUMMARY][1],
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_DASHBOARD_SUMMARY][2]
+  ]);
+}
+
+function* downloadQuestionTemplateSaga({ payload: testId }) {
+  yield fork(handleAPIRequest, api.downloadQuestionTemplateApi, testId);
+  const {
+    payload: apiPayload = {},
+    type = ''
+  } = yield take([
+    ACTION_TYPES[ACTIONS.DOWNLOAD_QUESTION_TEMPLATE][1],
+    ACTION_TYPES[ACTIONS.DOWNLOAD_QUESTION_TEMPLATE][2]
+  ]);
+  if (type === ACTION_TYPES[ACTIONS.DOWNLOAD_QUESTION_TEMPLATE][1]) {
+    const { url, ext = 'xlsx' } = apiPayload.data || {};
+    if (url) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `question-upload-template.${ext}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  } else {
+    toaster.create({
+      title: 'Download failed',
+      description: 'Could not download the question template. Please try again.',
+      type: 'error',
+      duration: 4000,
+      closable: true
+    });
+  }
+}
+
 function* submitContactSaga({ payload }) {
   yield fork(handleAPIRequest, api.submitContactApi, payload);
   yield take([
     ACTION_TYPES[ACTIONS.SUBMIT_CONTACT][1],
     ACTION_TYPES[ACTIONS.SUBMIT_CONTACT][2]
   ]);
+}
+
+function* fetchTestQuestionsSaga({ payload: testId }) {
+  yield fork(handleAPIRequest, api.getTestQuestionsApi, testId);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_TEST_QUESTIONS][1],
+    ACTION_TYPES[ACTIONS.FETCH_TEST_QUESTIONS][2]
+  ]);
+}
+
+function* fetchAdminTestQuestionsSaga({ payload }) {
+  yield fork(handleAPIRequest, api.getAdminTestQuestionsApi, payload);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_TEST_QUESTIONS][1],
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_TEST_QUESTIONS][2]
+  ]);
+}
+
+function* submitTestSaga({ payload }) {
+  yield fork(handleAPIRequest, api.submitTestApi, payload);
+  yield take([
+    ACTION_TYPES[ACTIONS.SUBMIT_TEST][1],
+    ACTION_TYPES[ACTIONS.SUBMIT_TEST][2]
+  ]);
+}
+
+function* startTestSaga({ payload: testId }) {
+  yield fork(handleAPIRequest, api.startTestApi, testId);
+  yield take([
+    ACTION_TYPES[ACTIONS.START_TEST][1],
+    ACTION_TYPES[ACTIONS.START_TEST][2]
+  ]);
+}
+
+function* fetchSubmissionSaga({ payload: submissionId }) {
+  yield fork(handleAPIRequest, api.getSubmissionApi, submissionId);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_SUBMISSION][1],
+    ACTION_TYPES[ACTIONS.FETCH_SUBMISSION][2]
+  ]);
+}
+
+function* fetchSubmissionReviewSaga({ payload: submissionId }) {
+  yield fork(handleAPIRequest, api.getSubmissionReviewApi, submissionId);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_SUBMISSION_REVIEW][1],
+    ACTION_TYPES[ACTIONS.FETCH_SUBMISSION_REVIEW][2]
+  ]);
+}
+
+function* addQuestionSaga({ payload }) {
+  yield fork(handleAPIRequest, api.addQuestionApi, payload);
+  const { type } = yield take([
+    ACTION_TYPES[ACTIONS.ADD_QUESTION][1],
+    ACTION_TYPES[ACTIONS.ADD_QUESTION][2]
+  ]);
+  if (type === ACTION_TYPES[ACTIONS.ADD_QUESTION][1]) {
+    toaster.create({
+      title: 'Question saved',
+      description: 'Ready for the next question.',
+      type: 'success',
+      duration: 2500,
+      closable: true
+    });
+  }
+}
+
+function* updateQuestionSaga({ payload }) {
+  yield fork(handleAPIRequest, api.updateQuestionApi, payload);
+  const { type } = yield take([
+    ACTION_TYPES[ACTIONS.UPDATE_QUESTION][1],
+    ACTION_TYPES[ACTIONS.UPDATE_QUESTION][2]
+  ]);
+  if (type === ACTION_TYPES[ACTIONS.UPDATE_QUESTION][1]) {
+    toaster.create({
+      title: 'Question updated',
+      description: 'Your changes have been saved.',
+      type: 'success',
+      duration: 3500,
+      closable: true
+    });
+  }
+}
+
+function* bulkUploadQuestionsSaga({ payload }) {
+  yield fork(handleAPIRequest, api.bulkUploadQuestionsApi, payload);
+  const {
+    payload: apiPayload = {},
+    type = ''
+  } = yield take([
+    ACTION_TYPES[ACTIONS.BULK_UPLOAD_QUESTIONS][1],
+    ACTION_TYPES[ACTIONS.BULK_UPLOAD_QUESTIONS][2]
+  ]);
+  if (type === ACTION_TYPES[ACTIONS.BULK_UPLOAD_QUESTIONS][1]) {
+    const result = apiPayload.data?.data || {};
+    const added = Array.isArray(result.questions) ? result.questions.length : (result.addedCount ?? 0);
+    const errorCount = result.errors?.length || 0;
+    toaster.create({
+      title: 'Bulk upload complete',
+      description: `${added} question(s) added.${errorCount ? ` ${errorCount} row(s) had errors.` : ''}`,
+      type: errorCount ? 'warning' : 'success',
+      duration: 5000,
+      closable: true
+    });
+  }
+}
+
+function* deleteQuestionSaga({ payload }) {
+  const { questionId } = payload;
+  yield fork(handleAPIRequest, api.deleteQuestionApi, payload);
+  const { type } = yield take([
+    ACTION_TYPES[ACTIONS.DELETE_QUESTION][1],
+    ACTION_TYPES[ACTIONS.DELETE_QUESTION][2]
+  ]);
+  if (type === ACTION_TYPES[ACTIONS.DELETE_QUESTION][1]) {
+    yield put(actions.removeQuestion({ questionId }));
+    toaster.create({
+      title: 'Question deleted',
+      type: 'success',
+      duration: 3000,
+      closable: true
+    });
+  }
+}
+
+// When there's no active search/type filter, `isFiltered` is false and this
+// calls the real bulk DELETE /api/admin/tests/{testId}/questions endpoint
+// (confirmed via /v3/api-docs — no body, deletes everything unconditionally).
+// That endpoint can't be scoped to a subset, so when a filter IS active this
+// falls back to looping the single-question DELETE instead — sequential
+// rather than parallel so a slow/rate-limited backend isn't hit with e.g.
+// 199 requests at once; each failure is tallied rather than aborting the rest.
+function* deleteAllQuestionsSaga({ payload = {} }) {
+  const { testId, questionIds = [], isFiltered } = payload;
+
+  if (!isFiltered) {
+    yield put(actions.setDeleteAllQuestionsLoading(true));
+    yield fork(handleAPIRequest, api.deleteAllQuestionsApi, testId);
+    const { type } = yield take([
+      ACTION_TYPES[ACTIONS.DELETE_ALL_QUESTIONS][1],
+      ACTION_TYPES[ACTIONS.DELETE_ALL_QUESTIONS][2]
+    ]);
+    yield put(actions.setDeleteAllQuestionsLoading(false));
+    if (type === ACTION_TYPES[ACTIONS.DELETE_ALL_QUESTIONS][1]) {
+      yield put(actions.clearAdminTestQuestions());
+      toaster.create({
+        title: 'All questions deleted',
+        type: 'success',
+        duration: 4000,
+        closable: true
+      });
+    } else {
+      toaster.create({
+        title: 'Could not delete questions',
+        description: 'Please try again.',
+        type: 'error',
+        duration: 4000,
+        closable: true
+      });
+    }
+    return;
+  }
+
+  if (questionIds.length === 0) return;
+
+  yield put(actions.setDeleteAllQuestionsLoading(true));
+  let successCount = 0;
+  let failCount = 0;
+  for (const questionId of questionIds) {
+    const { error } = (yield call(handleAPIRequest, api.deleteQuestionApi, { testId, questionId })) || {};
+    if (_.isEmpty(error)) {
+      successCount += 1;
+      yield put(actions.removeQuestion({ questionId }));
+    } else {
+      failCount += 1;
+    }
+  }
+  yield put(actions.setDeleteAllQuestionsLoading(false));
+
+  if (failCount === 0) {
+    toaster.create({
+      title: 'All questions deleted',
+      description: `${successCount} question(s) removed.`,
+      type: 'success',
+      duration: 4000,
+      closable: true
+    });
+  } else {
+    toaster.create({
+      title: 'Some questions could not be deleted',
+      description: `${successCount} removed, ${failCount} failed. Try again for the remaining ones.`,
+      type: 'warning',
+      duration: 5000,
+      closable: true
+    });
+  }
 }
 
 export default function* pagesSaga() {
@@ -445,6 +685,19 @@ export default function* pagesSaga() {
     takeLatest(ACTIONS.BLOCK_STUDENT, blockStudentSaga),
     takeLatest(ACTIONS.UNBLOCK_STUDENT, unblockStudentSaga),
     takeLatest(ACTIONS.FETCH_ADMIN_ENQUIRIES, fetchAdminEnquiriesSaga),
-    takeLatest(ACTIONS.SUBMIT_CONTACT, submitContactSaga)
+    takeLatest(ACTIONS.SUBMIT_CONTACT, submitContactSaga),
+    takeLatest(ACTIONS.FETCH_TEST_QUESTIONS, fetchTestQuestionsSaga),
+    takeLatest(ACTIONS.SUBMIT_TEST, submitTestSaga),
+    takeLatest(ACTIONS.START_TEST, startTestSaga),
+    takeLatest(ACTIONS.FETCH_SUBMISSION, fetchSubmissionSaga),
+    takeLatest(ACTIONS.FETCH_SUBMISSION_REVIEW, fetchSubmissionReviewSaga),
+    takeLatest(ACTIONS.ADD_QUESTION, addQuestionSaga),
+    takeLatest(ACTIONS.UPDATE_QUESTION, updateQuestionSaga),
+    takeLatest(ACTIONS.BULK_UPLOAD_QUESTIONS, bulkUploadQuestionsSaga),
+    takeLatest(ACTIONS.DELETE_QUESTION, deleteQuestionSaga),
+    takeLatest(ACTIONS.DELETE_ALL_QUESTIONS, deleteAllQuestionsSaga),
+    takeLatest(ACTIONS.FETCH_ADMIN_DASHBOARD_SUMMARY, fetchAdminDashboardSummarySaga),
+    takeLatest(ACTIONS.DOWNLOAD_QUESTION_TEMPLATE, downloadQuestionTemplateSaga),
+    takeLatest(ACTIONS.FETCH_ADMIN_TEST_QUESTIONS, fetchAdminTestQuestionsSaga)
   ]);
 }
