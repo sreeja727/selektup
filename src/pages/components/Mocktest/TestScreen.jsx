@@ -17,8 +17,10 @@ import QuestionPalette from "./QuestionPalette";
 import QuestionAnswerInput from "./QuestionAnswerInput";
 import SubmitModal from "./SubmitModal";
 import { buildQuestionSet } from "./questionBank";
+import AlreadyAttempted from "./AlreadyAttempted";
 import { getTest } from "../../../data/testSeries";
 import { isLoggedIn } from "../../../utils/auth";
+import { getAttemptRecord, hasAttemptedTest, recordTestAttempt } from "../../../utils/mockTestAttempts";
 import {
   fetchAccessStatus, fetchTestCategories, fetchTestCategoryDetail, fetchTestDetail,
   fetchTestQuestions, submitTest, startTest,
@@ -28,7 +30,7 @@ import {
   getRawStatusForCategory, getStatusLoading,
   getTestCategories, getTestCategoryDetail,
   getTestDetail, getTestQuestions, getTestQuestionsLoading,
-  getSubmitTestLoading, getSubmitTestResult,
+  getSubmitTestLoading, getSubmitTestResult, getTestAlreadyAttempted, getTestAlreadyAttemptedSubmissionId,
 } from "../../selectors";
 import { ACCESS_STATUS } from "../../constants";
 import { isAnswered, buildSubmitAnswer } from "../../questionTypes";
@@ -50,6 +52,12 @@ export default function TestScreen() {
   const testQuestionsLoading = useSelector(getTestQuestionsLoading);
   const submitTestLoading = useSelector(getSubmitTestLoading);
   const submitTestResult = useSelector(getSubmitTestResult);
+  // The backend itself rejects a second start/questions/submit for a given
+  // test with 409 Conflict — its own authoritative "already attempted"
+  // signal (see slice.js), which catches attempts made on a different
+  // browser/device than the localStorage check below can see.
+  const serverAttempted = useSelector(getTestAlreadyAttempted);
+  const serverAttemptedSubmissionId = useSelector(getTestAlreadyAttemptedSubmissionId);
   const realCategory = useMemo(
     () => realCategories.find((c) => String(c.id) === categorySlug),
     [realCategories, categorySlug]
@@ -60,6 +68,11 @@ export default function TestScreen() {
   const realTest = realDetailMatches ? realDetail.tests?.find((t) => String(t.id) === testSlug) : null;
   const result = mockResult || (isReal && realTest ? { category: realCategory, test: realTest } : null);
   const testTitle = result ? `${result.category.title} — ${result.test.title}` : "Mock Test";
+  // realTest.attempted (MockTestSummaryDto, confirmed via OpenAPI) is the
+  // backend's own record, known as soon as the category detail loads —
+  // catches a direct/deep-linked visit immediately, without waiting on the
+  // 409 that serverAttempted below depends on.
+  const attempted = Boolean(realTest?.attempted) || hasAttemptedTest(categorySlug, testSlug) || serverAttempted;
 
   const loggedIn = isLoggedIn();
   // eslint-disable-next-line no-unused-vars -- TEMP: unused while the gate below is disabled
@@ -115,7 +128,7 @@ export default function TestScreen() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (!loggedIn || !categorySlug) return;
+    if (!loggedIn || !categorySlug || attempted) return;
     if (isReal) {
       dispatch(fetchTestCategoryDetail(categorySlug));
       dispatch(fetchTestDetail({ categoryId: categorySlug, testId: testSlug }));
@@ -125,7 +138,18 @@ export default function TestScreen() {
       dispatch(fetchAccessStatus(categorySlug));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categorySlug, testSlug, loggedIn, isReal]);
+  }, [categorySlug, testSlug, loggedIn, isReal, attempted]);
+
+  // Once the backend's 409 reveals this test was already attempted, persist
+  // that locally too — so the next visit (e.g. Instructions.jsx, which only
+  // has the localStorage check, not its own start/questions call) can block
+  // it immediately without needing another round trip to discover the same
+  // thing. recordTestAttempt() itself is a no-op if a local record already
+  // exists, so this never clobbers a genuine submissionId/snapshot.
+  useEffect(() => {
+    if (!serverAttempted || !categorySlug || !testSlug) return;
+    recordTestAttempt(categorySlug, testSlug, { submissionId: serverAttemptedSubmissionId ?? null });
+  }, [serverAttempted, serverAttemptedSubmissionId, categorySlug, testSlug]);
 
   // Real per-test duration/marks/cutoff/negative-marking need the authed
   // detail call; the question count has to be known up front to build a
@@ -150,17 +174,10 @@ export default function TestScreen() {
   const totalMarks = isReal && realTestDetailMatches
     ? (realTestDetail.totalMarks ?? totalQuestions ?? 100)
     : (mockResult?.test.marks ?? totalQuestions ?? 100);
-  // Falls back to 75 when the backend hasn't set a duration yet (0/null/undefined)
-  // — Timer starts counting down from `duration * 60` and fires onTimeUp the
-  // instant it mounts if that's <= 0, which would auto-submit before the
-  // student ever sees a question. Matches the placeholder shown on the
-  // Instructions screen so the promised duration and the actual timer agree.
+
   const durationMinutes = isReal && realTestDetailMatches ? (realTestDetail.durationMinutes || 75) : (mockResult?.test.duration ?? 120);
   const cutOffMarks = isReal && realTestDetailMatches ? (realTestDetail.cutOffMarks ?? 35) : 35;
-  // Fixed marking scheme: +1 mark per correct answer, -1/3 mark per wrong
-  // answer, no deduction for unattempted questions (matches the Instructions
-  // screen). Expressed as a fraction of marksPerQuestion so it still scales
-  // correctly if a test isn't weighted exactly 1 mark per question.
+ 
   const NEGATIVE_MARK_FRACTION = 1 / 3;
 
   const questions = useMemo(() => {
@@ -168,16 +185,13 @@ export default function TestScreen() {
     return isPendingRealDetail ? [] : buildQuestionSet(totalQuestions || 10);
   }, [isReal, realQuestions, isPendingRealDetail, totalQuestions]);
 
-  // True once every loading gate below has cleared and the question UI is
-  // about to actually render.
+  
   const examReady = !isPendingRealDetail && questions.length > 0 && !(isReal && testQuestionsLoading) && !(isReal && submitTestLoading);
   useEffect(() => {
     if (examReady) examStartedRef.current = true;
   }, [examReady]);
 
-  // Persists the in-progress attempt to localStorage on every change
-  // (debounced) — see the lazy `savedAttempt` initializer above for the
-  // restore side of this.
+
   useEffect(() => {
     if (!examReady) return;
     const handle = setTimeout(() => {
@@ -195,10 +209,7 @@ export default function TestScreen() {
   function finalizeAndSubmit() {
     if (submittedRef.current || questions.length === 0) return;
     submittedRef.current = true;
-    // The attempt is being finalized either way (mock path scores locally
-    // below, real path dispatches submitTest) — clear the auto-saved draft
-    // now so a later visit to this same test starts fresh instead of
-    // resuming a completed attempt.
+   
     try {
       localStorage.removeItem(attemptStorageKey);
     } catch {
@@ -206,10 +217,7 @@ export default function TestScreen() {
     }
 
     if (isReal) {
-      // Confirmed via OpenAPI: AnswerEntry is { questionId, selectedOption } —
-      // a single string for every type. buildSubmitAnswer encodes
-      // multi-select as comma-separated letters and text-answer as the
-      // literal answer text into that same field — see questionTypes.js.
+     
       const submitAnswers = questions.map((q, i) => buildSubmitAnswer(q, answers[i]));
       awaitingSubmitRef.current = true;
       dispatch(submitTest({ testId: testSlug, answers: submitAnswers }));
@@ -229,7 +237,7 @@ export default function TestScreen() {
     const penalty = wrong * marksPerQuestion * NEGATIVE_MARK_FRACTION;
     const score = Math.max(0, Math.round((correct * marksPerQuestion - penalty) * 100) / 100);
 
-    dispatch(actions.setTestAttempt({
+    const snapshot = {
       testTitle,
       totalQuestions: questions.length,
       totalMarks,
@@ -241,7 +249,9 @@ export default function TestScreen() {
       score,
       questions: questionResults,
       submittedAt: new Date().toISOString(),
-    }));
+    };
+    dispatch(actions.setTestAttempt(snapshot));
+    recordTestAttempt(categorySlug, testSlug, { submissionId: null, snapshot });
 
     navigate("/result", { replace: true });
   }
@@ -256,6 +266,7 @@ export default function TestScreen() {
 
     const r = submitTestResult;
     if (r.submissionId) {
+      recordTestAttempt(categorySlug, testSlug, { submissionId: r.submissionId });
       navigate(`/result/${r.submissionId}`, { replace: true });
       return;
     }
@@ -263,7 +274,7 @@ export default function TestScreen() {
     // Fallback for a backend that doesn't return a submissionId yet: build
     // the same testAttempt shape locally so Result/Review (mock-test path)
     // still work off Redux state.
-    dispatch(actions.setTestAttempt({
+    const snapshot = {
       testTitle,
       totalQuestions: questions.length,
       totalMarks: r.totalMarks ?? totalMarks,
@@ -275,7 +286,9 @@ export default function TestScreen() {
       score: r.score ?? 0,
       questions: questions.map((q, i) => ({ ...q, selected: answers[i] || null })),
       submittedAt: new Date().toISOString(),
-    }));
+    };
+    dispatch(actions.setTestAttempt(snapshot));
+    recordTestAttempt(categorySlug, testSlug, { submissionId: null, snapshot });
 
     navigate("/result", { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -312,6 +325,28 @@ export default function TestScreen() {
   }, [answers, questions, totalMarks, cutOffMarks, testTitle]);
 
   if (!result) return <Navigate to="/test-series" replace />;
+
+  if (attempted) {
+    return (
+      <AlreadyAttempted
+        categoryTitle={result.category.title}
+        testTitle={result.test.title}
+        onBack={() => navigate(`/test-series/${categorySlug}/${testSlug}`)}
+        onReview={() => {
+          const record = getAttemptRecord(categorySlug, testSlug);
+          const submissionId = record?.submissionId || serverAttemptedSubmissionId;
+          if (submissionId) {
+            navigate(`/review/${submissionId}`);
+          } else if (record?.snapshot) {
+            dispatch(actions.setTestAttempt(record.snapshot));
+            navigate("/review");
+          } else {
+            navigate("/test-series");
+          }
+        }}
+      />
+    );
+  }
 
   // TEMP: auth/access gate disabled to preview the screen without logging in.
   // Restore before shipping:

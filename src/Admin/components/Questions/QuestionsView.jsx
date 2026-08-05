@@ -14,10 +14,6 @@ export default function QuestionsView() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-
-  // Comes from QuestionsList's Preview action — this page doesn't have a
-  // "fetch one question" endpoint of its own, so a direct link/refresh here
-  // (without having come from the list) has nothing to show.
   const { question, testId, categoryId, testTitle } = location.state || {};
 
   if (!question || String(question.id) !== String(id)) {

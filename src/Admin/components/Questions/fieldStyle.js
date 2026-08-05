@@ -1,5 +1,3 @@
-// Shared Chakra field styling for every Questions admin screen — was
-// previously duplicated verbatim in QuestionsAdd/QuestionsEdit/QuestionsList.
 export const fieldStyle = {
   borderColor: "gray.200",
   borderWidth: "2px",

@@ -31,7 +31,6 @@ export default function StudentsList() {
   const [requestsPage, setRequestsPage] = useState(1);
   const [studentsPage, setStudentsPage] = useState(1);
 
-  // Debounce the search box so we don't hit the backend on every keystroke.
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(handle);
@@ -45,8 +44,6 @@ export default function StudentsList() {
     }));
   }, [dispatch, debouncedSearch, studentsPage]);
 
-  // Normalize the backend's { id, fullName, mobile, email, lastLoginAt, joined, blocked }
-  // to the name/phone/lastLogin/status shape the filter below expects.
   const students = useMemo(() => adminStudents.map((s) => ({
     id: s.id,
     name: s.fullName,
@@ -57,8 +54,6 @@ export default function StudentsList() {
     status: s.blocked ? "Blocked" : "Active",
   })), [adminStudents]);
 
-  // Search and pagination are server-side; only the status filter is applied
-  // client-side, within the current page returned by the backend.
   const filtered = useMemo(() => (
     students.filter((s) => filter === "All" || s.status === filter)
   ), [students, filter]);

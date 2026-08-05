@@ -23,6 +23,7 @@ import {
 } from "react-icons/fa";
 import { getTest } from "../../../data/testSeries";
 import { isLoggedIn } from "../../../utils/auth";
+import { getAttemptRecord, hasAttemptedTest } from "../../../utils/mockTestAttempts";
 import { fetchAccessStatus, fetchTestCategories, fetchTestCategoryDetail, fetchTestDetail } from "../../actions";
 import {
   getRawStatusForCategory, getStatusLoading,
@@ -30,7 +31,9 @@ import {
   getTestDetail, getTestDetailLoading,
 } from "../../selectors";
 import { ACCESS_STATUS } from "../../constants";
+import { actions } from "../../slice";
 import Loader from "../../../components/Loader";
+import AlreadyAttempted from "./AlreadyAttempted";
 
 const CATEGORY_COLOR = "#E91E8C";
 
@@ -124,6 +127,34 @@ export default function Instructions() {
 
   const { category, test } = result;
   const color = category.color || CATEGORY_COLOR;
+
+  // `test.attempted` (MockTestSummaryDto, confirmed via OpenAPI) is the
+  // backend's own authoritative record — known the moment the category
+  // detail loads, and correct even on a device/browser that never made the
+  // attempt itself. hasAttemptedTest() is a same-browser fallback for the
+  // legacy mock-test path, which has no such backend field.
+  if (test.attempted || hasAttemptedTest(categorySlug, testSlug)) {
+    return (
+      <AlreadyAttempted
+        categoryTitle={category.title}
+        testTitle={test.title}
+        color={color}
+        onBack={() => navigate(`/test-series/${categorySlug}`)}
+        onReview={() => {
+          const record = getAttemptRecord(categorySlug, testSlug);
+          if (record?.submissionId) {
+            navigate(`/review/${record.submissionId}`);
+          } else if (record?.snapshot) {
+            dispatch(actions.setTestAttempt(record.snapshot));
+            navigate("/review");
+          } else {
+            navigate("/test-series");
+          }
+        }}
+      />
+    );
+  }
+
   // Falls back to placeholder values whenever the backend test-detail
   // response leaves a field null (seen on tests where duration/marks/cutoff
   // haven't been configured yet) so the screen never shows a literal "null".

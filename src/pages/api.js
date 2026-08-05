@@ -5,9 +5,6 @@ import { ACTION_TYPES, ACTIONS } from './actions';
 import { ACCESS_STATUS, REQUESTS_STORAGE_KEY } from './constants';
 import * as questionsApi from './questionTypes';
 
-/* ===========================
-   AUTH APIs
-=========================== */
 
 const registerApi = (data) => {
   return {
@@ -31,12 +28,7 @@ const loginApi = (data) => {
   };
 };
 
-// Real Spring Boot backend (POST /api/auth/forgot-password) — confirmed via
-// /v3/api-docs and live-tested: ContactValueRequest's field is named
-// `mobile` (renamed server-side from an earlier `contactValue` — confirmed
-// by re-checking the live schema after a 400 "Mobile number is required"
-// showed up; sending `contactValue` now fails that same way, sending
-// `mobile` gets past validation to the email-sending step).
+
 const forgotPasswordApi = ({ mobile }) => {
   return {
     url: API_URL.FORGOT_PASSWORD,
@@ -48,14 +40,7 @@ const forgotPasswordApi = ({ mobile }) => {
   };
 };
 
-// Real Spring Boot backend (POST /api/auth/verify-otp) — confirmed via
-// /v3/api-docs: VerifyOtpRequest is { mobile, otp } (same `contactValue` ->
-// `mobile` rename as forgot-password above). Response is
-// ApiResponseMapStringString — an untyped string map; the key holding the
-// reset token isn't documented, so `resetToken` (matching the field name
-// the next endpoint expects) is an assumption verifyOtpSaga reads
-// defensively — confirm the exact key once a real OTP can be issued
-// end-to-end in an environment with working email delivery.
+
 const verifyOtpApi = ({ mobile, otp }) => {
   return {
     url: API_URL.VERIFY_OTP,
@@ -67,14 +52,7 @@ const verifyOtpApi = ({ mobile, otp }) => {
   };
 };
 
-// Real Spring Boot backend (POST /api/auth/reset-password-with-token) —
-// confirmed via /v3/api-docs (ResetPasswordWithTokenRequest: { resetToken,
-// newPassword }). Note this is a different endpoint than a plain
-// "reset-password" — it takes the token verify-otp returned, not the
-// mobile/otp pair again. `newPassword` only requires min 6 characters now
-// (the backend dropped the earlier upper+lower+digit+symbol regex —
-// re-confirmed live against the current schema) — enforced client-side in
-// ResetPassword.jsx's validate() to match.
+
 const resetPasswordApi = ({ resetToken, password }) => {
   return {
     url: API_URL.RESET_PASSWORD,
@@ -86,14 +64,7 @@ const resetPasswordApi = ({ resetToken, password }) => {
   };
 };
 
-// Real Spring Boot backend (POST /api/auth/change-password, requires auth) —
-// confirmed live: ChangePasswordRequest is { currentPassword, newPassword },
-// response { success, message: "Password changed successfully." } on success
-// or { success: false, message: "Current password is incorrect" } when
-// currentPassword doesn't match. Unlike reset-password-with-token, this
-// endpoint does NOT enforce a complexity rule on newPassword (a live test
-// with a 4-character password succeeded) — kept as a light client-side
-// suggestion only in ChangePassword.jsx, not a hard requirement.
+
 const changePasswordApi = ({ currentPassword, newPassword }) => {
   return {
     url: API_URL.CHANGE_PASSWORD,
@@ -105,16 +76,6 @@ const changePasswordApi = ({ currentPassword, newPassword }) => {
   };
 };
 
-/* ===========================
-   CATEGORY ACCESS APIs
-=========================== */
-
-// Stands in for the backend today: every student's category-access request
-// lives here, keyed by categorySlug + mobile, so the admin table and the
-// student's own status check read the exact same source of truth.
-// Swap these functions for real axios calls (see registerApi/loginApi above
-// for the pattern) once the Spring Boot endpoints exist — actions/saga/slice
-// won't need to change.
 
 function readAll() {
   try {
@@ -134,9 +95,7 @@ function requestId(categorySlug, mobile) {
 
 async function getAccessStatus(categorySlug) {
   const user = getUser();
-  // Without a real identifier every such user would collide on the same
-  // "<slug>::undefined" record, making one approval look like everyone's
-  // approval. Treat a missing identifier as "can't tell yet", not a match.
+ 
   if (!user || !user.mobile) return ACCESS_STATUS.NOT_REQUESTED;
   const found = readAll().find(
     (r) => r.id === requestId(categorySlug, user.mobile)
@@ -155,8 +114,7 @@ async function submitAccessRequest({ categorySlug, categoryTitle, categoryPrice 
   const record = {
     id,
     studentName: user.fullName,
-    // The login response only returns a mobile number, not a separate email
-    // address — the backend would need to return one for this to be populated.
+
     studentEmail: '',
     studentMobile: user.mobile,
     categorySlug,
@@ -175,8 +133,7 @@ async function submitAccessRequest({ categorySlug, categoryTitle, categoryPrice 
   return record.status;
 }
 
-// Real Spring Boot backend (POST /api/admin/category-access/{requestId}/approve
-// and .../reject) — replaces the setRequestStatus() localStorage mock above.
+
 function approveCategoryAccessApi(requestId) {
   return {
     url: `${API_URL.ADMIN_CATEGORY_ACCESS}/${requestId}/approve`,
@@ -197,9 +154,7 @@ function rejectCategoryAccessApi(requestId) {
   };
 }
 
-// This one hits the real Spring Boot backend (GET /api/test-categories),
-// following the same request-descriptor shape as registerApi/loginApi above —
-// consumed via utils/http's handleAPIRequest in saga.js, not the mock helpers above.
+
 function getTestCategoriesApi() {
   return {
     url: API_URL.TEST_CATEGORIES,
@@ -210,9 +165,7 @@ function getTestCategoriesApi() {
   };
 }
 
-// Real Spring Boot backend (GET /api/test-categories/{id}) — category detail,
-// including the real tests list and the current student's accessStatus.
-// Requires auth (returns 403 without a token), unlike getTestCategoriesApi above.
+
 function getTestCategoryDetailApi(categoryId) {
   return {
     url: `${API_URL.TEST_CATEGORIES}/${categoryId}`,
@@ -223,8 +176,7 @@ function getTestCategoryDetailApi(categoryId) {
   };
 }
 
-// Real Spring Boot backend (GET /api/test-categories/{categoryId}/tests/{testId}) —
-// per-test detail: duration, marks, cut-off, negative marking. Requires auth.
+
 function getTestDetailApi({ categoryId, testId }) {
   return {
     url: `${API_URL.TEST_CATEGORIES}/${categoryId}/tests/${testId}`,
@@ -235,8 +187,7 @@ function getTestDetailApi({ categoryId, testId }) {
   };
 }
 
-// Real Spring Boot backend (POST /api/test-categories/{id}/request-access) —
-// the real counterpart to submitAccessRequest() above; returns no data body.
+
 function requestCategoryAccessApi(categoryId) {
   return {
     url: `${API_URL.TEST_CATEGORIES}/${categoryId}/request-access`,
@@ -247,9 +198,6 @@ function requestCategoryAccessApi(categoryId) {
   };
 }
 
-// Real Spring Boot backend (GET /api/admin/category-access) — replaces the
-// getAllRequests() localStorage mock above for the admin requests table.
-// Same request-descriptor shape as getTestCategoriesApi.
 function getAdminCategoryAccessApi() {
   return {
     url: API_URL.ADMIN_CATEGORY_ACCESS,
@@ -260,8 +208,6 @@ function getAdminCategoryAccessApi() {
   };
 }
 
-// Real Spring Boot backend (GET /api/admin/students/paginated?search=&page=&size=) —
-// same shape again, with query params for search + pagination.
 function getAdminStudentsApi({ search = '', page = 0, size = 10 } = {}) {
   return {
     url: API_URL.ADMIN_STUDENTS_PAGINATED,
@@ -273,7 +219,6 @@ function getAdminStudentsApi({ search = '', page = 0, size = 10 } = {}) {
   };
 }
 
-// Real Spring Boot backend (POST /api/admin/students/{id}/block and .../unblock).
 function blockStudentApi(id) {
   return {
     url: `${API_URL.ADMIN_STUDENTS}/${id}/block`,
@@ -294,9 +239,51 @@ function unblockStudentApi(id) {
   };
 }
 
-// Real Spring Boot backend (POST /api/home/contact) — the public contact/
-// enquiry form submission. Same request-descriptor shape as registerApi/
-// loginApi above.
+// Real Spring Boot backend (GET /api/admin/results) — paginated list of
+// submitted test results (admin only), confirmed via OpenAPI. Same
+// Page<T>-as-Map response shape as getAdminStudentsApi above.
+function getAdminResultsApi({ search = '', categoryId, testId, page = 0, size = 10 } = {}) {
+  return {
+    url: API_URL.ADMIN_RESULTS,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULTS],
+      params: {
+        search, page, size,
+        ...(categoryId ? { categoryId } : {}),
+        ...(testId ? { testId } : {}),
+      }
+    }
+  };
+}
+
+// Real Spring Boot backend (GET /api/admin/results/{submissionId}) — the
+// full per-submission detail (admin only), confirmed via OpenAPI
+// (AdminResultDetailDto).
+function getAdminResultDetailApi(submissionId) {
+  return {
+    url: `${API_URL.ADMIN_RESULTS}/${submissionId}`,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULT_DETAIL]
+    }
+  };
+}
+
+// Real Spring Boot backend (GET /api/admin/tests) — every mock test across
+// every category, admin-scoped (no per-user access gating, unlike
+// getTestCategoryDetailApi's tests[]). Powers the admin Results page's Mock
+// Test filter.
+function getAdminTestsApi() {
+  return {
+    url: API_URL.ADMIN_TESTS,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_TESTS]
+    }
+  };
+}
+
 function submitContactApi(data) {
   return {
     url: API_URL.HOME_CONTACT,
@@ -308,8 +295,6 @@ function submitContactApi(data) {
   };
 }
 
-// Real Spring Boot backend (GET /api/tests/{testId}/questions) — the question
-// set for a specific test (student-facing exam view). Requires auth.
 function getTestQuestionsApi(testId) {
   return {
     url: `${API_URL.TESTS}/${testId}/questions`,
@@ -320,12 +305,6 @@ function getTestQuestionsApi(testId) {
   };
 }
 
-// Real Spring Boot backend (GET /api/admin/tests/{testId}/questions?type=&search=) —
-// the admin-only question list for a mock test (includes correctOption,
-// unlike the student-facing endpoint above). Confirmed via /v3/api-docs:
-// listQuestions takes optional `type` (a QUESTION_TYPES key) and `search`
-// query params; response is { data: { total, questions: [AdminQuestionDto] } }.
-// Raw rows are normalized to the app's canonical question shape in slice.js.
 function getAdminTestQuestionsApi({ testId, search, type }) {
   return {
     url: `${API_URL.ADMIN_TESTS}/${testId}/questions`,
@@ -337,8 +316,6 @@ function getAdminTestQuestionsApi({ testId, search, type }) {
   };
 }
 
-// Real Spring Boot backend (POST /api/tests/{testId}/submit) — submits the
-// student's answers and gets back the computed score/result.
 function submitTestApi({ testId, answers }) {
   return {
     url: `${API_URL.TESTS}/${testId}/submit`,
@@ -350,9 +327,6 @@ function submitTestApi({ testId, answers }) {
   };
 }
 
-// Real Spring Boot backend (POST /api/tests/{testId}/start) — marks a new
-// attempt as started for the given test (student-facing). Fired when the
-// exam screen mounts; the UI doesn't block on its result.
 function startTestApi(testId) {
   return {
     url: `${API_URL.TESTS}/${testId}/start`,
@@ -363,11 +337,6 @@ function startTestApi(testId) {
   };
 }
 
-// Real Spring Boot backend (GET /api/tests/submissions/{submissionId}) — the
-// persisted result summary for a completed attempt, expected to mirror
-// submitTestApi's response shape (totalMarks, cutOffMarks, correct, wrong,
-// unanswered, penalty, score, ...). Backs the Result screen when it's
-// reached via a submissionId (real tests) instead of local Redux state.
 function getSubmissionApi(submissionId) {
   return {
     url: `${API_URL.TESTS}/submissions/${submissionId}`,
@@ -378,10 +347,7 @@ function getSubmissionApi(submissionId) {
   };
 }
 
-// Real Spring Boot backend (GET /api/tests/submissions/{submissionId}/review) —
-// the per-question breakdown (question/options/correctOption/selectedOption)
-// for a completed attempt. Backs the Review screen the same way
-// getSubmissionApi backs Result.
+
 function getSubmissionReviewApi(submissionId) {
   return {
     url: `${API_URL.TESTS}/submissions/${submissionId}/review`,
@@ -392,17 +358,10 @@ function getSubmissionReviewApi(submissionId) {
   };
 }
 
-// Converts the app's canonical question shape (see questionTypes.js) to the
-// backend's wire shape — confirmed against the live OpenAPI spec
-// (GET /v3/api-docs, CreateQuestionRequest schema) for all 7 types.
-// questionTypes.js is the single place a future question TYPE needs a
-// new branch.
+
 const toWireQuestion = questionsApi.toWireQuestion;
 
-// Real Spring Boot backend (POST /api/admin/tests/{testId}/questions) — adds a
-// single question under the given mock test (admin only). Expected response:
-// { data: { question, nextQuestionNumber } }, letting the admin form move on
-// to the next question without tracking all ~100 of them itself.
+
 function addQuestionApi({ testId, question }) {
   return {
     url: `${API_URL.ADMIN_TESTS}/${testId}/questions`,
@@ -414,9 +373,7 @@ function addQuestionApi({ testId, question }) {
   };
 }
 
-// Real Spring Boot backend (PUT /api/admin/tests/{testId}/questions/{questionId}) —
-// edits an existing question (admin only), same body shape as addQuestionApi.
-// Expected response: { data: { question } }.
+
 function updateQuestionApi({ testId, questionId, question }) {
   return {
     url: `${API_URL.ADMIN_TESTS}/${testId}/questions/${questionId}`,
@@ -428,12 +385,7 @@ function updateQuestionApi({ testId, questionId, question }) {
   };
 }
 
-// Real Spring Boot backend (POST /api/admin/tests/{testId}/questions/bulk,
-// multipart) — uploads one .xlsx file (the same columns as the downloadable
-// template) and lets the backend parse, validate and save every row under the
-// mock test in one go. Expected response:
-// { data: { questions: [...], errors: [{ row, message }] } }, so the admin
-// sees both what was saved and which rows failed.
+
 function bulkUploadQuestionsApi({ testId, file }) {
   const formData = new FormData();
   formData.append('file', file);
@@ -447,10 +399,7 @@ function bulkUploadQuestionsApi({ testId, file }) {
   };
 }
 
-// Real Spring Boot backend (GET /api/admin/tests/{testId}/questions/template) —
-// downloads the backend-generated .xlsx template admins fill in for bulk
-// upload. Uses the existing blob-download path in utils/http.js (isDocument),
-// so the response comes back as a Blob rather than JSON.
+
 function downloadQuestionTemplateApi(testId) {
   return {
     url: `${API_URL.ADMIN_TESTS}/${testId}/questions/template`,
@@ -462,9 +411,7 @@ function downloadQuestionTemplateApi(testId) {
   };
 }
 
-// Real Spring Boot backend (DELETE /api/admin/tests/{testId}/questions/{questionId}) —
-// admin-only. Returns no body; the saga removes the row from adminTestQuestions
-// locally (same pattern as blockStudentApi/unblockStudentApi above).
+
 function deleteQuestionApi({ testId, questionId }) {
   return {
     url: `${API_URL.ADMIN_TESTS}/${testId}/questions/${questionId}`,
@@ -475,11 +422,7 @@ function deleteQuestionApi({ testId, questionId }) {
   };
 }
 
-// Real Spring Boot backend (DELETE /api/admin/tests/{testId}/questions) —
-// confirmed via /v3/api-docs: no body, no query params — unconditionally
-// deletes every question under the test. Only usable when the admin isn't
-// looking at a filtered subset (see deleteAllQuestionsSaga in saga.js),
-// since there's no way to scope it to a search/type filter.
+
 function deleteAllQuestionsApi(testId) {
   return {
     url: `${API_URL.ADMIN_TESTS}/${testId}/questions`,
@@ -490,7 +433,6 @@ function deleteAllQuestionsApi(testId) {
   };
 }
 
-// Real Spring Boot backend (GET /api/admin/enquiries) — same shape again.
 function getAdminEnquiriesApi() {
   return {
     url: API_URL.ADMIN_ENQUIRIES,
@@ -501,9 +443,7 @@ function getAdminEnquiriesApi() {
   };
 }
 
-// Real Spring Boot backend (GET /api/admin/dashboard/summary) — the Admin
-// Dashboard's headline counts. Expected response:
-// { success, message, data: { testSeriesCount, mockTestsCount, studentsCount } }.
+
 function getAdminDashboardSummaryApi() {
   return {
     url: API_URL.ADMIN_DASHBOARD_SUMMARY,
@@ -551,4 +491,7 @@ export {
   deleteAllQuestionsApi,
   getAdminDashboardSummaryApi,
   downloadQuestionTemplateApi,
+  getAdminResultsApi,
+  getAdminResultDetailApi,
+  getAdminTestsApi,
 };

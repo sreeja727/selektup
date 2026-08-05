@@ -1,9 +1,9 @@
-import { Box, Flex, HStack, Text } from "@chakra-ui/react";
+import { Flex, HStack, Text, Box } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import { FaSignOutAlt, FaBars } from "react-icons/fa";
+import { FaSignOutAlt } from "react-icons/fa";
 import { logoutAdmin } from "../../utils/adminAuth";
 
-export default function Header({ sidebarOpen, onToggleSidebar }) {
+export default function Header() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -21,28 +21,9 @@ export default function Header({ sidebarOpen, onToggleSidebar }) {
       borderBottom="1px solid"
       borderColor="gray.100"
     >
-      <HStack gap={{ base: 2, md: 4 }}>
-        <Box
-          as="button"
-          aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          w="38px"
-          h="38px"
-          rounded="lg"
-          color="gray.600"
-          _hover={{ color: "#E91E8C", bg: "pink.50" }}
-          transition="all 0.15s"
-          onClick={onToggleSidebar}
-          flexShrink={0}
-        >
-          <FaBars size={16} />
-        </Box>
-        <Text fontWeight="800" fontSize={{ base: "md", md: "xl" }} color="#0C1222">
-          Admin Dashboard
-        </Text>
-      </HStack>
+      <Text fontWeight="800" fontSize={{ base: "md", md: "xl" }} color="#0C1222">
+        Admin Dashboard
+      </Text>
 
       <HStack
         gap={2}

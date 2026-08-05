@@ -1,48 +1,4 @@
-// Single source of truth for every supported question type — the admin Add/
-// Edit/View/List/Bulk-Upload screens and the student exam screens
-// (TestScreen/QuestionPalette/Review) all read this instead of hardcoding
-// option counts or an MCQ-only answer shape. Adding a new question type later
-// is one entry in QUESTION_TYPES (plus a render branch only if it needs a
-// new `kind`) rather than a change to every screen.
-//
-// Wire shape confirmed against the live backend's OpenAPI spec
-// (GET /v3/api-docs) on admin-question-controller's CreateQuestionRequest/
-// AdminQuestionDto/QuestionDto/ReviewQuestionDto/AnswerEntry schemas:
-//   - the type field is named `questionType` (enum: SINGLE_CORRECT_MCQ,
-//     MULTIPLE_CORRECT_MCQ, TRUE_FALSE, FILL_IN_THE_BLANK, ONE_WORD_ANSWER,
-//     IMAGE_BASED, ASSERTION_AND_REASON, STATEMENT_BASED, PARAGRAPH_BASED,
-//     LONG_ANSWER, NUMERICAL, TABLE_BASED) — not `type`. All 12 are real,
-//     saveable types.
-//   - `tableData` holds TABLE_BASED's table — declared as a bare untyped
-//     `object` in the OpenAPI schema (no inner shape given), so the exact
-//     key names aren't confirmed. Sent/read as `{ headers: string[], rows:
-//     string[][] }`, matching this app's own table-editor shape — the most
-//     conventional guess, but unverified against real backend parsing
-//     (no admin-role test credentials available to round-trip it). Adjust
-//     here if the backend actually expects different keys.
-//   - exactly 4 fixed option slots exist (optionA..optionD), no more.
-//   - single/multi-select and options-based text (fill-blank/one-word)
-//     answers go through a single `correctOption` string field — multi-select
-//     encodes as comma-separated letters ("A,C"); fill-blank/one-word store
-//     the literal expected text in it.
-//   - NUMERICAL has its own dedicated `correctNumericAnswer`/
-//     `numericTolerance` number fields — not squeezed into correctOption.
-//   - LONG_ANSWER has no correct-answer field at all — it's manually graded
-//     (ReviewQuestionDto's `needsManualGrading`/`manualScore` confirm this).
-//   - `secondaryText` holds the Reason statement for ASSERTION_AND_REASON
-//     (questionText holds the Assertion).
-//   - `statements` holds STATEMENT_BASED's numbered statements — a single
-//     newline-separated string on write/admin-read, but an actual string[]
-//     on the student-facing QuestionDto.
-//   - `passageTitle`/`passageText` (plus a read-only `passageId`) hold
-//     PARAGRAPH_BASED's shared reading passage.
-//   - `marks` (int) is a real per-question field.
-//   - AnswerEntry (submit) is { questionId, selectedOption, textAnswer,
-//     numericAnswer } — three separate fields, one per answer shape, not a
-//     single overloaded string.
-//   - ReviewQuestionDto mirrors that with `selectedOption`/`textAnswerGiven`/
-//     `numericAnswerGiven`, plus `needsManualGrading`/`manualScore` for
-//     LONG_ANSWER.
+
 
 export const QUESTION_KIND = {
   SINGLE_SELECT: 'SINGLE_SELECT',
@@ -51,9 +7,6 @@ export const QUESTION_KIND = {
   NUMERIC_ANSWER: 'NUMERIC_ANSWER',
 };
 
-// Standard four assertion/reason statements used across exam boards — kept
-// as the fixed option set so the admin only ever has to check which one
-// applies, not retype it per question.
 const ASSERTION_REASON_OPTIONS = [
   'Both Assertion and Reason are true, and Reason is the correct explanation of Assertion',
   'Both Assertion and Reason are true, but Reason is NOT the correct explanation of Assertion',
@@ -85,9 +38,7 @@ export const QUESTION_TYPES = {
     optionCount: 4,
     hasPassage: true,
   },
-  // Reuses CommonMCQQuestion/QuestionTypeFields' SINGLE_SELECT branch (table
-  // above the options), same as Paragraph-based's passage — no new `kind`
-  // needed for it.
+
   TABLE_BASED: {
     kind: QUESTION_KIND.SINGLE_SELECT,
     label: 'Table-based',
@@ -132,10 +83,7 @@ export const QUESTION_TYPES = {
 
 export const QUESTION_TYPE_LIST = Object.keys(QUESTION_TYPES);
 
-// Every type above has a real backend enum value today — kept as a separate
-// export (rather than inlining QUESTION_TYPE_LIST everywhere) so a future
-// type still under development can be marked `comingSoon: true` again
-// without touching QuestionsList/BulkUploadDialog.
+
 export const SAVEABLE_QUESTION_TYPE_LIST = QUESTION_TYPE_LIST.filter((t) => !QUESTION_TYPES[t].comingSoon);
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D'];
@@ -152,17 +100,13 @@ function normalizeText(value) {
   return (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
-/* ===========================
-   Admin form state helpers
-=========================== */
 
 function makeDefaultOptions(config) {
   if (config.fixedOptions) return [...config.fixedOptions];
   return Array.from({ length: config.optionCount }, () => '');
 }
 
-// Fresh form state for a given type — used both when the Add form mounts/
-// resets and whenever the admin switches "Question Type" mid-form.
+
 export function emptyFields(type) {
   const config = getTypeConfig(type);
   const base = { text: '', explanation: '', marks: 1 };
@@ -195,10 +139,6 @@ export function emptyFields(type) {
   return fields;
 }
 
-// Extracts the editable form-field subset from a canonical question (as
-// stored in Redux) — used to seed the Edit form. Falls back to emptyFields
-// for anything the loaded question doesn't have, so the form never renders
-// undefined into an input.
 export function toFormFields(question) {
   const empty = emptyFields(question.type);
   return {
@@ -329,12 +269,7 @@ export function removeTableColumn(fields, index) {
   return { ...fields, tableHeaders: headers, tableRows: rows };
 }
 
-/* ===========================
-   Wire (backend) <-> app shape
-=========================== */
 
-// Converts the app's canonical question shape to the backend's
-// CreateQuestionRequest shape (confirmed via /v3/api-docs).
 export function toWireQuestion({
   type, text, explanation, marks, options = [], correctOptionIndexes = [],
   answerText, correctNumericAnswer, numericTolerance, imageUrl, reason,
@@ -388,8 +323,6 @@ export function toWireQuestion({
   return wire;
 }
 
-// Converts a raw backend row (AdminQuestionDto/QuestionDto shape) into the
-// canonical app shape every screen renders from.
 export function fromWireQuestion(raw) {
   if (!raw) return raw;
 
@@ -406,8 +339,7 @@ export function fromWireQuestion(raw) {
   };
 
   if (config.hasStatements) {
-    // QuestionDto (student-facing) already sends string[]; the admin-facing
-    // DTOs send one newline-separated string.
+  
     base.statements = Array.isArray(raw.statements)
       ? raw.statements
       : String(raw.statements || '').split('\n').map((s) => s.trim()).filter(Boolean);
@@ -462,13 +394,7 @@ export function fromWireQuestion(raw) {
   return result;
 }
 
-/* ===========================
-   Answering / scoring (student exam flow + admin preview)
-=========================== */
 
-// `value` is whatever QuestionAnswerInput produces for the question's kind:
-// a string for single-select/text-answer/numeric-answer, a string[] of
-// option labels for multi-select.
 export function isAnswered(question, value) {
   const config = getTypeConfig(question.type);
   if (config.kind === QUESTION_KIND.MULTI_SELECT) return Array.isArray(value) && value.length > 0;
@@ -481,8 +407,7 @@ export function isCorrect(question, value) {
   if (!isAnswered(question, value)) return false;
   const config = getTypeConfig(question.type);
 
-  // Long Answer (and any future manually-graded type) has no answer key —
-  // the backend defers to a human via needsManualGrading/manualScore.
+ 
   if (config.manualGrading) return false;
 
   if (config.kind === QUESTION_KIND.NUMERIC_ANSWER) {
@@ -513,10 +438,7 @@ export function isCorrect(question, value) {
   return selectedIndex >= 0 && correctIndexes.includes(selectedIndex);
 }
 
-// Shape appended to the `answers[]` array sent to submitTestApi — confirmed
-// AnswerEntry: { questionId, selectedOption, textAnswer, numericAnswer },
-// one field per answer shape. Multi-select still encodes as comma-separated
-// letters in selectedOption (no dedicated array field exists for it).
+
 export function buildSubmitAnswer(question, value) {
   const config = getTypeConfig(question.type);
   const options = question.options || [];
@@ -546,7 +468,6 @@ export function buildSubmitAnswer(question, value) {
   return answer;
 }
 
-// Display-only helpers for View/Review screens.
 export function getCorrectAnswerLabel(question) {
   const config = getTypeConfig(question.type);
   if (config.manualGrading) return 'Manually graded';

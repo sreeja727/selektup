@@ -8,13 +8,6 @@ import {
 } from "../../../pages/questionTypes";
 import { fieldStyle } from "./fieldStyle";
 
-// The dynamic body of the Add/Edit question form — everything below the
-// Question/Explanation textareas that changes shape per question type.
-// Reused by both QuestionsAdd.jsx and QuestionsEdit.jsx so a new question
-// type only needs an entry in questionTypes.js plus (if it needs a new
-// `kind`) a new branch here, not a change to either screen. Every
-// options-based type has exactly 4 fixed slots (optionA-D on the backend) —
-// no adding/removing options.
 export default function QuestionTypeFields({
   type, fields, setFields, errors, clearError,
 }) {
