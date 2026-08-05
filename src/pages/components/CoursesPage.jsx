@@ -338,7 +338,7 @@ export default function CoursesPage() {
               bg="linear-gradient(135deg, #f0f8ff 0%, #e8f4ff 100%)"
               borderRadius="2xl"
               border="2px solid rgba(3,155,229,0.15)"
-              p={8}
+              p={{ base: 6, md: 8 }}
             >
               <Text fontSize="sm" fontWeight={700} color="gray.500" letterSpacing="0.08em" mb={5}>
                 THIS PROGRAMME FOCUSES ON
@@ -431,7 +431,7 @@ export default function CoursesPage() {
               backdropFilter="blur(10px)"
               borderRadius="2xl"
               border="1px solid rgba(103,58,183,0.25)"
-              p={8}
+              p={{ base: 6, md: 8 }}
             >
               <Text fontSize="sm" fontWeight={700} color="rgba(255,255,255,0.5)" letterSpacing="0.08em" mb={5}>
                 WE PROVIDE
@@ -513,7 +513,7 @@ export default function CoursesPage() {
               bg="linear-gradient(135deg, #f0faf9 0%, #e6f6f4 100%)"
               borderRadius="2xl"
               border="2px solid rgba(0,137,123,0.15)"
-              p={8}
+              p={{ base: 6, md: 8 }}
             >
               <Text fontSize="sm" fontWeight={700} color="gray.500" letterSpacing="0.08em" mb={5}>
                 THIS COURSE COVERS

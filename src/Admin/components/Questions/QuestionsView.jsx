@@ -22,7 +22,7 @@ export default function QuestionsView() {
 
   if (!question || String(question.id) !== String(id)) {
     return (
-      <Box bg="white" p={8} borderRadius="xl" boxShadow="md">
+      <Box bg="white" p={{ base: 4, md: 6, lg: 8 }} borderRadius="xl" boxShadow="md">
         <Text color="gray.500">Open this question from the Questions list to preview it.</Text>
         <BackButton to="/admin/questions" label="Back to Questions" />
       </Box>
@@ -49,7 +49,7 @@ export default function QuestionsView() {
       />
       <BackButton to="/admin/questions" label="Back to Questions" />
 
-      <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="800px">
+      <Box bg="white" p={{ base: 4, md: 6, lg: 8 }} borderRadius="xl" boxShadow="md" maxW="800px">
         <Flex justify="space-between" align="flex-start" mb={6} gap={4} wrap="wrap">
           <Box>
             {testTitle && <Heading size="lg" color="#0C1222" mb={2}>{testTitle}</Heading>}

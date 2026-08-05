@@ -21,8 +21,6 @@ export default function BulkUploadDialog({ isOpen, onClose, testId, testTitle })
   const error = useSelector(getBulkUploadError);
   const templateLoading = useSelector(getQuestionTemplateLoading);
 
-  // Grouped by type so the admin can confirm the backend actually detected
-  // the mixed question types in the sheet correctly, not just a total count.
   const typeBreakdown = useMemo(() => {
     if (!Array.isArray(result?.questions)) return [];
     const counts = {};
@@ -32,8 +30,6 @@ export default function BulkUploadDialog({ isOpen, onClose, testId, testTitle })
     return Object.entries(counts);
   }, [result]);
 
-  // Clear the picked file the moment the dialog opens — a render-time state
-  // adjustment (see QuestionsAdd.jsx) rather than an effect.
   if (isOpen !== prevOpen) {
     setPrevOpen(isOpen);
     if (isOpen) setFile(null);
@@ -57,8 +53,8 @@ export default function BulkUploadDialog({ isOpen, onClose, testId, testTitle })
     <Dialog.Root open={isOpen} onOpenChange={(e) => !e.open && onClose()} placement="center">
       <Portal>
         <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content borderRadius="xl">
+        <Dialog.Positioner p={{ base: 4, md: 0 }}>
+          <Dialog.Content borderRadius="xl" w={{ base: "100%", md: "440px" }}>
             <Dialog.Header>
               <Dialog.Title color="#0C1222" fontWeight={800}>Bulk Upload Questions</Dialog.Title>
             </Dialog.Header>

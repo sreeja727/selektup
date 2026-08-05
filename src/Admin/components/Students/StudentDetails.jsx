@@ -65,7 +65,7 @@ export default function StudentDetails() {
       <Heading mb={1} color="#0C1222">Student Details</Heading>
       <Text color="gray.500" mb={8}>View registered students and manage their accounts</Text>
 
-      <Box bg="white" rounded="xl" shadow="md" p={6}>
+      <Box bg="white" rounded="xl" shadow="md" p={{ base: 4, md: 6 }}>
         <Flex
           justify="space-between"
           align={{ base: "stretch", md: "center" }}

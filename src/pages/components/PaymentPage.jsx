@@ -16,23 +16,23 @@ import { FaCheckCircle, FaLock } from "react-icons/fa";
 
 export default function PaymentPage() {
   return (
-    <Box bg="gray.50" minH="100vh" py={10}>
+    <Box bg="gray.50" minH="100vh" py={{ base: 6, md: 10 }}>
       <Container maxW="7xl">
 
-        <Heading mb={8}>
+        <Heading mb={{ base: 6, md: 8 }} fontSize={{ base: "xl", md: "2xl" }}>
           Complete Your Purchase
         </Heading>
 
         <Grid
           templateColumns={{ base: "1fr", lg: "2fr 1fr" }}
-          gap={8}
+          gap={{ base: 6, md: 8 }}
         >
 
           {/* LEFT */}
 
           <Box
             bg="white"
-            p={8}
+            p={{ base: 5, md: 8 }}
             rounded="xl"
             shadow="md"
           >
@@ -41,6 +41,7 @@ export default function PaymentPage() {
               src="selektup banner.jpg"
               rounded="lg"
               mb={6}
+              w="100%"
             />
 
             <Heading size="md">
@@ -61,7 +62,7 @@ export default function PaymentPage() {
 
             <VStack
               align="start"
-              spacing={4}
+              gap={4}
               mt={8}
             >
 
@@ -101,7 +102,7 @@ export default function PaymentPage() {
 
           <Box
             bg="white"
-            p={8}
+            p={{ base: 5, md: 8 }}
             rounded="xl"
             shadow="md"
             h="fit-content"
@@ -111,17 +112,17 @@ export default function PaymentPage() {
               Order Summary
             </Heading>
 
-            <Flex justify="space-between" mb={4}>
+            <Flex justify="space-between" mb={4} flexWrap="wrap" gap={1}>
               <Text>Price</Text>
               <Text>₹999</Text>
             </Flex>
 
-            <Flex justify="space-between" mb={4}>
+            <Flex justify="space-between" mb={4} flexWrap="wrap" gap={1}>
               <Text>Discount</Text>
               <Text color="green.500">₹0</Text>
             </Flex>
 
-            <Flex justify="space-between" mb={4}>
+            <Flex justify="space-between" mb={4} flexWrap="wrap" gap={1}>
               <Text>GST (18%)</Text>
               <Text>₹180</Text>
             </Flex>

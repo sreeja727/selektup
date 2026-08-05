@@ -39,8 +39,16 @@ export default function ForgotPassword() {
       setMobileError('Please enter your registered mobile number')
       return
     }
+    if (!/^\d+$/.test(trimmed)) {
+      setMobileError('Mobile number must contain digits only')
+      return
+    }
+    if (trimmed.length !== 10) {
+      setMobileError('Mobile number must be exactly 10 digits')
+      return
+    }
     if (!MOBILE_RE.test(trimmed)) {
-      setMobileError('Enter a valid 10-digit mobile number')
+      setMobileError('Enter a valid mobile number')
       return
     }
     setMobileError('')
@@ -118,10 +126,13 @@ export default function ForgotPassword() {
                 </Box>
                 <Input
                   pl="36px"
-                  placeholder="Enter your registered mobile number"
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="10-digit mobile number"
                   value={mobile}
                   onChange={(e) => {
-                    setMobile(e.target.value)
+                    setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))
                     setMobileError('')
                   }}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendOtp()}

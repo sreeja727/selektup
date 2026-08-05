@@ -22,10 +22,7 @@ export default function EnquiriesList() {
     dispatch(fetchAdminEnquiries());
   }, [dispatch]);
 
-  // The backend doesn't return an id per enquiry — use the array index as a
-  // stable-enough key/route param, since EnquiryDetails reads from this same
-  // fetched list rather than looking the record up independently.
-  const enquiries = useMemo(
+ const enquiries = useMemo(
     () => adminEnquiries.map((e, index) => ({ ...e, id: index })),
     [adminEnquiries]
   );
@@ -50,9 +47,9 @@ export default function EnquiriesList() {
       <Breadcrumb items={[{ label: "Dashboard", to: "/admin/dashboard" }, { label: "Enquiries" }]} />
 
       <Heading mb={1} color="#0C1222">Enquiries</Heading>
-      <Text color="gray.500" mb={8}>Manage student enquiries and support requests</Text>
+      <Text color="gray.500" mb={{ base: 4, md: 8 }}>Manage student enquiries and support requests</Text>
 
-      <Box bg="white" rounded="xl" shadow="md" p={6}>
+      <Box bg="white" rounded="xl" shadow="md" p={{ base: 4, md: 6 }}>
         <Box position="relative" maxW={{ md: "320px" }} w="100%" mb={6}>
           <Box
             position="absolute"

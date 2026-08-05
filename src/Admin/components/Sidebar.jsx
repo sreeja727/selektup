@@ -40,7 +40,7 @@ function isGroupActive(item, pathname) {
   return item.children.some((child) => pathname.startsWith(child.path));
 }
 
-export default function Sidebar() {
+export default function Sidebar({ open = true, onClose }) {
   const { pathname } = useLocation();
   const [openGroups, setOpenGroups] = useState(() => {
     const initial = {};
@@ -54,28 +54,49 @@ export default function Sidebar() {
     setOpenGroups((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
+  // On mobile/tablet the sidebar behaves as an overlay drawer (fixed width,
+  // slides in/out via transform, dims the page behind it) instead of
+  // squeezing the content. On desktop it keeps its original collapse-to-0
+  // push behavior.
   return (
-    <Box
-      w="250px"
-      bg="#0C1222"
-      color="white"
-      h="100vh"
-      p={5}
-      position="fixed"
-      overflowY="auto"
-    >
-      <Box mb={8} px={1} pb={5} borderBottom="1px solid" borderColor="rgba(255,255,255,0.08)">
-        <Text fontWeight="900" fontSize="xl" letterSpacing="-0.5px">
-          <span style={{ color: "#039BE5" }}>SeleKt</span>
-          <span style={{ color: "#E91E8C" }}>Up</span>
-        </Text>
-        <Text fontSize="10px" fontWeight={700} color="gray.400" letterSpacing="0.12em" mt={1}>
-          ADMIN PANEL
-        </Text>
-      </Box>
+    <>
+      <Box
+        display={{ base: open ? "block" : "none", lg: "none" }}
+        position="fixed"
+        inset={0}
+        bg="blackAlpha.600"
+        zIndex={999}
+        onClick={onClose}
+      />
+      <Box
+        w={{ base: "250px", lg: open ? "250px" : "0px" }}
+        bg="#0C1222"
+        color="white"
+        h="100vh"
+        p={{ base: 5, lg: open ? 5 : 0 }}
+        position="fixed"
+        top={0}
+        left={0}
+        overflowX="hidden"
+        overflowY="auto"
+        zIndex={1000}
+        transform={{ base: open ? "translateX(0)" : "translateX(-100%)", lg: "translateX(0)" }}
+        boxShadow={{ base: open ? "2xl" : "none", lg: "none" }}
+        transition="width 0.2s ease, padding 0.2s ease, transform 0.2s ease"
+      >
+      <Box w="240px">
+        <Box mb={8} px={1} pb={5} borderBottom="1px solid" borderColor="rgba(255,255,255,0.08)">
+          <Text fontWeight="900" fontSize="xl" letterSpacing="-0.5px">
+            <span style={{ color: "#039BE5" }}>SeleKt</span>
+            <span style={{ color: "#E91E8C" }}>Up</span>
+          </Text>
+          <Text fontSize="10px" fontWeight={700} color="gray.400" letterSpacing="0.12em" mt={1}>
+            ADMIN PANEL
+          </Text>
+        </Box>
 
-      <VStack align="stretch" gap={2}>
-        {menu.map((item) => {
+        <VStack align="stretch" gap={2}>
+          {menu.map((item) => {
           if (item.children) {
             const active = isGroupActive(item, pathname);
             const open = openGroups[item.name] || active;
@@ -131,6 +152,7 @@ export default function Sidebar() {
                             textDecoration: "none",
                           }}
                           transition="all 0.15s"
+                          onClick={() => onClose?.()}
                         >
                           <Box as={child.icon} fontSize="12px" />
                           <Text>{child.name}</Text>
@@ -164,13 +186,16 @@ export default function Sidebar() {
                 textDecoration: "none",
               }}
               transition="all 0.15s"
+              onClick={() => onClose?.()}
             >
               <Box as={item.icon} fontSize="14px" />
               <Text>{item.name}</Text>
             </Box>
           );
         })}
-      </VStack>
-    </Box>
+        </VStack>
+      </Box>
+      </Box>
+    </>
   );
 }

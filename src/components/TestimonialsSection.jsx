@@ -77,7 +77,7 @@ export default function TestimonialsSection() {
             <SwiperSlide key={i} style={{ height: 'auto' }}>
               <Box
                 bg="white"
-                p={8}
+                p={{ base: 6, md: 8 }}
                 borderRadius="2xl"
                 boxShadow="0 2px 16px rgba(0,0,0,0.07)"
                 border="2px solid transparent"

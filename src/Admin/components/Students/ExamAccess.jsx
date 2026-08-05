@@ -45,7 +45,7 @@ export default function ExamAccess() {
       <Heading mb={1} color="#0C1222">Category Access Requests</Heading>
       <Text color="gray.500" mb={8}>Approve a student's category request before they can attend any mock test inside it</Text>
 
-      <Box bg="white" rounded="xl" shadow="md" p={6} borderTop="4px solid" borderColor="#E91E8C">
+      <Box bg="white" rounded="xl" shadow="md" p={{ base: 4, md: 6 }} borderTop="4px solid" borderColor="#E91E8C">
         <Table.ScrollArea>
           <Table.Root size="sm">
             <Table.Header>

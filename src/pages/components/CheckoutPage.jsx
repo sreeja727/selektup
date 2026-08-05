@@ -63,8 +63,8 @@ export default function CheckoutPage() {
                   </Heading>
                 </Stack>
 
-                <Stack gap={3} bg="#F8F9FA" borderRadius="xl" p={5}>
-                  <HStack justify="space-between">
+                <Stack gap={3} bg="#F8F9FA" borderRadius="xl" p={{ base: 4, md: 5 }}>
+                  <HStack justify="space-between" flexWrap="wrap" gap={2}>
                     <HStack gap={2} color="gray.600" fontSize="sm">
                       <FaClipboardList size={12} />
                       <Text>{test.questions} Questions</Text>
@@ -83,6 +83,7 @@ export default function CheckoutPage() {
 
                 <Button
                   size="lg"
+                  w={{ base: "100%", md: "auto" }}
                   bg={category.color}
                   color="white"
                   fontWeight={700}
@@ -111,6 +112,7 @@ export default function CheckoutPage() {
                 </Text>
                 <Button
                   size="lg"
+                  w={{ base: "100%", md: "auto" }}
                   bg={category.color}
                   color="white"
                   fontWeight={700}

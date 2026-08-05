@@ -37,7 +37,11 @@ export default function QuestionPalette({
 }) {
   return (
     <>
-      <Grid templateColumns="repeat(5, 1fr)" gap={2.5} mb={4}>
+      <Grid
+        templateColumns={{ base: "repeat(5, 1fr)", sm: "repeat(6, 1fr)", md: "repeat(8, 1fr)", lg: "repeat(5, 1fr)" }}
+        gap={{ base: 2, md: 2.5 }}
+        mb={4}
+      >
         {Array.from({ length: totalQuestions }, (_, i) => {
           const active = currentQuestion === i;
           const status = getStatus(Boolean(answers[i]), Boolean(marked[i]), Boolean(visited[i]));
@@ -56,9 +60,9 @@ export default function QuestionPalette({
               key={i}
               as="button"
               onClick={() => onSelect(i)}
-              h="38px"
+              h={{ base: "34px", md: "38px" }}
               borderRadius="md"
-              fontSize="sm"
+              fontSize={{ base: "xs", md: "sm" }}
               fontWeight={700}
               bg={bg}
               color={color}

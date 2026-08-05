@@ -9,6 +9,7 @@ const ACTIONS = {
   FORGOT_PASSWORD: `${STATE_REDUCER_KEY}/FORGOT_PASSWORD`,
   VERIFY_OTP: `${STATE_REDUCER_KEY}/VERIFY_OTP`,
   RESET_PASSWORD: `${STATE_REDUCER_KEY}/RESET_PASSWORD`,
+  CHANGE_PASSWORD: `${STATE_REDUCER_KEY}/CHANGE_PASSWORD`,
 
   FETCH_ACCESS_STATUS: `${STATE_REDUCER_KEY}/FETCH_ACCESS_STATUS`,
   REQUEST_ACCESS: `${STATE_REDUCER_KEY}/REQUEST_ACCESS`,
@@ -46,6 +47,12 @@ const login = createAction(ACTIONS.LOGIN);
 const forgotPassword = createAction(ACTIONS.FORGOT_PASSWORD);
 const verifyOtp = createAction(ACTIONS.VERIFY_OTP);
 const resetPassword = createAction(ACTIONS.RESET_PASSWORD);
+// payload: { currentPassword, newPassword } - POST /api/auth/change-password
+// (requires auth). For a logged-in student changing their own password —
+// distinct from the forgot-password flow above, which is for someone who
+// doesn't know their current password. Confirmed live: the backend doesn't
+// enforce the same password-complexity rule reset-password-with-token does.
+const changePassword = createAction(ACTIONS.CHANGE_PASSWORD);
 
 // payload: categorySlug
 const fetchAccessStatus = createAction(ACTIONS.FETCH_ACCESS_STATUS);
@@ -129,6 +136,7 @@ export {
   forgotPassword,
   verifyOtp,
   resetPassword,
+  changePassword,
   fetchAccessStatus,
   requestAccess,
   fetchAdminRequests,

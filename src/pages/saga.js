@@ -154,7 +154,7 @@ export function* forgotPasswordSaga({ payload = {} }) {
 }
 
 export function* verifyOtpSaga({ payload = {} }) {
-  const { mobile, otp } = payload;
+  const { mobile } = payload;
   yield put(actions.setApiLoading(true));
   yield fork(handleAPIRequest, api.verifyOtpApi, payload);
   const {
@@ -166,9 +166,16 @@ export function* verifyOtpSaga({ payload = {} }) {
   ]);
 
   if (type === ACTION_TYPES[ACTIONS.VERIFY_OTP][1]) {
-    const { success, message = '' } = apiPayload.data || {};
+    const { success, message = '', data: resultData = {} } = apiPayload.data || {};
     if (success) {
-      yield put(actions.navigateTo({ to: '/reset-password', options: { state: { mobile, otp } } }));
+      // ApiResponseMapStringString's data is an untyped string map — the
+      // key holding the reset token isn't documented in the OpenAPI spec,
+      // so `resetToken` (matching ResetPasswordWithTokenRequest's field
+      // name) is the assumed key, with `token` as a fallback. Confirm the
+      // exact key once a real OTP can be issued end-to-end in an
+      // environment with working email delivery.
+      const resetToken = resultData.resetToken || resultData.token || '';
+      yield put(actions.navigateTo({ to: '/reset-password', options: { state: { mobile, resetToken } } }));
     } else {
       toaster.create({
         title: 'Invalid OTP',
@@ -224,6 +231,54 @@ export function* resetPasswordSaga({ payload = {} }) {
   } else {
     toaster.create({
       title: 'Reset failed',
+      description: 'Unable to reach the server right now. Please try again.',
+      type: 'error',
+      duration: 4000,
+      closable: true
+    });
+  }
+  yield put(actions.setApiLoading(false));
+}
+
+// Logged-in student changing their own password — POST /api/auth/change-password.
+// Distinct from forgotPasswordSaga/resetPasswordSaga above, which are for
+// someone who doesn't know their current password. Stores the raw
+// { success, message } via changePasswordData (see slice.js) so
+// ChangePassword.jsx can show "Current password is incorrect" inline under
+// that field, in addition to the toast every other auth saga uses.
+export function* changePasswordSaga({ payload = {} }) {
+  yield put(actions.setApiLoading(true));
+  yield fork(handleAPIRequest, api.changePasswordApi, payload);
+  const {
+    payload: apiPayload = {},
+    type = ''
+  } = yield take([
+    ACTION_TYPES[ACTIONS.CHANGE_PASSWORD][1],
+    ACTION_TYPES[ACTIONS.CHANGE_PASSWORD][2]
+  ]);
+
+  if (type === ACTION_TYPES[ACTIONS.CHANGE_PASSWORD][1]) {
+    const { success, message = '' } = apiPayload.data || {};
+    if (success) {
+      toaster.create({
+        title: 'Password changed',
+        description: message || 'Your password has been updated.',
+        type: 'success',
+        duration: 4000,
+        closable: true
+      });
+    } else {
+      toaster.create({
+        title: 'Could not change password',
+        description: message || 'Please check your current password and try again.',
+        type: 'error',
+        duration: 4000,
+        closable: true
+      });
+    }
+  } else {
+    toaster.create({
+      title: 'Could not change password',
       description: 'Unable to reach the server right now. Please try again.',
       type: 'error',
       duration: 4000,
@@ -671,6 +726,7 @@ export default function* pagesSaga() {
     takeLatest(ACTIONS.FORGOT_PASSWORD, forgotPasswordSaga),
     takeLatest(ACTIONS.VERIFY_OTP, verifyOtpSaga),
     takeLatest(ACTIONS.RESET_PASSWORD, resetPasswordSaga),
+    takeLatest(ACTIONS.CHANGE_PASSWORD, changePasswordSaga),
 
     takeLatest(ACTIONS.FETCH_ACCESS_STATUS, fetchAccessStatusSaga),
     takeLatest(ACTIONS.REQUEST_ACCESS, requestAccessSaga),

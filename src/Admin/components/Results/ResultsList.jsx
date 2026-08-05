@@ -1,31 +1,51 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Flex, Heading, Input, Table, Badge, Text } from "@chakra-ui/react";
+import { Box, Field, Flex, Heading, Input, NativeSelect, Table, Text } from "@chakra-ui/react";
 import { FaSearch } from "react-icons/fa";
-import { testResults, STATUS_COLOR } from "../../data/mockAdminData";
+import { testResults } from "../../data/mockAdminData";
 import Breadcrumb from "../common/Breadcrumb";
 import Pagination from "../common/Pagination";
 
-const FILTERS = ["All", "Pass", "Fail"];
 const PAGE_SIZE = 5;
+
+const selectStyle = {
+  borderColor: "gray.200",
+  borderWidth: "2px",
+  borderRadius: "lg",
+  _focus: { borderColor: "#039BE5", boxShadow: "0 0 0 3px rgba(3,155,229,0.12)" },
+};
 
 export default function ResultsList() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All");
+  const [category, setCategory] = useState("All");
+  const [test, setTest] = useState("All");
   const [page, setPage] = useState(1);
+
+  const categories = useMemo(
+    () => [...new Set(testResults.map((r) => r.category))].sort(),
+    []
+  );
+
+  const tests = useMemo(() => {
+    const source = category === "All" ? testResults : testResults.filter((r) => r.category === category);
+    return [...new Set(source.map((r) => r.testName))].sort((a, b) =>
+      a.localeCompare(b, undefined, { numeric: true })
+    );
+  }, [category]);
 
   const filtered = useMemo(() => {
     return testResults.filter((r) => {
-      const matchesFilter = filter === "All" || r.status === filter;
+      const matchesCategory = category === "All" || r.category === category;
+      const matchesTest = test === "All" || r.testName === test;
       const matchesSearch =
         r.studentName.toLowerCase().includes(search.toLowerCase()) ||
         r.studentEmail.toLowerCase().includes(search.toLowerCase()) ||
         r.testName.toLowerCase().includes(search.toLowerCase()) ||
         r.category.toLowerCase().includes(search.toLowerCase());
-      return matchesFilter && matchesSearch;
+      return matchesCategory && matchesTest && matchesSearch;
     });
-  }, [search, filter]);
+  }, [search, category, test]);
 
   const paginated = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
@@ -39,15 +59,9 @@ export default function ResultsList() {
       <Heading mb={1} color="#0C1222">Results</Heading>
       <Text color="gray.500" mb={8}>View mock test results submitted by students</Text>
 
-      <Box bg="white" rounded="xl" shadow="md" p={6}>
-        <Flex
-          justify="space-between"
-          align={{ base: "stretch", md: "center" }}
-          direction={{ base: "column", md: "row" }}
-          gap={4}
-          mb={6}
-        >
-          <Box position="relative" maxW={{ md: "320px" }} w="100%">
+      <Box bg="white" rounded="xl" shadow="md" p={{ base: 4, md: 6 }}>
+        <Flex gap={4} wrap="wrap" align="flex-end" mb={6}>
+          <Box position="relative" flex={1} minW="220px" maxW={{ md: "320px" }}>
             <Box
               position="absolute"
               left={3}
@@ -73,29 +87,46 @@ export default function ResultsList() {
             />
           </Box>
 
-          <Flex gap={2} wrap="wrap">
-            {FILTERS.map((f) => (
-              <Box
-                key={f}
-                as="button"
-                onClick={() => {
-                  setFilter(f);
+          <Field.Root minW="200px" maxW={{ md: "240px" }}>
+            <Field.Label fontSize="sm" color="gray.600">Category</Field.Label>
+            <NativeSelect.Root>
+              <NativeSelect.Field
+                value={category}
+                onChange={(e) => {
+                  setCategory(e.target.value);
+                  setTest("All");
                   setPage(1);
                 }}
-                px={4}
-                py={2}
-                rounded="lg"
-                fontSize="sm"
-                fontWeight={600}
-                bg={filter === f ? "#039BE5" : "gray.100"}
-                color={filter === f ? "white" : "gray.600"}
-                _hover={{ bg: filter === f ? "#0277BD" : "gray.200" }}
-                transition="all 0.15s"
+                {...selectStyle}
               >
-                {f}
-              </Box>
-            ))}
-          </Flex>
+                <option value="All">All Categories</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+          </Field.Root>
+
+          <Field.Root minW="200px" maxW={{ md: "240px" }}>
+            <Field.Label fontSize="sm" color="gray.600">Mock Test</Field.Label>
+            <NativeSelect.Root>
+              <NativeSelect.Field
+                value={test}
+                onChange={(e) => {
+                  setTest(e.target.value);
+                  setPage(1);
+                }}
+                {...selectStyle}
+              >
+                <option value="All">All Tests</option>
+                {tests.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </NativeSelect.Field>
+              <NativeSelect.Indicator />
+            </NativeSelect.Root>
+          </Field.Root>
         </Flex>
 
         <Table.ScrollArea>
@@ -107,7 +138,6 @@ export default function ResultsList() {
                 <Table.ColumnHeader>Test</Table.ColumnHeader>
                 <Table.ColumnHeader>Score</Table.ColumnHeader>
                 <Table.ColumnHeader>Submitted</Table.ColumnHeader>
-                <Table.ColumnHeader>Status</Table.ColumnHeader>
                 <Table.ColumnHeader></Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
@@ -121,9 +151,6 @@ export default function ResultsList() {
                   <Table.Cell color="gray.600">{r.testName}</Table.Cell>
                   <Table.Cell color="gray.600">{r.score} / {r.totalMarks}</Table.Cell>
                   <Table.Cell color="gray.600">{r.submittedAt}</Table.Cell>
-                  <Table.Cell>
-                    <Badge colorPalette={STATUS_COLOR[r.status]} rounded="md" px={2}>{r.status}</Badge>
-                  </Table.Cell>
                   <Table.Cell>
                     <Box
                       as="button"
@@ -141,7 +168,7 @@ export default function ResultsList() {
 
               {filtered.length === 0 && (
                 <Table.Row>
-                  <Table.Cell colSpan={7}>
+                  <Table.Cell colSpan={6}>
                     <Text textAlign="center" color="gray.400" py={8}>
                       No results found.
                     </Text>

@@ -380,7 +380,7 @@ export default function TestScreen() {
       {/* Header */}
       <Flex
         bg="white"
-        p={5}
+        p={{ base: 4, md: 5 }}
         borderRadius="xl"
         border="1px solid"
         borderColor="gray.100"
@@ -425,7 +425,7 @@ export default function TestScreen() {
             onChange={(value) => setAnswers((prev) => ({ ...prev, [currentQuestion]: value }))}
           />
 
-          <Flex mt={10} justify="space-between" wrap="wrap" gap={3}>
+          <Flex mt={{ base: 6, md: 10 }} justify="space-between" wrap="wrap" gap={3}>
             <Button
               border="2px solid"
               borderColor="gray.300"
@@ -436,12 +436,13 @@ export default function TestScreen() {
               _hover={{ borderColor: "#039BE5", color: "#039BE5" }}
               disabled={isFirst}
               onClick={goPrevious}
+              flex={{ base: "1 1 100%", sm: "0 1 auto" }}
             >
               <FaArrowLeft size={12} />
               Previous
             </Button>
 
-            <HStack gap={3} wrap="wrap">
+            <HStack gap={3} wrap="wrap" w={{ base: "100%", sm: "auto" }}>
               <Button
                 variant="outline"
                 borderColor="#E6A700"
@@ -450,6 +451,7 @@ export default function TestScreen() {
                 borderRadius="lg"
                 _hover={{ bg: "rgba(230,167,0,0.08)" }}
                 onClick={toggleMarkForReview}
+                flex={{ base: "1 1 100%", sm: "0 1 auto" }}
               >
                 <FaBookmark size={12} />
                 {isMarked ? "Marked" : "Mark for Review"}
@@ -463,6 +465,7 @@ export default function TestScreen() {
                 _hover={{ bg: "#0277BD" }}
                 disabled={isLast}
                 onClick={goNext}
+                flex={{ base: "1 1 100%", sm: "0 1 auto" }}
               >
                 Save &amp; Next
                 <FaArrowRight size={12} />
@@ -475,6 +478,7 @@ export default function TestScreen() {
                 fontWeight={700}
                 _hover={{ bg: "#B71C1C" }}
                 onClick={onOpen}
+                flex={{ base: "1 1 100%", sm: "0 1 auto" }}
               >
                 <FaPaperPlane size={12} />
                 Submit
@@ -486,7 +490,7 @@ export default function TestScreen() {
         {/* Question Palette */}
         <Box
           bg="white"
-          p={5}
+          p={{ base: 4, md: 5 }}
           borderRadius="xl"
           border="1px solid"
           borderColor="gray.100"

@@ -28,9 +28,9 @@ export default function AdminHome() {
   return (
     <Box>
       <Tabs.Root value={activeTab} onValueChange={handleTabChange} variant="enclosed" colorPalette="blue">
-        <Tabs.List mb={6} bg="white" rounded="lg" p={1} boxShadow="sm" flexWrap="wrap">
+        <Tabs.List mb={{ base: 4, md: 6 }} bg="white" rounded="lg" p={1} boxShadow="sm" flexWrap="wrap">
           {TABS.map((t) => (
-            <Tabs.Trigger key={t.value} value={t.value} fontWeight={600} fontSize="sm">
+            <Tabs.Trigger key={t.value} value={t.value} fontWeight={600} fontSize={{ base: "xs", md: "sm" }}>
               <Box as={t.icon} mr={2} fontSize="13px" />
               {t.label}
             </Tabs.Trigger>

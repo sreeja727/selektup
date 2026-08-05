@@ -16,13 +16,11 @@ export default function EnquiryDetails() {
     dispatch(fetchAdminEnquiries());
   }, [dispatch]);
 
-  // Same index-as-id convention as EnquiriesList — the backend doesn't
-  // return a per-enquiry id, so this only resolves once the list is fetched.
   const enquiry = adminEnquiries[Number(id)];
 
   if (!enquiry) {
     return (
-      <Box bg="white" p={8} borderRadius="xl" boxShadow="md">
+      <Box bg="white" p={{ base: 4, md: 6, lg: 8 }} borderRadius="xl" boxShadow="md">
         <Text color="gray.500">Enquiry not found.</Text>
         <BackButton to="/admin/enquiries" label="Back to Enquiries" />
       </Box>
@@ -40,11 +38,11 @@ export default function EnquiryDetails() {
       />
       <BackButton to="/admin/enquiries" label="Back to Enquiries" />
 
-      <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="800px" borderTop="4px solid" borderColor="#E91E8C">
+      <Box bg="white" p={{ base: 4, md: 6, lg: 8 }} borderRadius="xl" boxShadow="md" maxW="800px" borderTop="4px solid" borderColor="#E91E8C">
         <Heading size="lg" color="#0C1222" mb={6}>{enquiry.name}</Heading>
 
         <VStack align="stretch" gap={4}>
-          <Flex gap={8} wrap="wrap">
+          <Flex gap={{ base: 4, md: 8 }} wrap="wrap">
             <Box>
               <Text fontSize="xs" color="gray.400">Email</Text>
               <Text fontWeight={600} color="#0C1222">{enquiry.email}</Text>

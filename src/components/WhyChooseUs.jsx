@@ -149,7 +149,7 @@ export default function WhyChooseUs() {
                 background={`linear-gradient(90deg, ${r.iconColor}, ${r.iconColor}55)`}
               />
 
-              <VStack align="flex-start" gap={5} p={7} pt={8}>
+              <VStack align="flex-start" gap={5} p={{ base: 5, md: 7 }} pt={{ base: 6, md: 8 }}>
                 {/* Icon + number row */}
                 <Box display="flex" alignItems="center" justifyContent="space-between" w="full">
                   <Box

@@ -41,14 +41,14 @@ export default function SubmitModal({
       <Portal>
         <Dialog.Backdrop />
         <Dialog.Positioner>
-          <Dialog.Content borderRadius="xl">
+          <Dialog.Content borderRadius="xl" w={{ base: "92vw", md: "460px" }} maxW="460px" mx="auto">
             <Dialog.Header>
               <Dialog.Title color="#0C1222" fontWeight={800}>Submit Test</Dialog.Title>
             </Dialog.Header>
 
             <Dialog.Body>
               <Stack gap={5}>
-                <SimpleGrid columns={3} gap={3}>
+                <SimpleGrid columns={3} gap={{ base: 2, md: 3 }}>
                   <StatTile tile={{ Icon: FaCheckCircle, label: "Answered", value: answered, color: "#2E7D32", bg: "green.50" }} />
                   <StatTile tile={{ Icon: FaTimesCircle, label: "Not Answered", value: notAnswered, color: "#C62828", bg: "red.50" }} />
                   <StatTile tile={{ Icon: FaBookmark, label: "For Review", value: review, color: "#B8860B", bg: "yellow.50" }} />
@@ -77,8 +77,8 @@ export default function SubmitModal({
               </Stack>
             </Dialog.Body>
 
-            <Dialog.Footer>
-              <Button variant="outline" borderRadius="lg" mr={3} onClick={onClose}>
+            <Dialog.Footer wrap="wrap" gap={2}>
+              <Button variant="outline" borderRadius="lg" mr={{ base: 0, sm: 3 }} onClick={onClose}>
                 Cancel
               </Button>
 

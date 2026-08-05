@@ -15,6 +15,7 @@ const QUESTION_RENDERERS = {
   STATEMENT_BASED: CommonMCQQuestion,
   ASSERTION_AND_REASON: CommonMCQQuestion,
   PARAGRAPH_BASED: CommonMCQQuestion,
+  TABLE_BASED: CommonMCQQuestion,
   IMAGE_BASED: CommonMCQQuestion,
   TRUE_FALSE: CommonMCQQuestion,
   MULTIPLE_CORRECT_MCQ: MultipleCorrectQuestion,

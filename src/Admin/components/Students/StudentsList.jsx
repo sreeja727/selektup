@@ -97,7 +97,7 @@ export default function StudentsList() {
         bg="white"
         rounded="xl"
         shadow="md"
-        p={6}
+        p={{ base: 4, md: 6 }}
         mb={8}
         borderTop="4px solid"
         borderColor="#E91E8C"
@@ -167,7 +167,7 @@ export default function StudentsList() {
         <Pagination count={requests.length} pageSize={PAGE_SIZE} page={requestsPage} onPageChange={setRequestsPage} />
       </Box>
 
-      <Box bg="white" rounded="xl" shadow="md" p={6}>
+      <Box bg="white" rounded="xl" shadow="md" p={{ base: 4, md: 6 }}>
         <Heading size="md" color="#0C1222" mb={6}>All Students</Heading>
 
         <Flex
