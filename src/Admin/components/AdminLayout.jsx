@@ -6,15 +6,20 @@ import Header from "./Header";
 import { TestSeriesProvider } from "../context/TestSeriesContext";
 import Loader from "../../components/Loader";
 
+// Must match the WIDTH_EXPANDED/WIDTH_COLLAPSED constants in Sidebar.jsx.
+const SIDEBAR_WIDTH_EXPANDED = "250px";
+const SIDEBAR_WIDTH_COLLAPSED = "76px";
+
 export default function AdminLayout() {
   const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [loadedPath, setLoadedPath] = useState(null);
-  // Sidebar defaults open on desktop but should start closed on mobile/tablet
-  // so it doesn't cover the page on first load — it becomes an overlay
-  // drawer there (toggled via the header's hamburger button).
-  const [sidebarOpen, setSidebarOpen] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth >= 992 : true
+  // Sidebar defaults expanded on desktop but starts collapsed to icon-only
+  // on mobile/tablet, so it doesn't eat too much width on first load. The
+  // toggle lives on the sidebar itself (see Sidebar.jsx) and works the same
+  // way at every screen size.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 992 : false
   );
 
   if (location.pathname !== loadedPath) {
@@ -32,13 +37,13 @@ export default function AdminLayout() {
     <TestSeriesProvider>
       {loading && <Loader fullScreen />}
       <Box bg="gray.100" minH="100vh">
-        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed((c) => !c)} />
 
         <Box
-          ml={{ base: 0, lg: sidebarOpen ? "250px" : "0px" }}
-          transition="margin-left 0.2s ease"
+          ml={sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED}
+          transition="margin-left 0.25s ease"
         >
-          <Header sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen((o) => !o)} />
+          <Header />
 
           <Box p={{ base: 4, md: 6, lg: 8 }}>
             <Outlet />

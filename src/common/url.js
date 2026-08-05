@@ -13,6 +13,7 @@ export const API_URL={
     ADMIN_STUDENTS:'admin/students',
     ADMIN_STUDENTS_PAGINATED:'admin/students/paginated',
     ADMIN_ENQUIRIES:'admin/enquiries',
+    ADMIN_RESULTS:'admin/results',
     HOME_CONTACT:'home/contact',
     TESTS:'tests',
     ADMIN_TESTS:'admin/tests'

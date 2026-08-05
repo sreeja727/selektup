@@ -101,6 +101,15 @@ export const getAdminStudentsLoading = flow(getPagesData, (state) => state.admin
 export const getAdminStudentsTotalPages = flow(getPagesData, (state) => state.adminStudentsTotalPages);
 export const getAdminStudentsPageSize = flow(getPagesData, (state) => state.adminStudentsPageSize);
 export const getAdminStudentsCurrentPage = flow(getPagesData, (state) => state.adminStudentsCurrentPage);
+
+export const getAdminResults = flow(getPagesData, (state) => state.adminResults);
+export const getAdminResultsLoading = flow(getPagesData, (state) => state.adminResultsLoading);
+export const getAdminResultsTotalPages = flow(getPagesData, (state) => state.adminResultsTotalPages);
+export const getAdminResultsPageSize = flow(getPagesData, (state) => state.adminResultsPageSize);
+export const getAdminResultDetail = flow(getPagesData, (state) => state.adminResultDetail);
+export const getAdminResultDetailLoading = flow(getPagesData, (state) => state.adminResultDetailLoading);
+export const getAdminTests = flow(getPagesData, (state) => state.adminTests);
+export const getAdminTestsLoading = flow(getPagesData, (state) => state.adminTestsLoading);
 export const getAdminEnquiries = flow(getPagesData, (state) => state.adminEnquiries);
 export const getAdminEnquiriesLoading = flow(getPagesData, (state) => state.adminEnquiriesLoading);
 export const getContactSubmitting = flow(getPagesData, (state) => state.contactSubmitting);
@@ -110,6 +119,8 @@ export const getTestQuestions = flow(getPagesData, (state) => state.testQuestion
 export const getTestQuestionsLoading = flow(getPagesData, (state) => state.testQuestionsLoading);
 export const getSubmitTestLoading = flow(getPagesData, (state) => state.submitTestLoading);
 export const getSubmitTestResult = flow(getPagesData, (state) => state.submitTestResult);
+export const getTestAlreadyAttempted = flow(getPagesData, (state) => state.testAlreadyAttempted);
+export const getTestAlreadyAttemptedSubmissionId = flow(getPagesData, (state) => state.testAlreadyAttemptedSubmissionId);
 export const getStartTestLoading = flow(getPagesData, (state) => state.startTestLoading);
 export const getSubmission = flow(getPagesData, (state) => state.submission);
 export const getSubmissionLoading = flow(getPagesData, (state) => state.submissionLoading);

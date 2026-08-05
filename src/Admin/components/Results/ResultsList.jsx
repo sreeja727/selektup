@@ -1,12 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { Box, Field, Flex, Heading, Input, NativeSelect, Table, Text } from "@chakra-ui/react";
 import { FaSearch } from "react-icons/fa";
-import { testResults } from "../../data/mockAdminData";
 import Breadcrumb from "../common/Breadcrumb";
 import Pagination from "../common/Pagination";
+import { fetchAdminResults, fetchAdminTests, fetchTestCategories } from "../../../pages/actions";
+import {
+  getAdminResults, getAdminResultsLoading, getAdminResultsTotalPages, getAdminResultsPageSize,
+  getTestCategories, getAdminTests,
+} from "../../../pages/selectors";
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 400;
 
 const selectStyle = {
   borderColor: "gray.200",
@@ -17,40 +23,53 @@ const selectStyle = {
 
 export default function ResultsList() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const results = useSelector(getAdminResults);
+  const resultsLoading = useSelector(getAdminResultsLoading);
+  const resultsTotalPages = useSelector(getAdminResultsTotalPages);
+  const resultsPageSize = useSelector(getAdminResultsPageSize) || PAGE_SIZE;
+  const categories = useSelector(getTestCategories);
+  const adminTests = useSelector(getAdminTests);
+
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [test, setTest] = useState("All");
   const [page, setPage] = useState(1);
 
-  const categories = useMemo(
-    () => [...new Set(testResults.map((r) => r.category))].sort(),
-    []
-  );
+  useEffect(() => {
+    dispatch(fetchTestCategories());
+    // Admin-scoped list — unlike fetchTestCategoryDetail, its tests[] isn't
+    // gated behind the calling account's own category-access approval, so
+    // it actually populates for an admin session. Fetched once; filtered
+    // per-category client-side below.
+    dispatch(fetchAdminTests());
+  }, [dispatch]);
 
-  const tests = useMemo(() => {
-    const source = category === "All" ? testResults : testResults.filter((r) => r.category === category);
-    return [...new Set(source.map((r) => r.testName))].sort((a, b) =>
-      a.localeCompare(b, undefined, { numeric: true })
-    );
-  }, [category]);
+  // Debounce the search box so we don't hit the backend on every keystroke.
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(handle);
+  }, [search]);
 
-  const filtered = useMemo(() => {
-    return testResults.filter((r) => {
-      const matchesCategory = category === "All" || r.category === category;
-      const matchesTest = test === "All" || r.testName === test;
-      const matchesSearch =
-        r.studentName.toLowerCase().includes(search.toLowerCase()) ||
-        r.studentEmail.toLowerCase().includes(search.toLowerCase()) ||
-        r.testName.toLowerCase().includes(search.toLowerCase()) ||
-        r.category.toLowerCase().includes(search.toLowerCase());
-      return matchesCategory && matchesTest && matchesSearch;
-    });
-  }, [search, category, test]);
+  useEffect(() => {
+    dispatch(fetchAdminResults({
+      search: debouncedSearch,
+      categoryId: category === "All" ? undefined : category,
+      testId: test === "All" ? undefined : test,
+      page: page - 1,
+      size: PAGE_SIZE,
+    }));
+  }, [dispatch, debouncedSearch, category, test, page]);
 
-  const paginated = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, page]);
+  const testsForCategory = category === "All"
+    ? []
+    : adminTests.filter((t) => String(t.categoryId) === category);
+
+  const scoreLabel = useMemo(() => (r) => (
+    r.totalMarks != null ? `${r.score} / ${r.totalMarks}` : `${r.score}`
+  ), []);
 
   return (
     <>
@@ -101,7 +120,7 @@ export default function ResultsList() {
               >
                 <option value="All">All Categories</option>
                 {categories.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c.id} value={c.id}>{c.title}</option>
                 ))}
               </NativeSelect.Field>
               <NativeSelect.Indicator />
@@ -117,11 +136,12 @@ export default function ResultsList() {
                   setTest(e.target.value);
                   setPage(1);
                 }}
+                disabled={category === "All"}
                 {...selectStyle}
               >
                 <option value="All">All Tests</option>
-                {tests.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                {testsForCategory.map((t) => (
+                  <option key={t.id} value={t.id}>{t.title}</option>
                 ))}
               </NativeSelect.Field>
               <NativeSelect.Indicator />
@@ -142,19 +162,21 @@ export default function ResultsList() {
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {paginated.map((r) => (
-                <Table.Row key={r.id} _hover={{ bg: "gray.50" }}>
+              {results.map((r) => (
+                <Table.Row key={r.submissionId} _hover={{ bg: "gray.50" }}>
                   <Table.Cell fontWeight={600} color="#0C1222">
                     <Text fontSize="sm">{r.studentName}</Text>
                   </Table.Cell>
-                  <Table.Cell color="gray.600">{r.category}</Table.Cell>
-                  <Table.Cell color="gray.600">{r.testName}</Table.Cell>
-                  <Table.Cell color="gray.600">{r.score} / {r.totalMarks}</Table.Cell>
-                  <Table.Cell color="gray.600">{r.submittedAt}</Table.Cell>
+                  <Table.Cell color="gray.600">{r.categoryTitle}</Table.Cell>
+                  <Table.Cell color="gray.600">{r.testTitle}</Table.Cell>
+                  <Table.Cell color="gray.600">{scoreLabel(r)}</Table.Cell>
+                  <Table.Cell color="gray.600">
+                    {r.submittedAt ? new Date(r.submittedAt).toLocaleString() : "—"}
+                  </Table.Cell>
                   <Table.Cell>
                     <Box
                       as="button"
-                      onClick={() => navigate(`/admin/results/${r.id}`)}
+                      onClick={() => navigate(`/admin/results/${r.submissionId}`)}
                       color="#039BE5"
                       fontWeight={600}
                       fontSize="sm"
@@ -166,7 +188,7 @@ export default function ResultsList() {
                 </Table.Row>
               ))}
 
-              {filtered.length === 0 && (
+              {!resultsLoading && results.length === 0 && (
                 <Table.Row>
                   <Table.Cell colSpan={6}>
                     <Text textAlign="center" color="gray.400" py={8}>
@@ -179,7 +201,12 @@ export default function ResultsList() {
           </Table.Root>
         </Table.ScrollArea>
 
-        <Pagination count={filtered.length} pageSize={PAGE_SIZE} page={page} onPageChange={setPage} />
+        <Pagination
+          count={resultsTotalPages * resultsPageSize}
+          pageSize={resultsPageSize}
+          page={page}
+          onPageChange={setPage}
+        />
       </Box>
     </>
   );

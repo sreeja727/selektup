@@ -88,7 +88,6 @@ function AccessPanel({ price, status, justSubmitted, requestLoading, detailLoadi
     )
   }
 
-  // NOT_REQUESTED (or not yet known)
   return (
     <Stack gap={4} bg="white" borderRadius="2xl" border="1px solid" borderColor="gray.100" boxShadow="0 2px 14px rgba(0,0,0,0.06)" p={{ base: 6, md: 8 }} align="center" textAlign="center">
       <Box color="gray.400"><FaLock size={28} /></Box>
@@ -270,6 +269,11 @@ export default function TestCategoryPage() {
                           <FaLock size={11} />
                         </Box>
                       )}
+                      {unlocked && test.attempted && (
+                        <Badge colorPalette="green" rounded="md" px={2} py={0.5} fontSize="2xs">
+                          Attempted
+                        </Badge>
+                      )}
                     </HStack>
                     <HStack gap={4} color="gray.500" fontSize="xs">
                       <HStack gap={1}>
@@ -282,13 +286,15 @@ export default function TestCategoryPage() {
                   {unlocked ? (
                     <Button
                       size="sm"
-                      bg={CATEGORY_COLOR}
-                      color="white"
+                      bg={test.attempted ? "white" : CATEGORY_COLOR}
+                      color={test.attempted ? CATEGORY_COLOR : "white"}
+                      border={test.attempted ? "1px solid" : undefined}
+                      borderColor={test.attempted ? CATEGORY_COLOR : undefined}
                       _hover={{ opacity: 0.9 }}
                       onClick={() => navigate(`/test-series/${categoryId}/${test.id}`)}
                     >
-                      <FaPlayCircle size={12} />
-                      Start
+                      {test.attempted ? <FaCheckCircle size={12} /> : <FaPlayCircle size={12} />}
+                      {test.attempted ? "Attempted" : "Start"}
                     </Button>
                   ) : (
                     <Button size="sm" bg="gray.200" color="gray.500" disabled>

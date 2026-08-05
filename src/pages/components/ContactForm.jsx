@@ -17,6 +17,8 @@ import { actions } from '../slice'
 import { getContactError, getContactSubmitting, getContactSuccessMessage } from '../selectors'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const NAME_RE = /^[A-Za-z][A-Za-z .]{1,49}$/
+const PHONE_RE = /^[6-9]\d{9}$/
 
 const EMPTY_FORM = { name: '', email: '', phone: '', district: '', message: '' }
 
@@ -55,7 +57,8 @@ export default function ContactForm() {
   }, [apiError])
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name } = e.target
+    const value = name === 'phone' ? e.target.value.replace(/\D/g, '').slice(0, 10) : e.target.value
     setForm((f) => ({ ...f, [name]: value }))
     // Clear the inline error for this field as the user types
     if (fieldErrors[name]) setFieldErrors((fe) => ({ ...fe, [name]: '' }))
@@ -64,12 +67,24 @@ export default function ContactForm() {
 
   const validate = () => {
     const errors = {}
-    if (!form.name.trim())     errors.name     = 'Name is required'
+    const name = form.name.trim()
+    const phone = form.phone.trim()
+    const message = form.message.trim()
+
+    if (!name) errors.name = 'Name is required'
+    else if (!NAME_RE.test(name)) errors.name = 'Enter a valid name (letters only, min 2 characters)'
+
     if (!form.district.trim()) errors.district = 'District is required'
-    if (!form.phone.trim())    errors.phone    = 'Phone number is required'
-    if (!form.message.trim())  errors.message  = 'Message is required'
+
+    if (!phone) errors.phone = 'Phone number is required'
+    else if (!PHONE_RE.test(phone)) errors.phone = 'Enter a valid 10-digit phone number'
+
+    if (!message) errors.message = 'Message is required'
+    else if (message.length < 10) errors.message = 'Message must be at least 10 characters'
+
     if (form.email.trim() && !EMAIL_RE.test(form.email.trim()))
       errors.email = 'Enter a valid email address'
+
     return errors
   }
 
@@ -179,6 +194,7 @@ export default function ContactForm() {
                 <FieldLabel>Email</FieldLabel>
                 <Input
                   name="email"
+                  type="email"
                   placeholder="Enter valid email id"
                   value={form.email}
                   onChange={handleChange}
@@ -230,6 +246,9 @@ export default function ContactForm() {
                 <FieldLabel>Phone Number <Asterisk /></FieldLabel>
                 <Input
                   name="phone"
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
                   placeholder="Enter phone number"
                   value={form.phone}
                   onChange={handleChange}

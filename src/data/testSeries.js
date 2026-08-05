@@ -21,8 +21,6 @@ function makeTests(count = 10) {
   })
 }
 
-// Students purchase access to the whole category — price and features
-// live here, not on the individual tests.
 export const TEST_CATEGORIES = [
   {
     slug: 'degree-mains',

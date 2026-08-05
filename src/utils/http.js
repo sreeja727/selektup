@@ -202,7 +202,7 @@ function* invokeApi(method, url, payload) {
     const { code, response: { status, data: errorData = {} } = {} } = error;
     const { error: badReqTitle = '', message: badReqMessage = 'ERR_BAD_REQUEST', errorMessage = '' } = errorData || {};
     yield put(failureAction({
-      error: errorData, errorData, isLoading: false, status: REQUEST_STATUS.FAILED
+      error: errorData, errorData, isLoading: false, status: REQUEST_STATUS.FAILED, httpStatus: status
     }));
     let title = 'Something Unexpected';
     let description = 'Please try again later';
@@ -226,6 +226,10 @@ function* invokeApi(method, url, payload) {
         break;
       case 403:
         description = 'Permission Denied';
+        break;
+      case 409:
+        title = 'Already Completed';
+        description = errorMessage || 'This action has already been completed.';
         break;
       default:
         break;

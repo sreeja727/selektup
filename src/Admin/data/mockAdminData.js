@@ -160,57 +160,6 @@ export const seedQuestions = [
   },
 ]
 
-const RESULT_CATEGORIES = ['Degree Mains PYQ', 'KTET Psychology', 'Engineering Graphics', 'PSC Mentorship Programme']
-
-const RESULT_STUDENTS = [
-  { name: 'Rahul Sharma', email: 'rahul.sharma@gmail.com' },
-  { name: 'Priya Verma', email: 'priya.verma@gmail.com' },
-  { name: 'Amit Kumar', email: 'amit.kumar@gmail.com' },
-  { name: 'Sneha Iyer', email: 'sneha.iyer@gmail.com' },
-  { name: 'Vikram Singh', email: 'vikram.singh@gmail.com' },
-]
-
-const RESULT_TIMES = [
-  '11:42 AM', '06:15 PM', '09:03 AM', '04:50 PM', '10:20 AM',
-  '02:35 PM', '08:10 AM', '05:47 PM', '01:15 PM', '07:55 AM',
-]
-
-// 10 mock tests per category, each with a submission from a rotating student.
-function buildTestResults() {
-  const results = []
-  let id = 1
-  RESULT_CATEGORIES.forEach((category) => {
-    for (let testNum = 1; testNum <= 10; testNum += 1) {
-      const student = RESULT_STUDENTS[(id - 1) % RESULT_STUDENTS.length]
-      const correct = 40 + ((id * 13) % 50)
-      const wrong = Math.min(5 + ((id * 7) % 25), 97 - correct)
-      const unanswered = 100 - correct - wrong
-      const score = Math.round((correct - wrong / 1.5) * 10) / 10
-      const date = new Date(2026, 6, 30 - (id - 1))
-      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-
-      results.push({
-        id,
-        studentName: student.name,
-        studentEmail: student.email,
-        category,
-        testName: `Mock Test ${testNum}`,
-        totalQuestions: 100,
-        correct,
-        wrong,
-        unanswered,
-        totalMarks: 100,
-        score,
-        submittedAt: `${dateStr} ${RESULT_TIMES[(id - 1) % RESULT_TIMES.length]}`,
-      })
-      id += 1
-    }
-  })
-  return results
-}
-
-export const testResults = buildTestResults()
-
 export const STATUS_COLOR = {
   New: 'blue',
   'In Progress': 'orange',

@@ -24,8 +24,6 @@ export default function StudentDetails() {
     dispatch(fetchAdminStudents());
   }, [dispatch]);
 
-  // Normalize the backend's { id, fullName, mobile, email, lastLoginAt, joined, blocked }
-  // to the name/phone/lastLogin/status shape the search and filter below expect.
   const students = useMemo(() => adminStudents.map((s) => ({
     id: s.id,
     name: s.fullName,

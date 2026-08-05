@@ -8,12 +8,8 @@ import Loader from "../../../components/Loader";
 import { toaster } from "../../../components/ui/toaster";
 import QuestionTypeFields from "./QuestionTypeFields";
 import { fieldStyle } from "./fieldStyle";
-import {
-  QUESTION_TYPE_LIST, getTypeConfig, emptyFields, isSaveable, validate as validateQuestion,
-} from "../../../pages/questionTypes";
-import {
-  fetchTestCategories, fetchTestCategoryDetail, fetchAdminTestQuestions, addQuestion,
-} from "../../../pages/actions";
+import {QUESTION_TYPE_LIST, getTypeConfig, emptyFields, isSaveable, validate as validateQuestion,} from "../../../pages/questionTypes";
+import {fetchTestCategories, fetchTestCategoryDetail, fetchAdminTestQuestions, addQuestion,} from "../../../pages/actions";
 import {
   getTestCategories, getTestCategoriesLoading,
   getTestCategoryDetail, getTestCategoryDetailLoading,

@@ -1,9 +1,13 @@
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Box, Flex, Heading, SimpleGrid, Stack, Text } from "@chakra-ui/react";
+import { useDispatch, useSelector } from "react-redux";
+import { Badge, Box, Flex, Heading, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 import { FaCheckCircle, FaTimesCircle, FaMinusCircle, FaStar } from "react-icons/fa";
-import { testResults } from "../../data/mockAdminData";
+import { fetchAdminResultDetail } from "../../../pages/actions";
+import { getAdminResultDetail, getAdminResultDetailLoading } from "../../../pages/selectors";
 import Breadcrumb from "../common/Breadcrumb";
 import BackButton from "../common/BackButton";
+import Loader from "../../../components/Loader";
 
 function StatTile({ tile }) {
   return (
@@ -19,9 +23,16 @@ function StatTile({ tile }) {
 
 export default function ResultDetails() {
   const { id } = useParams();
-  const result = testResults.find((r) => String(r.id) === id);
+  const dispatch = useDispatch();
+  const result = useSelector(getAdminResultDetail);
+  const loading = useSelector(getAdminResultDetailLoading);
 
-  if (!result) {
+  useEffect(() => {
+    if (id) dispatch(fetchAdminResultDetail(id));
+  }, [dispatch, id]);
+
+  if (loading || !result) {
+    if (loading) return <Loader fullScreen />;
     return (
       <Box bg="white" p={{ base: 4, md: 6, lg: 8 }} borderRadius="xl" boxShadow="md">
         <Text color="gray.500">Result not found.</Text>
@@ -47,20 +58,27 @@ export default function ResultDetails() {
             <Heading size="lg" color="#0C1222" mb={1}>{result.studentName}</Heading>
             <Text color="gray.500" fontSize="sm">{result.studentEmail}</Text>
           </Box>
+          {result.hasPendingManualGrading && (
+            <Badge colorPalette="purple" rounded="md" px={3} py={1}>
+              {result.manualGradingCount} Needs Manual Grading
+            </Badge>
+          )}
         </Flex>
 
         <Flex gap={{ base: 4, md: 8 }} wrap="wrap" mb={8}>
           <Box>
             <Text fontSize="xs" color="gray.400">Category</Text>
-            <Text fontWeight={600} color="#0C1222">{result.category}</Text>
+            <Text fontWeight={600} color="#0C1222">{result.categoryTitle}</Text>
           </Box>
           <Box>
             <Text fontSize="xs" color="gray.400">Test</Text>
-            <Text fontWeight={600} color="#0C1222">{result.testName}</Text>
+            <Text fontWeight={600} color="#0C1222">{result.testTitle}</Text>
           </Box>
           <Box>
             <Text fontSize="xs" color="gray.400">Submitted</Text>
-            <Text fontWeight={600} color="#0C1222">{result.submittedAt}</Text>
+            <Text fontWeight={600} color="#0C1222">
+              {result.submittedAt ? new Date(result.submittedAt).toLocaleString() : "—"}
+            </Text>
           </Box>
         </Flex>
 

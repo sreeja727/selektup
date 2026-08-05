@@ -30,7 +30,6 @@ export default function QuestionsList() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-
   const categories = useSelector(getTestCategories);
   const categoriesLoading = useSelector(getTestCategoriesLoading);
   const categoryDetail = useSelector(getTestCategoryDetail);
@@ -39,9 +38,6 @@ export default function QuestionsList() {
   const testQuestionsLoading = useSelector(getAdminTestQuestionsLoading);
   const templateLoading = useSelector(getQuestionTemplateLoading);
   const deleteAllLoading = useSelector(getDeleteAllQuestionsLoading);
-
-  // Coming back from Add/Edit/Preview carries the category/test that was
-  // selected there, so the list doesn't reset to the first one on return.
   const [categoryId, setCategoryId] = useState(location.state?.categoryId ? String(location.state.categoryId) : "");
   const [testId, setTestId] = useState(location.state?.testId ? String(location.state.testId) : "");
   const [search, setSearch] = useState("");
@@ -55,8 +51,6 @@ export default function QuestionsList() {
     return () => clearTimeout(handle);
   }, [search]);
 
-  // Default to the first category once the real list loads — a render-time
-  // state adjustment (React's documented alternative to an effect for this).
   if (!categoryId && categories.length > 0) {
     setCategoryId(String(categories[0].id));
   }
@@ -75,15 +69,11 @@ export default function QuestionsList() {
     [categoryDetailMatches, categoryDetail]
   );
 
-  // Default to the first test of the selected category once it loads.
   if (tests.length > 0 && !tests.some((t) => String(t.id) === String(testId))) {
     setTestId(String(tests[0].id));
   }
   const testTitle = tests.find((t) => String(t.id) === String(testId))?.title || "this test";
 
-  // Both search and type are applied server-side (confirmed query params on
-  // GET /api/admin/tests/{testId}/questions) — testQuestions already only
-  // contains matching rows, no client-side filtering needed.
   useEffect(() => {
     if (testId) dispatch(fetchAdminTestQuestions({ testId, search: debouncedSearch, type: typeFilter }));
   }, [dispatch, testId, debouncedSearch, typeFilter]);
@@ -121,12 +111,6 @@ export default function QuestionsList() {
     dispatch(downloadQuestionTemplate(testId));
   };
 
-  // Deletes every question currently loaded for this test (i.e. matching the
-  // active search/type filter, same as the "Questions : N" count below).
-  // The real bulk-delete endpoint can't be scoped to a filter — it always
-  // deletes everything in the test — so it's only used when no filter is
-  // active; otherwise this falls back to looping the single-question DELETE
-  // (see deleteAllQuestionsSaga in saga.js).
   const isFiltered = Boolean(debouncedSearch || typeFilter);
   const handleDeleteAll = () => {
     if (testQuestions.length === 0) return;

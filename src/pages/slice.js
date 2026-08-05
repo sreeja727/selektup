@@ -6,25 +6,10 @@ import {
   fromWireQuestion, getTypeConfig, QUESTION_KIND, OPTION_LETTERS,
 } from './questionTypes';
 
-// Normalizes a raw question row from the backend into the canonical
-// { id, type, text, options, correctOptionIndexes, ... } shape every
-// Questions screen (List/Add/Edit/View) and TestScreen read — see
-// questionTypes.js for the per-type field mapping (confirmed against the
-// live OpenAPI spec for all 7 types).
+
 const normalizeQuestion = fromWireQuestion;
 
-// Normalizes a raw ReviewQuestionDto row (confirmed via /v3/api-docs:
-// { questionId, questionType, questionText, optionA..D, correctOption,
-// correctNumericAnswer, numericTolerance, selectedOption, textAnswerGiven,
-// numericAnswerGiven, correct, skipped, needsManualGrading, manualScore,
-// explanation } — three separate given-answer fields, one per kind, mirroring
-// AnswerEntry) into the canonical question shape plus a `selected` value in
-// the shape QuestionAnswerInput/questionTypes' isAnswered/isCorrect/
-// getSelectedAnswerLabel expect (a string for single-select/text-answer/
-// numeric-answer, a string[] for multi-select, decoded from the
-// comma-separated letters) — Review.jsx reads this shape for both the
-// real-backend path (this function) and the local mock-attempt path (built
-// directly in TestScreen.jsx).
+
 function normalizeSubmissionQuestion(raw) {
   if (!raw) return raw;
   const question = fromWireQuestion({ ...raw, id: raw.questionId });
@@ -56,11 +41,7 @@ function normalizeSubmissionQuestion(raw) {
   };
 }
 
-// Normalizes a raw SubmissionResultDto (confirmed via OpenAPI: { submissionId,
-// score, totalMarks, totalQuestions, attemptedCount, correctCount, wrongCount,
-// skippedCount, negativeMarks, cutOffMarks, passed, submittedAt }) into the
-// { correct, wrong, unanswered, penalty, ... } shape Result.jsx and
-// TestScreen.jsx's local-fallback path already read.
+
 function normalizeSubmissionResult(raw) {
   if (!raw) return raw;
   return {
@@ -76,6 +57,43 @@ function normalizeSubmissionResult(raw) {
     score: raw.score ?? 0,
     passed: raw.passed,
     submittedAt: raw.submittedAt,
+  };
+}
+
+
+function normalizeAdminResult(raw) {
+  if (!raw) return raw;
+  return {
+    submissionId: raw.submissionId,
+    studentName: raw.studentName,
+    studentEmail: raw.studentEmail,
+    categoryTitle: raw.categoryTitle,
+    testTitle: raw.testTitle,
+    submittedAt: raw.submittedAt,
+    score: raw.score ?? 0,
+    totalMarks: raw.totalMarks,
+    totalQuestions: raw.totalQuestions,
+    correct: raw.correctCount ?? 0,
+    wrong: raw.wrongCount ?? 0,
+    unanswered: raw.skippedCount ?? 0,
+    correctMarks: raw.correctMarks ?? 0,
+    negativeMarks: raw.negativeMarks ?? 0,
+    hasPendingManualGrading: raw.hasPendingManualGrading ?? false,
+    manualGradingCount: raw.manualGradingCount ?? 0,
+  };
+}
+
+// GET /api/admin/tests responds with an untyped list (springdoc can't
+// introspect the ad-hoc Map<String,Object> shape), so this reads several
+// plausible field-name spellings defensively rather than assuming one —
+// adjust here if the backend's actual keys turn out different.
+function normalizeAdminTest(raw) {
+  if (!raw) return raw;
+  return {
+    id: raw.id ?? raw.testId,
+    title: raw.title ?? raw.testTitle ?? raw.name,
+    categoryId: raw.categoryId ?? raw.category?.id ?? raw.testCategoryId,
+    categoryTitle: raw.categoryTitle ?? raw.category?.title ?? raw.categoryName,
   };
 }
 
@@ -114,68 +132,61 @@ const initialState = {
   adminStudentsTotalPages: 0,
   adminStudentsPageSize: 10,
   adminStudentsCurrentPage: 0,
+  adminResults: [],
+  adminResultsLoading: false,
+  adminResultsTotalPages: 0,
+  adminResultsPageSize: 10,
+  adminResultsCurrentPage: 0,
+  adminResultDetail: null,
+  adminResultDetailLoading: false,
+  adminTests: [],
+  adminTestsLoading: false,
   adminEnquiries: [],
   adminEnquiriesLoading: false,
   contactSubmitting: false,
   contactSuccessMessage: '',
   contactError: '',
 
-  // mock test attempt (frontend-only until a submit-attempt backend exists)
   testAttempt: null,
 
-  // real test questions/submit (GET/POST /api/tests/{testId}/...) — student-facing
   testQuestions: [],
   testQuestionsLoading: false,
   submitTestLoading: false,
   submitTestResult: null,
+  testAlreadyAttempted: false,
+  testAlreadyAttemptedSubmissionId: null,
 
-  // start test attempt (real, student-facing) - POST /api/tests/{testId}/start
   startTestLoading: false,
 
-  // submission result summary (real, student-facing), fetched by id instead
-  // of relying on local Redux state - GET /api/tests/submissions/{submissionId}
   submission: null,
   submissionLoading: false,
 
-  // submission review detail (real, student-facing) -
-  // GET /api/tests/submissions/{submissionId}/review
   submissionReview: null,
   submissionReviewLoading: false,
 
-  // admin test questions list (GET /api/admin/tests/{testId}/questions) — backs
-  // the Questions list/Add "next number" tracking; kept separate from
-  // testQuestions above since it's a different endpoint with different auth/shape.
   adminTestQuestions: [],
   adminTestQuestionsTotal: 0,
   adminTestQuestionsLoading: false,
 
-  // add question (admin) - POST /api/tests/{testId}/questions
   addQuestionLoading: false,
   addQuestionResult: null,
   addQuestionError: '',
 
-  // update question (admin) - PUT /api/tests/{testId}/questions/{questionId}
   updateQuestionLoading: false,
   updateQuestionResult: null,
   updateQuestionError: '',
 
-  // bulk upload questions (admin) - POST /api/tests/{testId}/questions/bulk
   bulkUploadLoading: false,
   bulkUploadResult: null,
   bulkUploadError: '',
 
-  // delete question (admin) - DELETE /api/tests/{testId}/questions/{questionId}
   deleteQuestionLoading: false,
 
-  // delete all questions (admin) - loops the single-delete endpoint above,
-  // since there's no bulk-delete endpoint on the backend yet.
   deleteAllQuestionsLoading: false,
 
-  // dashboard summary (admin) - GET /api/admin/dashboard/summary
   adminDashboardSummary: null,
   adminDashboardSummaryLoading: false,
 
-  // download question template (admin) - GET /api/admin/tests/{testId}/questions/template
   questionTemplateLoading: false,
   questionTemplateFile: null,
 };
@@ -224,8 +235,6 @@ const pagesSlice = createSlice({
         state.adminStudents[index] = { ...state.adminStudents[index], blocked };
       }
     },
-    // DELETE returns no body, so the saga dispatches this with the id it
-    // already knows once the request succeeds (same pattern as setStudentBlocked).
     removeQuestion: (state, { payload = {} }) => {
       const { questionId } = payload;
       const before = state.adminTestQuestions.length;
@@ -239,9 +248,7 @@ const pagesSlice = createSlice({
     setDeleteAllQuestionsLoading: (state, { payload = false }) => {
       state.deleteAllQuestionsLoading = payload;
     },
-    // DELETE /api/admin/tests/{testId}/questions returns no body — the saga
-    // dispatches this once it succeeds, since it deletes everything
-    // unconditionally (see deleteAllQuestionsSaga in saga.js).
+   
     clearAdminTestQuestions: (state) => {
       state.adminTestQuestions = [];
       state.adminTestQuestionsTotal = 0;
@@ -249,7 +256,6 @@ const pagesSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Register
       .addCase(
         ACTION_TYPES[ACTIONS.REGISTER_API][0],
         (state) => {
@@ -270,7 +276,6 @@ const pagesSlice = createSlice({
         }
       )
 
-      // Login
       .addCase(
         ACTION_TYPES[ACTIONS.LOGIN][1],
         (state, { payload = {} }) => {
@@ -278,7 +283,6 @@ const pagesSlice = createSlice({
         }
       )
 
-      // Forgot / reset password
       .addCase(
         ACTION_TYPES[ACTIONS.FORGOT_PASSWORD][1],
         (state, { payload = {} }) => {
@@ -291,10 +295,6 @@ const pagesSlice = createSlice({
           _.set(state, 'resetPasswordData', payload.data || payload);
         }
       )
-      // Change password (logged-in student) — POST /api/auth/change-password.
-      // Written the same way as forgotPasswordData so ChangePassword.jsx can
-      // react to { success, message } (e.g. show "Current password is
-      // incorrect" inline under that field, not just as a toast).
       .addCase(
         ACTION_TYPES[ACTIONS.CHANGE_PASSWORD][1],
         (state, { payload = {} }) => {
@@ -302,7 +302,6 @@ const pagesSlice = createSlice({
         }
       )
 
-      // Fetch access status (student)
       .addCase(ACTION_TYPES[ACTIONS.FETCH_ACCESS_STATUS][0], (state) => {
         state.statusLoading = true;
       })
@@ -312,8 +311,6 @@ const pagesSlice = createSlice({
         state.statusLoading = false;
       })
       .addCase(ACTION_TYPES[ACTIONS.FETCH_ACCESS_STATUS][2], (state, { payload = {} }) => {
-        // Fall back to NOT_REQUESTED so the UI has a definite answer instead
-        // of spinning forever when the (mock) status check fails.
         const { payload: categorySlug } = payload;
         if (categorySlug) {
           state.statusByCategory[categorySlug] = ACCESS_STATUS.NOT_REQUESTED;
@@ -321,7 +318,6 @@ const pagesSlice = createSlice({
         state.statusLoading = false;
       })
 
-      // Request access (student)
       .addCase(ACTION_TYPES[ACTIONS.REQUEST_ACCESS][0], (state) => {
         state.requestLoading = true;
       })
@@ -334,7 +330,6 @@ const pagesSlice = createSlice({
         state.requestLoading = false;
       })
 
-      // Fetch all requests (admin)
       .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_REQUESTS][0], (state) => {
         state.adminRequestsLoading = true;
       })
@@ -346,9 +341,6 @@ const pagesSlice = createSlice({
         state.adminRequestsLoading = false;
       })
 
-      // Approve / reject (admin) — both return ApiResponseVoid (no body), so
-      // the actual adminRequests update happens via setAdminRequestStatus,
-      // dispatched from the saga once the request succeeds.
       .addCase(ACTION_TYPES[ACTIONS.APPROVE_REQUEST][0], (state) => {
         state.actionLoading = true;
       })
@@ -368,7 +360,6 @@ const pagesSlice = createSlice({
         state.actionLoading = false;
       })
 
-      // Fetch test categories (GET /api/test-categories)
       .addCase(ACTION_TYPES[ACTIONS.FETCH_TEST_CATEGORIES][0], (state) => {
         state.testCategoriesLoading = true;
       })
@@ -380,7 +371,6 @@ const pagesSlice = createSlice({
         state.testCategoriesLoading = false;
       })
 
-      // Fetch test category detail (GET /api/test-categories/{id})
       .addCase(ACTION_TYPES[ACTIONS.FETCH_TEST_CATEGORY_DETAIL][0], (state) => {
         state.testCategoryDetailLoading = true;
       })
@@ -442,6 +432,56 @@ const pagesSlice = createSlice({
         state.adminStudentsLoading = false;
       })
 
+      // Fetch admin results (GET /api/admin/results)
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULTS][0], (state) => {
+        state.adminResultsLoading = true;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULTS][1], (state, { payload = {} }) => {
+        const raw = payload.data?.data;
+        const src = Array.isArray(raw) ? { content: raw } : (raw || {});
+        // The endpoint is typed as a generic Map (springdoc can't introspect
+        // Page<T>), so this is a raw Spring Data Page: { content, totalPages,
+        // size, number, ... }. Also accept pageSize/currentPage in case a
+        // custom DTO is used instead — matches the defensive style already
+        // used for FETCH_ADMIN_STUDENTS above.
+        state.adminResults = (src.content || []).map(normalizeAdminResult);
+        state.adminResultsTotalPages = src.totalPages ?? 0;
+        state.adminResultsPageSize = src.pageSize ?? src.size ?? 10;
+        state.adminResultsCurrentPage = src.currentPage ?? src.number ?? 0;
+        state.adminResultsLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULTS][2], (state) => {
+        state.adminResultsLoading = false;
+      })
+
+      // Fetch admin result detail (GET /api/admin/results/{submissionId})
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULT_DETAIL][0], (state) => {
+        state.adminResultDetailLoading = true;
+        state.adminResultDetail = null;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULT_DETAIL][1], (state, { payload = {} }) => {
+        state.adminResultDetail = normalizeAdminResult(payload.data?.data) || null;
+        state.adminResultDetailLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULT_DETAIL][2], (state) => {
+        state.adminResultDetailLoading = false;
+      })
+
+      // Fetch admin tests (GET /api/admin/tests) — flat, admin-scoped list of
+      // every mock test, used for the Results page's Mock Test filter.
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_TESTS][0], (state) => {
+        state.adminTestsLoading = true;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_TESTS][1], (state, { payload = {} }) => {
+        const raw = payload.data?.data;
+        const list = Array.isArray(raw) ? raw : (raw?.content || []);
+        state.adminTests = list.map(normalizeAdminTest);
+        state.adminTestsLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_TESTS][2], (state) => {
+        state.adminTestsLoading = false;
+      })
+
       // Block / unblock student (admin) — the actual adminStudents update
       // happens via setStudentBlocked, dispatched from the saga once the
       // POST resolves, since these endpoints return no student data back.
@@ -498,6 +538,8 @@ const pagesSlice = createSlice({
         // Clear out the previous test's questions so they can't briefly
         // flash while the next test's set is still loading.
         state.testQuestions = [];
+        state.testAlreadyAttempted = false;
+        state.testAlreadyAttemptedSubmissionId = null;
       })
       .addCase(ACTION_TYPES[ACTIONS.FETCH_TEST_QUESTIONS][1], (state, { payload = {} }) => {
         const raw = payload.data?.data;
@@ -508,8 +550,12 @@ const pagesSlice = createSlice({
         state.testQuestions = list.map(normalizeQuestion);
         state.testQuestionsLoading = false;
       })
-      .addCase(ACTION_TYPES[ACTIONS.FETCH_TEST_QUESTIONS][2], (state) => {
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_TEST_QUESTIONS][2], (state, { payload = {} }) => {
         state.testQuestionsLoading = false;
+        if (payload.httpStatus === 409) {
+          state.testAlreadyAttempted = true;
+          state.testAlreadyAttemptedSubmissionId = payload.errorData?.submissionId ?? state.testAlreadyAttemptedSubmissionId;
+        }
       })
 
       // Submit test (POST /api/tests/{testId}/submit)
@@ -521,8 +567,12 @@ const pagesSlice = createSlice({
         state.submitTestResult = normalizeSubmissionResult(payload.data?.data) || {};
         state.submitTestLoading = false;
       })
-      .addCase(ACTION_TYPES[ACTIONS.SUBMIT_TEST][2], (state) => {
+      .addCase(ACTION_TYPES[ACTIONS.SUBMIT_TEST][2], (state, { payload = {} }) => {
         state.submitTestLoading = false;
+        if (payload.httpStatus === 409) {
+          state.testAlreadyAttempted = true;
+          state.testAlreadyAttemptedSubmissionId = payload.errorData?.submissionId ?? state.testAlreadyAttemptedSubmissionId;
+        }
       })
 
       // Start test attempt (POST /api/tests/{testId}/start) — fire-and-forget,
@@ -533,8 +583,12 @@ const pagesSlice = createSlice({
       .addCase(ACTION_TYPES[ACTIONS.START_TEST][1], (state) => {
         state.startTestLoading = false;
       })
-      .addCase(ACTION_TYPES[ACTIONS.START_TEST][2], (state) => {
+      .addCase(ACTION_TYPES[ACTIONS.START_TEST][2], (state, { payload = {} }) => {
         state.startTestLoading = false;
+        if (payload.httpStatus === 409) {
+          state.testAlreadyAttempted = true;
+          state.testAlreadyAttemptedSubmissionId = payload.errorData?.submissionId ?? state.testAlreadyAttemptedSubmissionId;
+        }
       })
 
       // Submission result summary (GET /api/tests/submissions/{submissionId})
