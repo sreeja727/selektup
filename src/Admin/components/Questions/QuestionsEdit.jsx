@@ -30,9 +30,6 @@ export default function QuestionsEdit() {
   const location = useLocation();
   const dispatch = useDispatch();
 
-  // Comes from QuestionsList's Edit action — a question is edited in place
-  // under the mock test it already belongs to, so there's no "fetch by id"
-  // endpoint to fall back on for a direct link/refresh here.
   const { question, testId, categoryId, testTitle } = location.state || {};
   const updateLoading = useSelector(getUpdateQuestionLoading);
   const updateResult = useSelector(getUpdateQuestionResult);
@@ -42,7 +39,6 @@ export default function QuestionsEdit() {
   const [fields, setFields] = useState(() => (question ? toFormFields(question) : null));
   const [fieldErrors, setFieldErrors] = useState({});
 
-  // Once the save succeeds, head back to the list for this test.
   useEffect(() => {
     if (updateResult) {
       navigate("/admin/questions", { state: { categoryId, testId } });
@@ -52,7 +48,7 @@ export default function QuestionsEdit() {
 
   if (!question || String(question.id) !== String(id) || !fields) {
     return (
-      <Box bg="white" p={8} borderRadius="xl" boxShadow="md">
+      <Box bg="white" p={{ base: 4, md: 6, lg: 8 }} borderRadius="xl" boxShadow="md">
         <Text color="gray.500">Open this question from the Questions list to edit it.</Text>
         <BackButton to="/admin/questions" label="Back to Questions" />
       </Box>
@@ -93,8 +89,8 @@ export default function QuestionsEdit() {
       />
       <BackButton to="/admin/questions" label="Back to Questions" />
 
-      <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="800px">
-        <HStack justify="space-between" align="center" mb={6}>
+      <Box bg="white" p={{ base: 4, md: 6, lg: 8 }} borderRadius="xl" boxShadow="md" maxW="800px">
+        <HStack justify="space-between" align="center" mb={6} wrap="wrap" gap={2}>
           <Heading color="#0C1222">Edit Question</Heading>
           <HStack gap={3}>
             {testTitle && <Text color="gray.500" fontWeight={600}>{testTitle}</Text>}

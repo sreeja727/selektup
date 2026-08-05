@@ -160,83 +160,56 @@ export const seedQuestions = [
   },
 ]
 
-export const testResults = [
-  {
-    id: 1,
-    studentName: 'Rahul Sharma',
-    studentEmail: 'rahul.sharma@gmail.com',
-    category: 'Degree Mains PYQ',
-    testName: 'Mock Test 3',
-    totalQuestions: 100,
-    correct: 68,
-    wrong: 21,
-    unanswered: 11,
-    totalMarks: 100,
-    score: 54,
-    submittedAt: '2026-07-30 11:42 AM',
-    status: 'Pass',
-  },
-  {
-    id: 2,
-    studentName: 'Priya Verma',
-    studentEmail: 'priya.verma@gmail.com',
-    category: 'KTET Psychology',
-    testName: 'Mock Test 1',
-    totalQuestions: 100,
-    correct: 40,
-    wrong: 38,
-    unanswered: 22,
-    totalMarks: 100,
-    score: 14.7,
-    submittedAt: '2026-07-29 06:15 PM',
-    status: 'Fail',
-  },
-  {
-    id: 3,
-    studentName: 'Amit Kumar',
-    studentEmail: 'amit.kumar@gmail.com',
-    category: 'Degree Mains PYQ',
-    testName: 'Mock Test 5',
-    totalQuestions: 100,
-    correct: 74,
-    wrong: 15,
-    unanswered: 11,
-    totalMarks: 100,
-    score: 64,
-    submittedAt: '2026-07-27 09:03 AM',
-    status: 'Pass',
-  },
-  {
-    id: 4,
-    studentName: 'Sneha Iyer',
-    studentEmail: 'sneha.iyer@gmail.com',
-    category: 'Engineering Graphics',
-    testName: 'Mock Test 2',
-    totalQuestions: 100,
-    correct: 52,
-    wrong: 30,
-    unanswered: 18,
-    totalMarks: 100,
-    score: 32,
-    submittedAt: '2026-07-26 04:50 PM',
-    status: 'Fail',
-  },
-  {
-    id: 5,
-    studentName: 'Vikram Singh',
-    studentEmail: 'vikram.singh@gmail.com',
-    category: 'PSC Mentorship Programme',
-    testName: 'Mock Test 4',
-    totalQuestions: 100,
-    correct: 81,
-    wrong: 9,
-    unanswered: 10,
-    totalMarks: 100,
-    score: 75,
-    submittedAt: '2026-07-24 10:20 AM',
-    status: 'Pass',
-  },
+const RESULT_CATEGORIES = ['Degree Mains PYQ', 'KTET Psychology', 'Engineering Graphics', 'PSC Mentorship Programme']
+
+const RESULT_STUDENTS = [
+  { name: 'Rahul Sharma', email: 'rahul.sharma@gmail.com' },
+  { name: 'Priya Verma', email: 'priya.verma@gmail.com' },
+  { name: 'Amit Kumar', email: 'amit.kumar@gmail.com' },
+  { name: 'Sneha Iyer', email: 'sneha.iyer@gmail.com' },
+  { name: 'Vikram Singh', email: 'vikram.singh@gmail.com' },
 ]
+
+const RESULT_TIMES = [
+  '11:42 AM', '06:15 PM', '09:03 AM', '04:50 PM', '10:20 AM',
+  '02:35 PM', '08:10 AM', '05:47 PM', '01:15 PM', '07:55 AM',
+]
+
+// 10 mock tests per category, each with a submission from a rotating student.
+function buildTestResults() {
+  const results = []
+  let id = 1
+  RESULT_CATEGORIES.forEach((category) => {
+    for (let testNum = 1; testNum <= 10; testNum += 1) {
+      const student = RESULT_STUDENTS[(id - 1) % RESULT_STUDENTS.length]
+      const correct = 40 + ((id * 13) % 50)
+      const wrong = Math.min(5 + ((id * 7) % 25), 97 - correct)
+      const unanswered = 100 - correct - wrong
+      const score = Math.round((correct - wrong / 1.5) * 10) / 10
+      const date = new Date(2026, 6, 30 - (id - 1))
+      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
+      results.push({
+        id,
+        studentName: student.name,
+        studentEmail: student.email,
+        category,
+        testName: `Mock Test ${testNum}`,
+        totalQuestions: 100,
+        correct,
+        wrong,
+        unanswered,
+        totalMarks: 100,
+        score,
+        submittedAt: `${dateStr} ${RESULT_TIMES[(id - 1) % RESULT_TIMES.length]}`,
+      })
+      id += 1
+    }
+  })
+  return results
+}
+
+export const testResults = buildTestResults()
 
 export const STATUS_COLOR = {
   New: 'blue',
@@ -247,6 +220,4 @@ export const STATUS_COLOR = {
   Pending: 'orange',
   Enabled: 'green',
   Disabled: 'red',
-  Pass: 'green',
-  Fail: 'red',
 }

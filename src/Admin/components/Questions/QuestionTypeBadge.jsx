@@ -11,7 +11,9 @@ const COLOR_BY_TYPE = {
   ASSERTION_AND_REASON: "green",
   STATEMENT_BASED: "yellow",
   PARAGRAPH_BASED: "cyan",
+  TABLE_BASED: "teal",
   LONG_ANSWER: "orange",
+  NUMERICAL: "purple",
 };
 
 export default function QuestionTypeBadge({ type }) {

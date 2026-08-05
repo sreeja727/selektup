@@ -31,11 +31,11 @@ export default function Timer({ duration = 7200, onTimeUp }) {
 
   return (
     <HStack
-      gap={2}
+      gap={{ base: 1.5, md: 2 }}
       bg={bg}
       color="white"
-      px={5}
-      py={2.5}
+      px={{ base: 3, md: 5 }}
+      py={{ base: 2, md: 2.5 }}
       borderRadius="lg"
       boxShadow="0 2px 10px rgba(0,0,0,0.12)"
       animation={isCritical ? "pulse 1s ease-in-out infinite" : undefined}
@@ -49,7 +49,7 @@ export default function Timer({ duration = 7200, onTimeUp }) {
       <FaClock size={14} />
       <Text
         fontWeight={800}
-        fontSize="lg"
+        fontSize={{ base: "sm", md: "lg" }}
         fontFamily="mono"
         letterSpacing="0.02em"
       >

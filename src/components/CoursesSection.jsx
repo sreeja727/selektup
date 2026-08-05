@@ -82,7 +82,7 @@ function CourseCard({ c }) {
     <Box
       bg="white"
       borderRadius="2xl"
-      p={8}
+      p={{ base: 6, md: 8 }}
       boxShadow="0 2px 14px rgba(0,0,0,0.06)"
       border="2px solid"
       borderColor={open ? c.accentColor : 'transparent'}

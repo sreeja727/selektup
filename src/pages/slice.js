@@ -13,29 +13,28 @@ import {
 // live OpenAPI spec for all 7 types).
 const normalizeQuestion = fromWireQuestion;
 
-// Normalizes a raw ReviewQuestionDto row (confirmed via OpenAPI:
+// Normalizes a raw ReviewQuestionDto row (confirmed via /v3/api-docs:
 // { questionId, questionType, questionText, optionA..D, correctOption,
-// selectedOption, correct, skipped, explanation } — a single string
-// selectedOption/correctOption for every type, same as AnswerEntry) into the
-// canonical question shape plus a `selected` value in the shape
-// QuestionAnswerInput/questionTypes' isAnswered/isCorrect/
-// getSelectedAnswerLabel expect (a string for single-select/text-answer, a
-// string[] for multi-select, decoded from the comma-separated letters) —
-// Review.jsx reads this shape for both the real-backend path (this
-// function) and the local mock-attempt path (built directly in
-// TestScreen.jsx).
+// correctNumericAnswer, numericTolerance, selectedOption, textAnswerGiven,
+// numericAnswerGiven, correct, skipped, needsManualGrading, manualScore,
+// explanation } — three separate given-answer fields, one per kind, mirroring
+// AnswerEntry) into the canonical question shape plus a `selected` value in
+// the shape QuestionAnswerInput/questionTypes' isAnswered/isCorrect/
+// getSelectedAnswerLabel expect (a string for single-select/text-answer/
+// numeric-answer, a string[] for multi-select, decoded from the
+// comma-separated letters) — Review.jsx reads this shape for both the
+// real-backend path (this function) and the local mock-attempt path (built
+// directly in TestScreen.jsx).
 function normalizeSubmissionQuestion(raw) {
   if (!raw) return raw;
   const question = fromWireQuestion({ ...raw, id: raw.questionId });
   const config = getTypeConfig(question.type);
 
-  // ReviewQuestionDto/AnswerEntry (confirmed via /v3/api-docs) only have a
-  // single `selectedOption` string field for every type — multi-select
-  // decodes as comma-separated letters, text-answer types are the literal
-  // answer text.
   let selected = null;
-  if (config.kind === QUESTION_KIND.TEXT_ANSWER) {
-    selected = raw.selectedOption || null;
+  if (config.kind === QUESTION_KIND.NUMERIC_ANSWER) {
+    selected = raw.numericAnswerGiven ?? null;
+  } else if (config.kind === QUESTION_KIND.TEXT_ANSWER) {
+    selected = raw.textAnswerGiven || raw.selectedOption || null;
   } else if (config.kind === QUESTION_KIND.MULTI_SELECT) {
     selected = String(raw.selectedOption || '')
       .split(',')
@@ -52,6 +51,8 @@ function normalizeSubmissionQuestion(raw) {
     ...question,
     question: question.text,
     selected,
+    needsManualGrading: raw.needsManualGrading ?? false,
+    manualScore: raw.manualScore ?? null,
   };
 }
 
@@ -85,6 +86,7 @@ const initialState = {
   loginData: {},
   forgotPasswordData: {},
   resetPasswordData: {},
+  changePasswordData: {},
 
   // common (loading / toast / navigation)
   apiLoading: false,
@@ -202,6 +204,9 @@ const pagesSlice = createSlice({
       state.contactSuccessMessage = '';
       state.contactError = '';
     },
+    clearChangePasswordStatus: (state) => {
+      state.changePasswordData = {};
+    },
     // The approve/reject endpoints return no body (ApiResponseVoid), so the
     // saga dispatches this with the id + new status it already knows once
     // the request succeeds (same pattern as setStudentBlocked below).
@@ -284,6 +289,16 @@ const pagesSlice = createSlice({
         ACTION_TYPES[ACTIONS.RESET_PASSWORD][1],
         (state, { payload = {} }) => {
           _.set(state, 'resetPasswordData', payload.data || payload);
+        }
+      )
+      // Change password (logged-in student) — POST /api/auth/change-password.
+      // Written the same way as forgotPasswordData so ChangePassword.jsx can
+      // react to { success, message } (e.g. show "Current password is
+      // incorrect" inline under that field, not just as a toast).
+      .addCase(
+        ACTION_TYPES[ACTIONS.CHANGE_PASSWORD][1],
+        (state, { payload = {} }) => {
+          _.set(state, 'changePasswordData', payload.data || payload);
         }
       )
 

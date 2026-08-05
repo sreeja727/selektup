@@ -12,7 +12,14 @@ export default function Pagination({ count, pageSize, page, onPageChange }) {
       onPageChange={(e) => onPageChange(e.page)}
       mt={6}
     >
-      <ButtonGroup variant="ghost" size="sm" gap={1} justifyContent="flex-end" w="100%">
+      <ButtonGroup
+        variant="ghost"
+        size="sm"
+        gap={1}
+        justifyContent={{ base: "center", md: "flex-end" }}
+        flexWrap="wrap"
+        w="100%"
+      >
         <ChakraPagination.PrevTrigger asChild>
           <IconButton aria-label="Previous page" rounded="lg">
             <ChevronLeft size={16} />

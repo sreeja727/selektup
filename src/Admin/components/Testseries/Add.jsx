@@ -78,7 +78,7 @@ export default function AddTestSeries() {
 
     <Box
       bg="white"
-      p={8}
+      p={{ base: 4, md: 6, lg: 8 }}
       borderRadius="xl"
       boxShadow="md"
       maxW="800px"

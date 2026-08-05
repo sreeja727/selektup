@@ -20,7 +20,7 @@ export default function MultipleCorrectQuestion({ question, value, onChange }) {
                 border="2px solid"
                 borderColor={active ? "#039BE5" : "gray.200"}
                 bg={active ? "rgba(3,155,229,0.06)" : "white"}
-                p={4}
+                p={{ base: 3, md: 4 }}
                 borderRadius="lg"
                 cursor="pointer"
                 transition="all 0.15s"

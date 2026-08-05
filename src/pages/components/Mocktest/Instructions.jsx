@@ -230,11 +230,17 @@ export default function Instructions() {
               ))}
             </Stack>
 
-            <HStack justify="space-between" mt={10} gap={4}>
+            <Stack
+              direction={{ base: "column-reverse", sm: "row" }}
+              justify="space-between"
+              mt={{ base: 8, md: 10 }}
+              gap={4}
+            >
               <Button
                 variant="outline"
                 borderRadius="lg"
                 onClick={() => navigate(`/test-series/${categorySlug}`)}
+                w={{ base: "100%", sm: "auto" }}
               >
                 <FaArrowLeft size={12} />
                 Back
@@ -249,11 +255,12 @@ export default function Instructions() {
                 _hover={{ opacity: 0.9, transform: 'translateY(-2px)' }}
                 transition="all 0.2s"
                 onClick={() => navigate(`/mock-test/${categorySlug}/${testSlug}`)}
+                w={{ base: "100%", sm: "auto" }}
               >
                 <FaPlayCircle />
                 Start Exam
               </Button>
-            </HStack>
+            </Stack>
           </Box>
         </Stack>
       </Container>

@@ -6,6 +6,7 @@ import {
   Heading,
   HStack,
   Stack,
+  Table,
   Text,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
@@ -18,6 +19,7 @@ import {
   FaTimesCircle,
   FaLightbulb,
   FaClipboardCheck,
+  FaListAlt,
 } from "react-icons/fa";
 import { getTestAttempt, getSubmissionReview } from "../../selectors";
 import { fetchSubmissionReview } from "../../actions";
@@ -29,6 +31,7 @@ import {
 const LEGEND = [
   { label: "Correct", bg: "#2E7D32" },
   { label: "Incorrect", bg: "#D32F2F" },
+  { label: "Needs Manual Grading", bg: "#7C3AED" },
   { label: "Not Answered", bg: "gray.300" },
 ];
 
@@ -55,7 +58,9 @@ export default function Review() {
   const config = getTypeConfig(q.type);
   const answered = isAnswered(q, q.selected);
   const correct = isCorrect(q, q.selected);
+  const pendingManualGrading = config.manualGrading && answered;
   const selectedValues = config.kind === QUESTION_KIND.MULTI_SELECT && Array.isArray(q.selected) ? q.selected : [];
+  const isFreeAnswerKind = config.kind === QUESTION_KIND.TEXT_ANSWER || config.kind === QUESTION_KIND.NUMERIC_ANSWER;
   const progressPercent = ((current + 1) / questions.length) * 100;
 
   const goPrevious = () => setCurrent((c) => Math.max(0, c - 1));
@@ -66,7 +71,7 @@ export default function Review() {
       {/* Header */}
       <Flex
         bg="white"
-        p={5}
+        p={{ base: 4, md: 5 }}
         borderRadius="xl"
         border="1px solid"
         borderColor="gray.100"
@@ -81,15 +86,27 @@ export default function Review() {
           Review Answers
         </Heading>
 
-        <Button
-          variant="outline"
-          borderRadius="lg"
-          size="sm"
-          onClick={() => navigate(submissionId ? `/result/${submissionId}` : "/result")}
-        >
-          <FaClipboardCheck size={12} />
-          Back to Result
-        </Button>
+        <HStack gap={3}>
+          <Button
+            variant="outline"
+            borderRadius="lg"
+            size="sm"
+            onClick={() => navigate(submissionId ? `/result/${submissionId}` : "/result")}
+          >
+            <FaClipboardCheck size={12} />
+            Back to Result
+          </Button>
+
+          <Button
+            variant="outline"
+            borderRadius="lg"
+            size="sm"
+            onClick={() => navigate("/test-series")}
+          >
+            <FaListAlt size={12} />
+            Test Series
+          </Button>
+        </HStack>
       </Flex>
 
       <Grid templateColumns={{ base: "1fr", lg: "3fr 1fr" }} gap={5}>
@@ -112,10 +129,10 @@ export default function Review() {
               px={2.5}
               py={0.5}
               borderRadius="full"
-              bg={!answered ? "gray.100" : correct ? "green.50" : "red.50"}
-              color={!answered ? "gray.500" : correct ? "green.600" : "red.600"}
+              bg={!answered ? "gray.100" : pendingManualGrading ? "purple.50" : correct ? "green.50" : "red.50"}
+              color={!answered ? "gray.500" : pendingManualGrading ? "purple.600" : correct ? "green.600" : "red.600"}
             >
-              {!answered ? "Not Answered" : correct ? "Correct" : "Incorrect"}
+              {!answered ? "Not Answered" : pendingManualGrading ? "Needs Manual Grading" : correct ? "Correct" : "Incorrect"}
             </Text>
           </Flex>
 
@@ -133,13 +150,51 @@ export default function Review() {
             {q.question}
           </Heading>
 
+          {config.hasPassage && (q.passageTitle || q.passageText) && (
+            <Box mb={5} bg="gray.50" borderRadius="lg" p={4}>
+              {q.passageTitle && <Text fontWeight={700} color="#0C1222" mb={2}>{q.passageTitle}</Text>}
+              {q.passageText && <Text color="#0C1222" whiteSpace="pre-wrap">{q.passageText}</Text>}
+            </Box>
+          )}
+
+          {config.hasTable && q.tableHeaders?.length > 0 && (
+            <Box mb={5} overflowX="auto" border="1px solid" borderColor="gray.100" borderRadius="lg">
+              <Table.Root size="sm">
+                <Table.Header>
+                  <Table.Row bg="gray.50">
+                    {q.tableHeaders.map((header, i) => (
+                      <Table.ColumnHeader key={i}>{header}</Table.ColumnHeader>
+                    ))}
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {(q.tableRows || []).map((row, rowIndex) => (
+                    <Table.Row key={rowIndex}>
+                      {row.map((cell, cellIndex) => (
+                        <Table.Cell key={cellIndex}>{cell}</Table.Cell>
+                      ))}
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </Box>
+          )}
+
+          {config.hasStatements && q.statements?.length > 0 && (
+            <Stack gap={1} mb={5}>
+              {q.statements.map((statement, index) => (
+                <Text key={index} color="#0C1222">{index + 1}. {statement}</Text>
+              ))}
+            </Stack>
+          )}
+
           {config.hasAssertionReason && (
             <Stack gap={1} mb={5} bg="gray.50" borderRadius="lg" p={4}>
               <Text color="#0C1222"><Text as="span" fontWeight={700}>Reason (R): </Text>{q.reason}</Text>
             </Stack>
           )}
 
-          {config.kind === QUESTION_KIND.TEXT_ANSWER ? (
+          {isFreeAnswerKind ? (
             <Stack align="stretch" gap={3}>
               <Flex
                 justify="space-between"
@@ -147,12 +202,12 @@ export default function Review() {
                 gap={3}
                 p={4}
                 border="2px solid"
-                borderColor={!answered ? "gray.200" : correct ? "green.400" : "red.400"}
+                borderColor={!answered ? "gray.200" : pendingManualGrading ? "purple.300" : correct ? "green.400" : "red.400"}
                 borderRadius="lg"
-                bg={!answered ? "white" : correct ? "green.50" : "red.50"}
+                bg={!answered ? "white" : pendingManualGrading ? "purple.50" : correct ? "green.50" : "red.50"}
               >
-                <Text color="#0C1222" fontWeight={500}>{q.selected || "Not Answered"}</Text>
-                {answered && (correct
+                <Text color="#0C1222" fontWeight={500}>{q.selected ?? "Not Answered"}</Text>
+                {answered && !pendingManualGrading && (correct
                   ? <FaCheckCircle color="#22C55E" size={16} style={{ flexShrink: 0 }} />
                   : <FaTimesCircle color="#EF5350" size={16} style={{ flexShrink: 0 }} />)}
               </Flex>
@@ -200,7 +255,7 @@ export default function Review() {
           <Stack gap={3} mt={6}>
             <Flex fontSize="sm" wrap="wrap" gap={2}>
               <Text fontWeight={700} color="#0C1222">Your Answer:</Text>
-              <Text fontWeight={600} color={answered ? (correct ? "green.500" : "red.500") : "gray.500"}>
+              <Text fontWeight={600} color={!answered ? "gray.500" : pendingManualGrading ? "purple.600" : correct ? "green.500" : "red.500"}>
                 {getSelectedAnswerLabel(q, q.selected) || "Not Answered"}
               </Text>
             </Flex>
@@ -259,7 +314,7 @@ export default function Review() {
         {/* Question Palette */}
         <Box
           bg="white"
-          p={5}
+          p={{ base: 4, md: 5 }}
           borderRadius="xl"
           border="1px solid"
           borderColor="gray.100"
@@ -273,8 +328,8 @@ export default function Review() {
           </Heading>
 
           <Grid
-            templateColumns="repeat(5, 1fr)"
-            gap={2.5}
+            templateColumns={{ base: "repeat(5, 1fr)", sm: "repeat(6, 1fr)", md: "repeat(8, 1fr)", lg: "repeat(5, 1fr)" }}
+            gap={{ base: 2, md: 2.5 }}
             mb={4}
             maxH={{ base: "220px", lg: "440px" }}
             overflowY="auto"
@@ -282,14 +337,16 @@ export default function Review() {
           >
             {questions.map((item, index) => {
               const active = current === index;
+              const itemConfig = getTypeConfig(item.type);
               const itemAnswered = isAnswered(item, item.selected);
               const itemCorrect = isCorrect(item, item.selected);
+              const itemPendingManualGrading = itemConfig.manualGrading && itemAnswered;
 
               let bg = "gray.300";
               let color = "gray.700";
               let borderColor = "gray.300";
               if (itemAnswered) {
-                bg = itemCorrect ? "#2E7D32" : "#D32F2F";
+                bg = itemPendingManualGrading ? "#7C3AED" : itemCorrect ? "#2E7D32" : "#D32F2F";
                 color = "white";
                 borderColor = bg;
               }
@@ -304,9 +361,9 @@ export default function Review() {
                   key={item.id ?? index}
                   as="button"
                   onClick={() => setCurrent(index)}
-                  h="38px"
+                  h={{ base: "34px", md: "38px" }}
                   borderRadius="md"
-                  fontSize="sm"
+                  fontSize={{ base: "xs", md: "sm" }}
                   fontWeight={700}
                   bg={bg}
                   color={color}

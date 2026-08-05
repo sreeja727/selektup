@@ -11,7 +11,15 @@
 //   - the type field is named `questionType` (enum: SINGLE_CORRECT_MCQ,
 //     MULTIPLE_CORRECT_MCQ, TRUE_FALSE, FILL_IN_THE_BLANK, ONE_WORD_ANSWER,
 //     IMAGE_BASED, ASSERTION_AND_REASON, STATEMENT_BASED, PARAGRAPH_BASED,
-//     LONG_ANSWER, NUMERICAL) — not `type`. All 11 are real, saveable types.
+//     LONG_ANSWER, NUMERICAL, TABLE_BASED) — not `type`. All 12 are real,
+//     saveable types.
+//   - `tableData` holds TABLE_BASED's table — declared as a bare untyped
+//     `object` in the OpenAPI schema (no inner shape given), so the exact
+//     key names aren't confirmed. Sent/read as `{ headers: string[], rows:
+//     string[][] }`, matching this app's own table-editor shape — the most
+//     conventional guess, but unverified against real backend parsing
+//     (no admin-role test credentials available to round-trip it). Adjust
+//     here if the backend actually expects different keys.
 //   - exactly 4 fixed option slots exist (optionA..optionD), no more.
 //   - single/multi-select and options-based text (fill-blank/one-word)
 //     answers go through a single `correctOption` string field — multi-select
@@ -76,6 +84,15 @@ export const QUESTION_TYPES = {
     label: 'Paragraph-based',
     optionCount: 4,
     hasPassage: true,
+  },
+  // Reuses CommonMCQQuestion/QuestionTypeFields' SINGLE_SELECT branch (table
+  // above the options), same as Paragraph-based's passage — no new `kind`
+  // needed for it.
+  TABLE_BASED: {
+    kind: QUESTION_KIND.SINGLE_SELECT,
+    label: 'Table-based',
+    optionCount: 4,
+    hasTable: true,
   },
   IMAGE_BASED: {
     kind: QUESTION_KIND.SINGLE_SELECT,
@@ -155,6 +172,10 @@ export function emptyFields(type) {
     base.passageTitle = '';
     base.passageText = '';
   }
+  if (config.hasTable) {
+    base.tableHeaders = ['', ''];
+    base.tableRows = [['', '']];
+  }
 
   if (config.kind === QUESTION_KIND.NUMERIC_ANSWER) {
     return { ...base, correctNumericAnswer: '', numericTolerance: '' };
@@ -195,6 +216,8 @@ export function toFormFields(question) {
     statements: question.statements?.length ? question.statements : empty.statements,
     passageTitle: question.passageTitle ?? empty.passageTitle,
     passageText: question.passageText ?? empty.passageText,
+    tableHeaders: question.tableHeaders?.length ? question.tableHeaders : empty.tableHeaders,
+    tableRows: question.tableRows?.length ? question.tableRows : empty.tableRows,
   };
 }
 
@@ -215,6 +238,14 @@ export function validate(type, fields = {}) {
   if (config.hasPassage) {
     if (!fields.passageTitle?.trim()) errors.passageTitle = 'Passage title is required';
     if (!fields.passageText?.trim()) errors.passageText = 'Passage text is required';
+  }
+  if (config.hasTable) {
+    const headers = (fields.tableHeaders || []).map((h) => h.trim());
+    if (headers.length === 0 || headers.some((h) => !h)) errors.tableHeaders = 'All column headers must be filled in';
+    const rows = fields.tableRows || [];
+    if (rows.length === 0 || rows.every((row) => row.every((cell) => !cell.trim()))) {
+      errors.tableRows = 'At least one table row is required';
+    }
   }
 
   if (config.kind === QUESTION_KIND.NUMERIC_ANSWER) {
@@ -270,6 +301,34 @@ export function removeStatement(fields, index) {
   return { ...fields, statements: list.length ? list : [''] };
 }
 
+export function addTableRow(fields) {
+  const columnCount = (fields.tableHeaders || []).length;
+  return { ...fields, tableRows: [...(fields.tableRows || []), Array.from({ length: columnCount }, () => '')] };
+}
+
+export function removeTableRow(fields, index) {
+  const rows = (fields.tableRows || []).filter((_, i) => i !== index);
+  const columnCount = (fields.tableHeaders || []).length;
+  return { ...fields, tableRows: rows.length ? rows : [Array.from({ length: columnCount }, () => '')] };
+}
+
+export function addTableColumn(fields) {
+  return {
+    ...fields,
+    tableHeaders: [...(fields.tableHeaders || []), ''],
+    tableRows: (fields.tableRows || []).map((row) => [...row, '']),
+  };
+}
+
+export function removeTableColumn(fields, index) {
+  const headers = (fields.tableHeaders || []).filter((_, i) => i !== index);
+  const rows = (fields.tableRows || []).map((row) => row.filter((_, i) => i !== index));
+  if (headers.length === 0) {
+    return { ...fields, tableHeaders: [''], tableRows: rows.map(() => ['']) };
+  }
+  return { ...fields, tableHeaders: headers, tableRows: rows };
+}
+
 /* ===========================
    Wire (backend) <-> app shape
 =========================== */
@@ -279,7 +338,7 @@ export function removeStatement(fields, index) {
 export function toWireQuestion({
   type, text, explanation, marks, options = [], correctOptionIndexes = [],
   answerText, correctNumericAnswer, numericTolerance, imageUrl, reason,
-  statements = [], passageTitle, passageText,
+  statements = [], passageTitle, passageText, tableHeaders = [], tableRows = [],
 }) {
   const config = getTypeConfig(type);
   const wire = {
@@ -295,6 +354,9 @@ export function toWireQuestion({
   if (config.hasPassage) {
     wire.passageTitle = passageTitle || '';
     wire.passageText = passageText || '';
+  }
+  if (config.hasTable) {
+    wire.tableData = { headers: tableHeaders, rows: tableRows };
   }
 
   if (config.kind === QUESTION_KIND.NUMERIC_ANSWER) {
@@ -354,6 +416,11 @@ export function fromWireQuestion(raw) {
     base.passageId = raw.passageId ?? null;
     base.passageTitle = raw.passageTitle || '';
     base.passageText = raw.passageText || '';
+  }
+  if (config.hasTable) {
+    const tableData = raw.tableData || {};
+    base.tableHeaders = tableData.headers?.length ? tableData.headers : [''];
+    base.tableRows = tableData.rows?.length ? tableData.rows : [Array.from({ length: base.tableHeaders.length }, () => '')];
   }
 
   if (config.kind === QUESTION_KIND.NUMERIC_ANSWER) {

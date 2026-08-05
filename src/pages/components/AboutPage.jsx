@@ -219,7 +219,7 @@ export default function AboutPage() {
             </VStack>
 
             <Box flex={1}>
-              <Box bg="rgba(255,255,255,0.06)" borderRadius="2xl" p={8} border="1px solid rgba(255,255,255,0.1)">
+              <Box bg="rgba(255,255,255,0.06)" borderRadius="2xl" p={{ base: 6, md: 8 }} border="1px solid rgba(255,255,255,0.1)">
                 <Box color="#E91E8C" mb={4}><FaBullseye size={36} /></Box>
                 <Heading fontSize="xl" fontWeight={800} color="white" mb={4}>Our Promise</Heading>
                 <VStack align="flex-start" gap={4}>

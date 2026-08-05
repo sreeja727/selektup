@@ -151,7 +151,7 @@ export default function QuestionsList() {
       <Heading mb={1} color="#0C1222">Questions</Heading>
       <Text color="gray.500" mb={6}>Manage questions for a specific mock test</Text>
 
-      <Box bg="white" rounded="xl" shadow="md" p={6}>
+      <Box bg="white" rounded="xl" shadow="md" p={{ base: 4, md: 6 }}>
         <HStack gap={5} align="stretch" wrap="wrap">
           <Field.Root flex={1} minW="220px">
             <Field.Label>Category</Field.Label>

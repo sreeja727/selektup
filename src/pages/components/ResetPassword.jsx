@@ -6,11 +6,20 @@ import { FaLock, FaEye, FaEyeSlash, FaExclamationTriangle } from 'react-icons/fa
 import { resetPassword } from '../actions'
 import { getApiLoading } from '../selectors'
 
+// Backend requirement for ResetPasswordWithTokenRequest.newPassword,
+// re-confirmed live against the current schema: just minLength 6, no
+// character-composition rule (the earlier upper+lower+digit+symbol regex
+// was dropped server-side at some point).
+const PASSWORD_MIN_LENGTH = 6
+
 export default function ResetPassword() {
   const dispatch = useDispatch()
   const loading = useSelector(getApiLoading)
   const location = useLocation()
-  const { mobile, otp } = location.state || {}
+  // Comes from ForgotPassword.jsx after OTP verification — the backend's
+  // real reset-password-with-token endpoint takes the token verify-otp
+  // returned, not the mobile/otp pair again.
+  const { resetToken } = location.state || {}
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -21,7 +30,7 @@ export default function ResetPassword() {
   const validate = () => {
     const errors = {}
     if (!password) errors.password = 'Password is required'
-    else if (password.length < 6) errors.password = 'Password must be at least 6 characters'
+    else if (password.length < PASSWORD_MIN_LENGTH) errors.password = `Password must be at least ${PASSWORD_MIN_LENGTH} characters`
     if (!confirmPassword) errors.confirmPassword = 'Please confirm your password'
     else if (password !== confirmPassword) errors.confirmPassword = 'Passwords do not match'
     return errors
@@ -34,7 +43,7 @@ export default function ResetPassword() {
       return
     }
     setFieldErrors({})
-    dispatch(resetPassword({ mobile, otp, password }))
+    dispatch(resetPassword({ resetToken, password }))
   }
 
   return (
@@ -62,7 +71,7 @@ export default function ResetPassword() {
           <span style={{ color: '#E91E8C' }}>Up</span>
         </Text>
 
-        {!mobile || !otp ? (
+        {!resetToken ? (
           <VStack gap={4} textAlign="center">
             <Box color="red.400" fontSize="48px">
               <FaExclamationTriangle />

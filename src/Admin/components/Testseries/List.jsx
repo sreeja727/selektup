@@ -30,7 +30,13 @@ export default function TestSeriesList() {
     <Box>
       <Breadcrumb items={[{ label: "Dashboard", to: "/admin/dashboard" }, { label: "Test Series" }]} />
 
-      <Flex justify="space-between" align="center" mb={8}>
+      <Flex
+        justify="space-between"
+        align={{ base: "stretch", sm: "center" }}
+        direction={{ base: "column", sm: "row" }}
+        gap={4}
+        mb={8}
+      >
         <Heading color="#0C1222">Test Series</Heading>
 
         <Button
@@ -48,7 +54,7 @@ export default function TestSeriesList() {
           <Box
             key={series.id}
             bg="white"
-            p={6}
+            p={{ base: 4, md: 6 }}
             borderRadius="xl"
             boxShadow="md"
             border="1px solid"

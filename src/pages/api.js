@@ -31,35 +31,76 @@ const loginApi = (data) => {
   };
 };
 
-const forgotPasswordApi = (data) => {
+// Real Spring Boot backend (POST /api/auth/forgot-password) — confirmed via
+// /v3/api-docs and live-tested: ContactValueRequest's field is named
+// `mobile` (renamed server-side from an earlier `contactValue` — confirmed
+// by re-checking the live schema after a 400 "Mobile number is required"
+// showed up; sending `contactValue` now fails that same way, sending
+// `mobile` gets past validation to the email-sending step).
+const forgotPasswordApi = ({ mobile }) => {
   return {
     url: API_URL.FORGOT_PASSWORD,
     method: REQUEST_METHOD.POST,
     payload: {
       types: ACTION_TYPES[ACTIONS.FORGOT_PASSWORD],
-      data,
+      data: { mobile },
     },
   };
 };
 
-const verifyOtpApi = (data) => {
+// Real Spring Boot backend (POST /api/auth/verify-otp) — confirmed via
+// /v3/api-docs: VerifyOtpRequest is { mobile, otp } (same `contactValue` ->
+// `mobile` rename as forgot-password above). Response is
+// ApiResponseMapStringString — an untyped string map; the key holding the
+// reset token isn't documented, so `resetToken` (matching the field name
+// the next endpoint expects) is an assumption verifyOtpSaga reads
+// defensively — confirm the exact key once a real OTP can be issued
+// end-to-end in an environment with working email delivery.
+const verifyOtpApi = ({ mobile, otp }) => {
   return {
     url: API_URL.VERIFY_OTP,
     method: REQUEST_METHOD.POST,
     payload: {
       types: ACTION_TYPES[ACTIONS.VERIFY_OTP],
-      data,
+      data: { mobile, otp },
     },
   };
 };
 
-const resetPasswordApi = (data) => {
+// Real Spring Boot backend (POST /api/auth/reset-password-with-token) —
+// confirmed via /v3/api-docs (ResetPasswordWithTokenRequest: { resetToken,
+// newPassword }). Note this is a different endpoint than a plain
+// "reset-password" — it takes the token verify-otp returned, not the
+// mobile/otp pair again. `newPassword` only requires min 6 characters now
+// (the backend dropped the earlier upper+lower+digit+symbol regex —
+// re-confirmed live against the current schema) — enforced client-side in
+// ResetPassword.jsx's validate() to match.
+const resetPasswordApi = ({ resetToken, password }) => {
   return {
     url: API_URL.RESET_PASSWORD,
     method: REQUEST_METHOD.POST,
     payload: {
       types: ACTION_TYPES[ACTIONS.RESET_PASSWORD],
-      data,
+      data: { resetToken, newPassword: password },
+    },
+  };
+};
+
+// Real Spring Boot backend (POST /api/auth/change-password, requires auth) —
+// confirmed live: ChangePasswordRequest is { currentPassword, newPassword },
+// response { success, message: "Password changed successfully." } on success
+// or { success: false, message: "Current password is incorrect" } when
+// currentPassword doesn't match. Unlike reset-password-with-token, this
+// endpoint does NOT enforce a complexity rule on newPassword (a live test
+// with a 4-character password succeeded) — kept as a light client-side
+// suggestion only in ChangePassword.jsx, not a hard requirement.
+const changePasswordApi = ({ currentPassword, newPassword }) => {
+  return {
+    url: API_URL.CHANGE_PASSWORD,
+    method: REQUEST_METHOD.POST,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.CHANGE_PASSWORD],
+      data: { currentPassword, newPassword },
     },
   };
 };
@@ -481,6 +522,7 @@ export {
   forgotPasswordApi,
   verifyOtpApi,
   resetPasswordApi,
+  changePasswordApi,
 
   getAccessStatus,
   submitAccessRequest,

@@ -1,9 +1,9 @@
 import { Box, Flex, HStack, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import { FaSignOutAlt } from "react-icons/fa";
+import { FaSignOutAlt, FaBars } from "react-icons/fa";
 import { logoutAdmin } from "../../utils/adminAuth";
 
-export default function Header() {
+export default function Header({ sidebarOpen, onToggleSidebar }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -17,13 +17,32 @@ export default function Header() {
       h="70px"
       align="center"
       justify="space-between"
-      px={8}
+      px={{ base: 4, md: 6, lg: 8 }}
       borderBottom="1px solid"
       borderColor="gray.100"
     >
-      <Text fontWeight="800" fontSize="xl" color="#0C1222">
-        Admin Dashboard
-      </Text>
+      <HStack gap={{ base: 2, md: 4 }}>
+        <Box
+          as="button"
+          aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          w="38px"
+          h="38px"
+          rounded="lg"
+          color="gray.600"
+          _hover={{ color: "#E91E8C", bg: "pink.50" }}
+          transition="all 0.15s"
+          onClick={onToggleSidebar}
+          flexShrink={0}
+        >
+          <FaBars size={16} />
+        </Box>
+        <Text fontWeight="800" fontSize={{ base: "md", md: "xl" }} color="#0C1222">
+          Admin Dashboard
+        </Text>
+      </HStack>
 
       <HStack
         gap={2}
@@ -31,7 +50,7 @@ export default function Header() {
         color="gray.600"
         fontWeight={600}
         fontSize="sm"
-        px={4}
+        px={{ base: 2, md: 4 }}
         py={2}
         rounded="lg"
         _hover={{ color: "#E91E8C", bg: "pink.50" }}

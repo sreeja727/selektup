@@ -52,9 +52,9 @@ export default function Dashboard() {
 
   return (
     <Box>
-      <Heading mb={8} color="#0C1222">Admin Dashboard</Heading>
+      <Heading mb={{ base: 4, md: 8 }} color="#0C1222">Admin Dashboard</Heading>
 
-      <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={6}>
+      <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={{ base: 4, md: 6 }}>
         {dashboardCards.map((card) => {
           const Icon = card.icon;
           const accent = ACCENTS[card.accent];
@@ -63,7 +63,7 @@ export default function Dashboard() {
             <Box
               key={card.title}
               bg="white"
-              p={6}
+              p={{ base: 4, md: 6 }}
               borderRadius="xl"
               boxShadow="md"
               border="1px solid"

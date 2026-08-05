@@ -39,6 +39,12 @@ export const getResetPasswordData = flow(
   resetPasswordData
 );
 
+const changePasswordData = (state) => state.changePasswordData;
+export const getChangePasswordData = flow(
+  getPagesData,
+  changePasswordData
+);
+
 /* ===========================
    COMMON (loading / toast / navigation)
 =========================== */

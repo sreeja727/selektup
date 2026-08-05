@@ -99,7 +99,7 @@ export default function Result() {
                 {pass ? <FaTrophy size={26} /> : <FaSadTear size={26} />}
               </Box>
 
-              <Heading color={pass ? "green.500" : "red.500"} fontWeight={900} textAlign="center">
+              <Heading color={pass ? "green.500" : "red.500"} fontWeight={900} textAlign="center" fontSize={{ base: "xl", md: "2xl" }}>
                 {pass ? "Congratulations!" : "Better Luck Next Time"}
               </Heading>
 
@@ -112,9 +112,9 @@ export default function Result() {
               <Text fontSize="xs" color="gray.400" fontWeight={700} textTransform="uppercase" letterSpacing="0.08em" mb={2}>
                 Final Score
               </Text>
-              <Heading color="white" fontWeight={900} fontSize="4xl">
+              <Heading color="white" fontWeight={900} fontSize={{ base: "3xl", md: "4xl" }}>
                 {result.finalScore}
-                <Text as="span" fontSize="xl" color="gray.400" fontWeight={600}> / {result.totalMarks}</Text>
+                <Text as="span" fontSize={{ base: "lg", md: "xl" }} color="gray.400" fontWeight={600}> / {result.totalMarks}</Text>
               </Heading>
               <Box mt={4} bg="whiteAlpha.200" borderRadius="full" h="8px" overflow="hidden">
                 <Box

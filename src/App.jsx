@@ -24,6 +24,7 @@ import Login from './pages/components/Login'
 import Register from './pages/components/Register'
 import ForgotPassword from './pages/components/ForgotPassword'
 import ResetPassword from './pages/components/ResetPassword'
+import ChangePassword from './pages/components/ChangePassword'
 import AdminRoutes from './Admin/Routes/AdminRoutes'
 // import Dashboard from './Admin/components/Dashboard'
 import Instructions from "./pages/components/Mocktest/Instructions";
@@ -101,6 +102,7 @@ export default function App() {
         <Route path="/register" element={<Register />}/>
         <Route path="/forgot-password" element={<ForgotPassword />}/>
         <Route path="/reset-password" element={<ResetPassword />}/>
+        <Route path="/change-password" element={<ChangePassword />}/>
         {/* <Route path="/dashboard" element={<Dashboard/>}/> */}
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route path="/mock-test/:categorySlug/:testSlug" element={<TestScreen />} />

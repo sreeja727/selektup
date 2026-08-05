@@ -1,17 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  Box,
-  Button,
-  Field,
-  Heading,
-  HStack,
-  Input,
-  NativeSelect,
-  Text,
-  Textarea,
-  VStack,
-} from "@chakra-ui/react";
+import {Box,Button,Field,Heading,HStack,Input,NativeSelect,Stack,Text,Textarea,VStack,} from "@chakra-ui/react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Breadcrumb from "../common/Breadcrumb";
 import BackButton from "../common/BackButton";
@@ -46,32 +35,25 @@ export default function QuestionsAdd() {
   const addQuestionLoading = useSelector(getAddQuestionLoading);
   const addQuestionResult = useSelector(getAddQuestionResult);
 
-  // Arriving from the Questions list carries the already-selected category/
-  // mock test along (see QuestionsList.jsx's "+ Add Question" button), so the
-  // admin doesn't have to re-pick them here.
+
   const [categoryId, setCategoryId] = useState(location.state?.categoryId ? String(location.state.categoryId) : "");
   const [testId, setTestId] = useState(location.state?.testId ? String(location.state.testId) : "");
   const [type, setType] = useState(QUESTION_TYPE_LIST[0]);
   const [fields, setFields] = useState(() => emptyFields(QUESTION_TYPE_LIST[0]));
   const [fieldErrors, setFieldErrors] = useState({});
-  // Tracks the addQuestionResult reference already reflected in the form, so
-  // the reset-on-success below fires exactly once per successful save.
+ 
   const [handledResult, setHandledResult] = useState(null);
   const typeConfig = getTypeConfig(type);
 
-  // Default to the first category once the real list loads — a render-time
-  // state adjustment (React's documented alternative to an effect for this),
-  // not a network call, so it's safe to do here rather than in an effect.
   if (!categoryId && categories.length > 0) {
     setCategoryId(String(categories[0].id));
   }
 
-  // Load the real categories once on mount.
+
   useEffect(() => {
     dispatch(fetchTestCategories());
   }, [dispatch]);
 
-  // Fetch the selected category's real tests (with real ids) whenever it changes.
   useEffect(() => {
     if (categoryId) dispatch(fetchTestCategoryDetail(categoryId));
   }, [dispatch, categoryId]);
@@ -82,25 +64,16 @@ export default function QuestionsAdd() {
     [categoryDetailMatches, categoryDetail]
   );
 
-  // Default to the first test of the selected category once it loads.
   if (tests.length > 0 && !tests.some((t) => String(t.id) === String(testId))) {
     setTestId(String(tests[0].id));
   }
 
-  // Learn how many questions this mock test already has, so the admin knows
-  // which question number they're about to add — the backend owns the count;
-  // this is just the starting point before the first save in this session.
   useEffect(() => {
     if (testId) dispatch(fetchAdminTestQuestions({ testId }));
   }, [dispatch, testId]);
 
-  // The slice appends each newly-saved question onto testQuestions, so the
-  // count (and therefore the next question number) advances on its own —
-  // no separate counter to keep in sync.
   const questionNumber = testQuestionsLoading ? null : testQuestions.length + 1;
 
-  // Reset the form the moment a new successful save comes back — same
-  // render-time-adjustment pattern as ContactForm.jsx.
   if (addQuestionResult && addQuestionResult !== handledResult) {
     setHandledResult(addQuestionResult);
     setFields(emptyFields(type));
@@ -156,8 +129,8 @@ export default function QuestionsAdd() {
       />
       <BackButton to="/admin/questions" label="Back to Questions" />
 
-      <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="800px">
-      <HStack justify="space-between" align="center" mb={6}>
+      <Box bg="white" p={{ base: 4, md: 6, lg: 8 }} borderRadius="xl" boxShadow="md" maxW="800px">
+      <HStack justify="space-between" align="center" mb={6} wrap="wrap" gap={2}>
         <Heading color="#0C1222">Add Question</Heading>
         {questionNumber !== null && (
           <Text color="gray.500" fontWeight={600}>Question {questionNumber}</Text>
@@ -165,7 +138,7 @@ export default function QuestionsAdd() {
       </HStack>
 
       <VStack gap={5} align="stretch">
-        <HStack gap={5} align="stretch">
+        <Stack direction={{ base: "column", md: "row" }} gap={5} align="stretch">
           <Field.Root flex={1}>
             <Field.Label>Category</Field.Label>
             <NativeSelect.Root>
@@ -200,9 +173,9 @@ export default function QuestionsAdd() {
             </NativeSelect.Root>
             {fieldErrors.test && <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.test}</Text>}
           </Field.Root>
-        </HStack>
+        </Stack>
 
-        <HStack gap={5} align="stretch">
+        <Stack direction={{ base: "column", md: "row" }} gap={5} align="stretch">
           <Field.Root flex={2}>
             <Field.Label>Question Type</Field.Label>
             <NativeSelect.Root>
@@ -236,7 +209,7 @@ export default function QuestionsAdd() {
             />
             {fieldErrors.marks && <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.marks}</Text>}
           </Field.Root>
-        </HStack>
+        </Stack>
 
         {typeConfig.comingSoon && (
           <Box bg="orange.50" border="1px solid" borderColor="orange.200" rounded="lg" p={3}>
@@ -286,14 +259,14 @@ export default function QuestionsAdd() {
           {fieldErrors.explanation && <Text color="red.500" fontSize="xs" mt={1}>{fieldErrors.explanation}</Text>}
         </Field.Root>
 
-        <HStack gap={3}>
+        <Stack direction={{ base: "column", sm: "row" }} gap={3} align="stretch">
           <Button colorPalette="blue" size="lg" onClick={handleSave} loading={addQuestionLoading} disabled={typeConfig.comingSoon} flex={1}>
             Save &amp; Next
           </Button>
           <Button size="lg" variant="outline" onClick={() => navigate("/admin/questions", { state: { categoryId, testId } })}>
             Finish
           </Button>
-        </HStack>
+        </Stack>
       </VStack>
       </Box>
     </Box>

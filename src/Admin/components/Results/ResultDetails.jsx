@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
-import { Box, Flex, Heading, SimpleGrid, Stack, Text, Badge } from "@chakra-ui/react";
+import { Box, Flex, Heading, SimpleGrid, Stack, Text } from "@chakra-ui/react";
 import { FaCheckCircle, FaTimesCircle, FaMinusCircle, FaStar } from "react-icons/fa";
-import { testResults, STATUS_COLOR } from "../../data/mockAdminData";
+import { testResults } from "../../data/mockAdminData";
 import Breadcrumb from "../common/Breadcrumb";
 import BackButton from "../common/BackButton";
 
@@ -23,7 +23,7 @@ export default function ResultDetails() {
 
   if (!result) {
     return (
-      <Box bg="white" p={8} borderRadius="xl" boxShadow="md">
+      <Box bg="white" p={{ base: 4, md: 6, lg: 8 }} borderRadius="xl" boxShadow="md">
         <Text color="gray.500">Result not found.</Text>
         <BackButton to="/admin/results" label="Back to Results" />
       </Box>
@@ -41,18 +41,15 @@ export default function ResultDetails() {
       />
       <BackButton to="/admin/results" label="Back to Results" />
 
-      <Box bg="white" p={8} borderRadius="xl" boxShadow="md" maxW="900px" borderTop="4px solid" borderColor="#E91E8C">
+      <Box bg="white" p={{ base: 4, md: 6, lg: 8 }} borderRadius="xl" boxShadow="md" maxW="900px" borderTop="4px solid" borderColor="#E91E8C">
         <Flex justify="space-between" align="flex-start" wrap="wrap" gap={4} mb={6}>
           <Box>
             <Heading size="lg" color="#0C1222" mb={1}>{result.studentName}</Heading>
             <Text color="gray.500" fontSize="sm">{result.studentEmail}</Text>
           </Box>
-          <Badge colorPalette={STATUS_COLOR[result.status]} rounded="md" px={3} py={1} fontSize="sm">
-            {result.status}
-          </Badge>
         </Flex>
 
-        <Flex gap={8} wrap="wrap" mb={8}>
+        <Flex gap={{ base: 4, md: 8 }} wrap="wrap" mb={8}>
           <Box>
             <Text fontSize="xs" color="gray.400">Category</Text>
             <Text fontWeight={600} color="#0C1222">{result.category}</Text>
