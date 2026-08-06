@@ -14,6 +14,7 @@ import StudentDetails from "../components/Students/StudentDetails";
 import ResultsList from "../components/Results/ResultsList";
 import StudentCategoryResults from "../components/Results/StudentCategoryResults";
 import ResultReview from "../components/Results/ResultReview";
+import SubmissionDetail from "../components/Results/SubmissionDetail";
 
 export default function AdminRoutes() {
   return (
@@ -40,6 +41,7 @@ export default function AdminRoutes() {
         <Route path="results" element={<ResultsList />} />
         <Route path="results/student/:studentId/category/:categoryId" element={<StudentCategoryResults />} />
         <Route path="results/attempt/:attemptId/review" element={<ResultReview />} />
+        <Route path="results/submission/:submissionId" element={<SubmissionDetail />} />
       </Route>
     </Routes>
   );

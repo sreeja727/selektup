@@ -65,6 +65,11 @@ function normalizeAdminResult(raw) {
   if (!raw) return raw;
   return {
     submissionId: raw.submissionId,
+    // Not confirmed via OpenAPI for this endpoint — read defensively so the
+    // studentId+testId review lookup (GET /api/admin/results/review) still
+    // works if the backend uses different key names.
+    studentId: raw.studentId ?? raw.student?.id ?? null,
+    testId: raw.testId ?? raw.test?.id ?? null,
     studentName: raw.studentName,
     studentEmail: raw.studentEmail,
     categoryTitle: raw.categoryTitle,
