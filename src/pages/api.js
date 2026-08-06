@@ -264,10 +264,7 @@ function getAdminResultDetailApi(submissionId) {
   };
 }
 
-// Real Spring Boot backend (GET /api/admin/tests) — every mock test across
-// every category, admin-scoped (no per-user access gating, unlike
-// getTestCategoryDetailApi's tests[]). Powers the admin Results page's Mock
-// Test filter.
+
 function getAdminTestsApi() {
   return {
     url: API_URL.ADMIN_TESTS,
@@ -368,12 +365,13 @@ function submitTestApi({ testId, answers }) {
   };
 }
 
-function startTestApi(testId) {
+function startTestApi(testId, { silent = false } = {}) {
   return {
     url: `${API_URL.TESTS}/${testId}/start`,
     method: REQUEST_METHOD.POST,
     payload: {
-      types: ACTION_TYPES[ACTIONS.START_TEST]
+      types: ACTION_TYPES[ACTIONS.START_TEST],
+      silent
     }
   };
 }

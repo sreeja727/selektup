@@ -21,8 +21,8 @@ import {
   FaClipboardCheck,
   FaListAlt,
 } from "react-icons/fa";
-import { getTestAttempt, getSubmissionReview } from "../../selectors";
-import { fetchSubmissionReview } from "../../actions";
+import { getTestAttempt, getSubmissionReview, getSubmission } from "../../selectors";
+import { fetchSubmissionReview, fetchSubmission } from "../../actions";
 import Loader from "../../../components/Loader";
 import {
   QUESTION_KIND, getTypeConfig, isAnswered, isCorrect, getCorrectAnswerLabel, getSelectedAnswerLabel,
@@ -41,19 +41,38 @@ export default function Review() {
   const { submissionId } = useParams();
   const attempt = useSelector(getTestAttempt);
   const submissionReview = useSelector(getSubmissionReview);
+  const submission = useSelector(getSubmission);
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    if (submissionId) dispatch(fetchSubmissionReview(submissionId));
+    if (submissionId) {
+      dispatch(fetchSubmissionReview(submissionId));
+      dispatch(fetchSubmission(submissionId));
+    }
   }, [dispatch, submissionId]);
 
   if (submissionId) {
-    if (!submissionReview) return <Loader fullScreen />;
+    if (!submissionReview || !submission) return <Loader fullScreen />;
   } else if (!attempt) {
     return <Navigate to="/test-series" replace />;
   }
 
   const questions = submissionId ? submissionReview : attempt.questions;
+  if (!questions || questions.length === 0) {
+    return <Navigate to={submissionId ? `/result/${submissionId}` : "/result"} replace />;
+  }
+
+  const scoreSource = submissionId ? submission : attempt;
+  const stats = {
+    correct: scoreSource.correct ?? 0,
+    wrong: scoreSource.wrong ?? 0,
+    skipped: scoreSource.unanswered ?? 0,
+    score: scoreSource.score ?? 0,
+    totalMarks: scoreSource.totalMarks,
+    cutOffMarks: scoreSource.cutOffMarks,
+  };
+  const passed = stats.score >= stats.cutOffMarks;
+
   const q = questions[current];
   const config = getTypeConfig(q.type);
   const answered = isAnswered(q, q.selected);
@@ -106,6 +125,48 @@ export default function Review() {
             <FaListAlt size={12} />
             Test Series
           </Button>
+        </HStack>
+      </Flex>
+
+      <Flex
+        bg="white"
+        p={{ base: 4, md: 5 }}
+        borderRadius="xl"
+        border="1px solid"
+        borderColor="gray.100"
+        boxShadow="0 2px 10px rgba(0,0,0,0.05)"
+        mb={5}
+        justify="space-between"
+        align="center"
+        wrap="wrap"
+        gap={4}
+      >
+        <Stack gap={0}>
+          <Text fontSize="xs" color="gray.500" fontWeight={700} textTransform="uppercase" letterSpacing="0.06em">
+            Score
+          </Text>
+          <Heading size="lg" color={passed ? "green.500" : "red.500"} fontWeight={900}>
+            {stats.score}
+            <Text as="span" fontSize="sm" color="gray.400" fontWeight={600}> / {stats.totalMarks}</Text>
+          </Heading>
+        </Stack>
+        <HStack gap={6} fontSize="sm" wrap="wrap">
+          <Stack gap={0} align="center">
+            <Text fontWeight={800} color="green.500">{stats.correct}</Text>
+            <Text fontSize="2xs" color="gray.500" fontWeight={600} textTransform="uppercase">Correct</Text>
+          </Stack>
+          <Stack gap={0} align="center">
+            <Text fontWeight={800} color="red.500">{stats.wrong}</Text>
+            <Text fontSize="2xs" color="gray.500" fontWeight={600} textTransform="uppercase">Wrong</Text>
+          </Stack>
+          <Stack gap={0} align="center">
+            <Text fontWeight={800} color="gray.500">{stats.skipped}</Text>
+            <Text fontSize="2xs" color="gray.500" fontWeight={600} textTransform="uppercase">Skipped</Text>
+          </Stack>
+          <Stack gap={0} align="center">
+            <Text fontWeight={800} color="#0C1222">{stats.cutOffMarks}</Text>
+            <Text fontSize="2xs" color="gray.500" fontWeight={600} textTransform="uppercase">Cut Off</Text>
+          </Stack>
         </HStack>
       </Flex>
 

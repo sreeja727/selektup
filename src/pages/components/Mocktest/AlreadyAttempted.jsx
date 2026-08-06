@@ -47,7 +47,7 @@ export default function AlreadyAttempted({ categoryTitle, testTitle, color = "#E
               </Heading>
 
               <Text color="gray.600" maxW="480px">
-                You have already attempted this mock test. Retaking is not allowed.
+                You have already attempted this mock test. Each mock test can only be attempted once.
               </Text>
 
               <Text fontWeight={700} color="#0C1222">{testTitle}</Text>
@@ -67,7 +67,7 @@ export default function AlreadyAttempted({ categoryTitle, testTitle, color = "#E
                   w={{ base: "100%", sm: "auto" }}
                 >
                   <FaCheck size={14} />
-                  Review Answers
+                  View Review
                 </Button>
               </Stack>
             </Stack>

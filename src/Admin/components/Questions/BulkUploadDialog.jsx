@@ -12,7 +12,7 @@ import {
   getBulkUploadLoading, getBulkUploadResult, getBulkUploadError, getQuestionTemplateLoading,
 } from "../../../pages/selectors";
 
-export default function BulkUploadDialog({ isOpen, onClose, testId, testTitle }) {
+export default function BulkUploadDialog({ isOpen, onClose, testId, testTitle, onUploaded }) {
   const dispatch = useDispatch();
   const [file, setFile] = useState(null);
   const [prevOpen, setPrevOpen] = useState(false);
@@ -38,6 +38,10 @@ export default function BulkUploadDialog({ isOpen, onClose, testId, testTitle })
   useEffect(() => {
     if (isOpen) dispatch(actions.clearBulkUploadStatus());
   }, [isOpen, dispatch]);
+
+  useEffect(() => {
+    if (result && onUploaded) onUploaded();
+  }, [result]);
 
   const handleUpload = () => {
     if (!file || !testId) return;
