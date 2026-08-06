@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { Box, Field, Flex, Heading, Input, NativeSelect, Table, Text } from "@chakra-ui/react";
 import { FaSearch } from "react-icons/fa";
 import Breadcrumb from "../common/Breadcrumb";
 import Pagination from "../common/Pagination";
-import { fetchAdminResults, fetchAdminTests, fetchTestCategories } from "../../../pages/actions";
+import { fetchAdminStudentResults, fetchTestCategories } from "../../../pages/actions";
 import {
-  getAdminResults, getAdminResultsLoading, getAdminResultsTotalPages, getAdminResultsPageSize,
-  getTestCategories, getAdminTests,
+  getAdminStudentResults, getAdminStudentResultsLoading, getAdminStudentResultsTotalPages,
+  getAdminStudentResultsPageSize, getTestCategories,
 } from "../../../pages/selectors";
 
 const PAGE_SIZE = 10;
@@ -25,26 +25,19 @@ export default function ResultsList() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const results = useSelector(getAdminResults);
-  const resultsLoading = useSelector(getAdminResultsLoading);
-  const resultsTotalPages = useSelector(getAdminResultsTotalPages);
-  const resultsPageSize = useSelector(getAdminResultsPageSize) || PAGE_SIZE;
+  const results = useSelector(getAdminStudentResults);
+  const resultsLoading = useSelector(getAdminStudentResultsLoading);
+  const resultsTotalPages = useSelector(getAdminStudentResultsTotalPages);
+  const resultsPageSize = useSelector(getAdminStudentResultsPageSize) || PAGE_SIZE;
   const categories = useSelector(getTestCategories);
-  const adminTests = useSelector(getAdminTests);
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [category, setCategory] = useState("All");
-  const [test, setTest] = useState("All");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
     dispatch(fetchTestCategories());
-    // Admin-scoped list — unlike fetchTestCategoryDetail, its tests[] isn't
-    // gated behind the calling account's own category-access approval, so
-    // it actually populates for an admin session. Fetched once; filtered
-    // per-category client-side below.
-    dispatch(fetchAdminTests());
   }, [dispatch]);
 
   // Debounce the search box so we don't hit the backend on every keystroke.
@@ -54,29 +47,20 @@ export default function ResultsList() {
   }, [search]);
 
   useEffect(() => {
-    dispatch(fetchAdminResults({
+    dispatch(fetchAdminStudentResults({
       search: debouncedSearch,
       categoryId: category === "All" ? undefined : category,
-      testId: test === "All" ? undefined : test,
       page: page - 1,
       size: PAGE_SIZE,
     }));
-  }, [dispatch, debouncedSearch, category, test, page]);
-
-  const testsForCategory = category === "All"
-    ? []
-    : adminTests.filter((t) => String(t.categoryId) === category);
-
-  const scoreLabel = useMemo(() => (r) => (
-    r.totalMarks != null ? `${r.score} / ${r.totalMarks}` : `${r.score}`
-  ), []);
+  }, [dispatch, debouncedSearch, category, page]);
 
   return (
     <>
       <Breadcrumb items={[{ label: "Dashboard", to: "/admin/dashboard" }, { label: "Results" }]} />
 
       <Heading mb={1} color="#0C1222">Results</Heading>
-      <Text color="gray.500" mb={8}>View mock test results submitted by students</Text>
+      <Text color="gray.500" mb={8}>View each student's progress across their purchased test categories</Text>
 
       <Box bg="white" rounded="xl" shadow="md" p={{ base: 4, md: 6 }}>
         <Flex gap={4} wrap="wrap" align="flex-end" mb={6}>
@@ -93,7 +77,7 @@ export default function ResultsList() {
             </Box>
             <Input
               pl="34px"
-              placeholder="Search by student, test or category"
+              placeholder="Search by student name or email"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -113,7 +97,6 @@ export default function ResultsList() {
                 value={category}
                 onChange={(e) => {
                   setCategory(e.target.value);
-                  setTest("All");
                   setPage(1);
                 }}
                 {...selectStyle}
@@ -126,57 +109,38 @@ export default function ResultsList() {
               <NativeSelect.Indicator />
             </NativeSelect.Root>
           </Field.Root>
-
-          <Field.Root minW="200px" maxW={{ md: "240px" }}>
-            <Field.Label fontSize="sm" color="gray.600">Mock Test</Field.Label>
-            <NativeSelect.Root>
-              <NativeSelect.Field
-                value={test}
-                onChange={(e) => {
-                  setTest(e.target.value);
-                  setPage(1);
-                }}
-                disabled={category === "All"}
-                {...selectStyle}
-              >
-                <option value="All">All Tests</option>
-                {testsForCategory.map((t) => (
-                  <option key={t.id} value={t.id}>{t.title}</option>
-                ))}
-              </NativeSelect.Field>
-              <NativeSelect.Indicator />
-            </NativeSelect.Root>
-          </Field.Root>
         </Flex>
 
         <Table.ScrollArea>
           <Table.Root size="sm">
             <Table.Header>
               <Table.Row bg="gray.50">
-                <Table.ColumnHeader>Student</Table.ColumnHeader>
+                <Table.ColumnHeader>Student Name</Table.ColumnHeader>
                 <Table.ColumnHeader>Category</Table.ColumnHeader>
-                <Table.ColumnHeader>Test</Table.ColumnHeader>
-                <Table.ColumnHeader>Score</Table.ColumnHeader>
-                <Table.ColumnHeader>Submitted</Table.ColumnHeader>
+                <Table.ColumnHeader>Tests Completed</Table.ColumnHeader>
+                <Table.ColumnHeader>Average Score</Table.ColumnHeader>
+                <Table.ColumnHeader>Last Attempt Date</Table.ColumnHeader>
                 <Table.ColumnHeader></Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
               {results.map((r) => (
-                <Table.Row key={r.submissionId} _hover={{ bg: "gray.50" }}>
+                <Table.Row key={`${r.studentId}-${r.categoryId}`} _hover={{ bg: "gray.50" }}>
                   <Table.Cell fontWeight={600} color="#0C1222">
                     <Text fontSize="sm">{r.studentName}</Text>
                   </Table.Cell>
                   <Table.Cell color="gray.600">{r.categoryTitle}</Table.Cell>
-                  <Table.Cell color="gray.600">{r.testTitle}</Table.Cell>
-                  <Table.Cell color="gray.600">{scoreLabel(r)}</Table.Cell>
+                  <Table.Cell color="gray.600">{r.testsCompleted}/{r.testsTotal}</Table.Cell>
+                  <Table.Cell color="gray.600">{r.averageScorePercent}%</Table.Cell>
                   <Table.Cell color="gray.600">
-                    {r.submittedAt ? new Date(r.submittedAt).toLocaleString() : "—"}
+                    {r.lastAttemptAt ? new Date(r.lastAttemptAt).toLocaleString() : "—"}
                   </Table.Cell>
                   <Table.Cell>
                     <Box
                       as="button"
-                      onClick={() => navigate(`/admin/results/${r.submissionId}`)}
+                      onClick={() => navigate(`/admin/results/student/${r.studentId}/category/${r.categoryId}`, {
+                        state: { studentName: r.studentName, studentEmail: r.studentEmail, categoryTitle: r.categoryTitle },
+                      })}
                       color="#039BE5"
                       fontWeight={600}
                       fontSize="sm"

@@ -239,9 +239,6 @@ function unblockStudentApi(id) {
   };
 }
 
-// Real Spring Boot backend (GET /api/admin/results) — paginated list of
-// submitted test results (admin only), confirmed via OpenAPI. Same
-// Page<T>-as-Map response shape as getAdminStudentsApi above.
 function getAdminResultsApi({ search = '', categoryId, testId, page = 0, size = 10 } = {}) {
   return {
     url: API_URL.ADMIN_RESULTS,
@@ -257,9 +254,6 @@ function getAdminResultsApi({ search = '', categoryId, testId, page = 0, size = 
   };
 }
 
-// Real Spring Boot backend (GET /api/admin/results/{submissionId}) — the
-// full per-submission detail (admin only), confirmed via OpenAPI
-// (AdminResultDetailDto).
 function getAdminResultDetailApi(submissionId) {
   return {
     url: `${API_URL.ADMIN_RESULTS}/${submissionId}`,
@@ -280,6 +274,53 @@ function getAdminTestsApi() {
     method: REQUEST_METHOD.GET,
     payload: {
       types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_TESTS]
+    }
+  };
+}
+
+function getAdminStudentResultsApi({ search = '', categoryId, page = 0, size = 10 } = {}) {
+  return {
+    url: API_URL.ADMIN_RESULTS_STUDENTS,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENT_RESULTS],
+      params: {
+        search, page, size,
+        ...(categoryId ? { categoryId } : {}),
+      }
+    }
+  };
+}
+
+
+function getAdminStudentCategoryResultsApi({ studentId, categoryId }) {
+  return {
+    url: `${API_URL.ADMIN_RESULTS_STUDENT_CATEGORY}/${studentId}/category/${categoryId}`,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENT_CATEGORY_RESULTS]
+    }
+  };
+}
+
+
+function getAdminResultReviewApi(attemptId) {
+  return {
+    url: `${API_URL.ADMIN_RESULTS_ATTEMPTS}/${attemptId}/review`,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULT_REVIEW]
+    }
+  };
+}
+
+function getAdminAttemptReviewByStudentTestApi({ studentId, testId }) {
+  return {
+    url: API_URL.ADMIN_RESULTS_REVIEW,
+    method: REQUEST_METHOD.GET,
+    payload: {
+      types: ACTION_TYPES[ACTIONS.FETCH_ADMIN_ATTEMPT_REVIEW_BY_STUDENT_TEST],
+      params: { studentId, testId }
     }
   };
 }
@@ -494,4 +535,8 @@ export {
   getAdminResultsApi,
   getAdminResultDetailApi,
   getAdminTestsApi,
+  getAdminStudentResultsApi,
+  getAdminStudentCategoryResultsApi,
+  getAdminResultReviewApi,
+  getAdminAttemptReviewByStudentTestApi,
 };

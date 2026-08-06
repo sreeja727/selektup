@@ -39,7 +39,11 @@ const ACTIONS = {
   FETCH_ADMIN_TEST_QUESTIONS: `${STATE_REDUCER_KEY}/FETCH_ADMIN_TEST_QUESTIONS`,
   FETCH_ADMIN_RESULTS: `${STATE_REDUCER_KEY}/FETCH_ADMIN_RESULTS`,
   FETCH_ADMIN_RESULT_DETAIL: `${STATE_REDUCER_KEY}/FETCH_ADMIN_RESULT_DETAIL`,
-  FETCH_ADMIN_TESTS: `${STATE_REDUCER_KEY}/FETCH_ADMIN_TESTS`
+  FETCH_ADMIN_TESTS: `${STATE_REDUCER_KEY}/FETCH_ADMIN_TESTS`,
+  FETCH_ADMIN_STUDENT_RESULTS: `${STATE_REDUCER_KEY}/FETCH_ADMIN_STUDENT_RESULTS`,
+  FETCH_ADMIN_STUDENT_CATEGORY_RESULTS: `${STATE_REDUCER_KEY}/FETCH_ADMIN_STUDENT_CATEGORY_RESULTS`,
+  FETCH_ADMIN_RESULT_REVIEW: `${STATE_REDUCER_KEY}/FETCH_ADMIN_RESULT_REVIEW`,
+  FETCH_ADMIN_ATTEMPT_REVIEW_BY_STUDENT_TEST: `${STATE_REDUCER_KEY}/FETCH_ADMIN_ATTEMPT_REVIEW_BY_STUDENT_TEST`
 };
 
 const ACTION_TYPES = getApiActionType(ACTIONS);
@@ -79,11 +83,11 @@ const fetchAdminDashboardSummary = createAction(ACTIONS.FETCH_ADMIN_DASHBOARD_SU
 const downloadQuestionTemplate = createAction(ACTIONS.DOWNLOAD_QUESTION_TEMPLATE);
 const fetchAdminResults = createAction(ACTIONS.FETCH_ADMIN_RESULTS);
 const fetchAdminResultDetail = createAction(ACTIONS.FETCH_ADMIN_RESULT_DETAIL);
-// payload: none (admin) - GET /api/admin/tests, the flat list of every mock
-// test across every category (admin-scoped, unlike GET /api/test-categories/{id}
-// which only returns tests[] once the calling account itself has approved
-// access — wrong for populating an admin filter dropdown).
 const fetchAdminTests = createAction(ACTIONS.FETCH_ADMIN_TESTS);
+const fetchAdminStudentResults = createAction(ACTIONS.FETCH_ADMIN_STUDENT_RESULTS);
+const fetchAdminStudentCategoryResults = createAction(ACTIONS.FETCH_ADMIN_STUDENT_CATEGORY_RESULTS);
+const fetchAdminResultReview = createAction(ACTIONS.FETCH_ADMIN_RESULT_REVIEW);
+const fetchAdminAttemptReviewByStudentTest = createAction(ACTIONS.FETCH_ADMIN_ATTEMPT_REVIEW_BY_STUDENT_TEST);
 
 export {
   ACTIONS,
@@ -123,5 +127,9 @@ export {
   fetchAdminTestQuestions,
   fetchAdminResults,
   fetchAdminResultDetail,
-  fetchAdminTests
+  fetchAdminTests,
+  fetchAdminStudentResults,
+  fetchAdminStudentCategoryResults,
+  fetchAdminResultReview,
+  fetchAdminAttemptReviewByStudentTest
 };

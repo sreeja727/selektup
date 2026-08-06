@@ -12,7 +12,8 @@ import QuestionsView from "../components/Questions/QuestionsView";
 import ExamAccess from "../components/Students/ExamAccess";
 import StudentDetails from "../components/Students/StudentDetails";
 import ResultsList from "../components/Results/ResultsList";
-import ResultDetails from "../components/Results/ResultDetails";
+import StudentCategoryResults from "../components/Results/StudentCategoryResults";
+import ResultReview from "../components/Results/ResultReview";
 
 export default function AdminRoutes() {
   return (
@@ -37,7 +38,8 @@ export default function AdminRoutes() {
         <Route path="students/details" element={<StudentDetails />} />
 
         <Route path="results" element={<ResultsList />} />
-        <Route path="results/:id" element={<ResultDetails />} />
+        <Route path="results/student/:studentId/category/:categoryId" element={<StudentCategoryResults />} />
+        <Route path="results/attempt/:attemptId/review" element={<ResultReview />} />
       </Route>
     </Routes>
   );
