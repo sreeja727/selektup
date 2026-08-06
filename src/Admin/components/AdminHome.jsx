@@ -1,10 +1,6 @@
 import { Box, Tabs } from "@chakra-ui/react";
 import { useSearchParams } from "react-router-dom";
-import {
-  FaTachometerAlt,
-  FaEnvelopeOpenText,
-  FaUserGraduate,
-} from "react-icons/fa";
+import {FaTachometerAlt,FaEnvelopeOpenText,FaUserGraduate,} from "react-icons/fa";
 import Dashboard from "./Dashboard";
 import EnquiriesList from "./Enquiries/EnquiriesList";
 import StudentsList from "./Students/StudentsList";

@@ -6,7 +6,6 @@ import Header from "./Header";
 import { TestSeriesProvider } from "../context/TestSeriesContext";
 import Loader from "../../components/Loader";
 
-// Must match the WIDTH_EXPANDED/WIDTH_COLLAPSED constants in Sidebar.jsx.
 const SIDEBAR_WIDTH_EXPANDED = "250px";
 const SIDEBAR_WIDTH_COLLAPSED = "76px";
 
@@ -14,10 +13,6 @@ export default function AdminLayout() {
   const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [loadedPath, setLoadedPath] = useState(null);
-  // Sidebar defaults expanded on desktop but starts collapsed to icon-only
-  // on mobile/tablet, so it doesn't eat too much width on first load. The
-  // toggle lives on the sidebar itself (see Sidebar.jsx) and works the same
-  // way at every screen size.
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth < 992 : false
   );

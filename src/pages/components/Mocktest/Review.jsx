@@ -11,7 +11,7 @@ import {
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   FaArrowLeft,
   FaArrowRight,
@@ -37,8 +37,10 @@ const LEGEND = [
 
 export default function Review() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const { submissionId } = useParams();
+  const categorySlug = location.state?.categorySlug;
   const attempt = useSelector(getTestAttempt);
   const submissionReview = useSelector(getSubmissionReview);
   const submission = useSelector(getSubmission);
@@ -120,7 +122,7 @@ export default function Review() {
             variant="outline"
             borderRadius="lg"
             size="sm"
-            onClick={() => navigate("/test-series")}
+            onClick={() => navigate(categorySlug ? `/test-series/${categorySlug}` : "/test-series")}
           >
             <FaListAlt size={12} />
             Test Series
@@ -162,10 +164,6 @@ export default function Review() {
           <Stack gap={0} align="center">
             <Text fontWeight={800} color="gray.500">{stats.skipped}</Text>
             <Text fontSize="2xs" color="gray.500" fontWeight={600} textTransform="uppercase">Skipped</Text>
-          </Stack>
-          <Stack gap={0} align="center">
-            <Text fontWeight={800} color="#0C1222">{stats.cutOffMarks}</Text>
-            <Text fontSize="2xs" color="gray.500" fontWeight={600} textTransform="uppercase">Cut Off</Text>
           </Stack>
         </HStack>
       </Flex>

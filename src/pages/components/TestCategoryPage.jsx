@@ -242,11 +242,7 @@ export default function TestCategoryPage() {
             <Stack gap={4}>
               <Heading fontSize="md" fontWeight={800} color="#0C1222">Mock Tests</Heading>
 
-              {/* Real per-test titles need the authed detail call, and the backend
-                  only returns the real tests[] once access is approved — until
-                  then (or while it's still loading), show locked placeholder rows
-                  using the public totalTests count so the list still reads as
-                  "10 tests, locked" instead of looking empty. */}
+              
               {detailMatches && tests.length > 0 ? tests.map((test) => (
                 <HStack
                   key={test.id}

@@ -35,12 +35,17 @@ export default function ResultsList() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [page, setPage] = useState(1);
+  const [submissionLookup, setSubmissionLookup] = useState("");
+
+  const goToSubmission = () => {
+    const id = submissionLookup.trim();
+    if (id) navigate(`/admin/results/submission/${id}`);
+  };
 
   useEffect(() => {
     dispatch(fetchTestCategories());
   }, [dispatch]);
 
-  // Debounce the search box so we don't hit the backend on every keystroke.
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(handle);
@@ -108,6 +113,38 @@ export default function ResultsList() {
               </NativeSelect.Field>
               <NativeSelect.Indicator />
             </NativeSelect.Root>
+          </Field.Root>
+
+          <Field.Root minW="200px" maxW={{ md: "260px" }} ml={{ md: "auto" }}>
+            <Field.Label fontSize="sm" color="gray.600">Look up by Submission ID</Field.Label>
+            <Flex gap={2}>
+              <Input
+                placeholder="e.g. 1024"
+                value={submissionLookup}
+                onChange={(e) => setSubmissionLookup(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && goToSubmission()}
+                borderColor="gray.200"
+                borderWidth="2px"
+                rounded="lg"
+                _focus={{ borderColor: "#039BE5", boxShadow: "0 0 0 3px rgba(3,155,229,0.12)" }}
+              />
+              <Box
+                as="button"
+                onClick={goToSubmission}
+                disabled={!submissionLookup.trim()}
+                bg="#039BE5"
+                color="white"
+                fontWeight={700}
+                borderRadius="lg"
+                px={4}
+                _hover={{ bg: "#0277BD" }}
+                opacity={submissionLookup.trim() ? 1 : 0.5}
+                cursor={submissionLookup.trim() ? "pointer" : "not-allowed"}
+                flexShrink={0}
+              >
+                Go
+              </Box>
+            </Flex>
           </Field.Root>
         </Flex>
 

@@ -21,8 +21,7 @@ export default function StudentCategoryResults() {
   const tests = useSelector(getAdminStudentCategoryResults);
   const loading = useSelector(getAdminStudentCategoryResultsLoading);
 
-  // The backend returns a bare array of tests with no student/category info
-  // attached, so the header relies on state passed by whoever navigated here.
+
   const { studentName, studentEmail, categoryTitle } = location.state || {};
 
   useEffect(() => {

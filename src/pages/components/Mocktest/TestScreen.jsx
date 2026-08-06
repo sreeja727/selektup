@@ -100,6 +100,10 @@ export default function TestScreen() {
   const [currentQuestion, setCurrentQuestion] = useState(() => savedAttempt?.currentQuestion ?? 0);
   const [answers, setAnswers] = useState(() => savedAttempt?.answers ?? {});
   const [marked, setMarked] = useState(() => savedAttempt?.marked ?? {});
+  // Absolute deadline (ms since epoch), not a duration — set once below and
+  // persisted alongside the answers so a mid-exam refresh restores the real
+  // remaining time instead of resetting the countdown to the full duration.
+  const [examEndAt, setExamEndAt] = useState(() => savedAttempt?.examEndAt ?? null);
   // Tracks every question index the student has actually navigated to, so
   // the palette can distinguish "Skipped" (visited, left unanswered) from
   // "Not Visited" (never opened) — the standard competitive-exam status set.
@@ -191,37 +195,51 @@ export default function TestScreen() {
     if (examReady) examStartedRef.current = true;
   }, [examReady]);
 
+  // Anchor the deadline exactly once, as soon as the real duration is known.
+  // Reading the wall clock (Date.now()) is impure and so can't happen during
+  // render, which is why this has to be an effect despite the general
+  // "avoid setState in effects" guidance — there's no pure way to compute
+  // it. A restored attempt already has examEndAt from localStorage, so this
+  // is a no-op then; only a genuinely new attempt sets it.
+  useEffect(() => {
+    if (!examReady || examEndAt) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Date.now() is impure, can't be computed during render
+    setExamEndAt(Date.now() + durationMinutes * 60 * 1000);
+  }, [examReady, examEndAt, durationMinutes]);
 
   useEffect(() => {
     if (!examReady) return;
     const handle = setTimeout(() => {
       try {
         localStorage.setItem(attemptStorageKey, JSON.stringify({
-          answers, marked, visited, currentQuestion,
+          answers, marked, visited, currentQuestion, examEndAt,
         }));
       } catch {
         // Storage full/unavailable — auto-save is best-effort, not required.
       }
     }, 300);
     return () => clearTimeout(handle);
-  }, [examReady, attemptStorageKey, answers, marked, visited, currentQuestion]);
+  }, [examReady, attemptStorageKey, answers, marked, visited, currentQuestion, examEndAt]);
 
   function finalizeAndSubmit() {
     if (submittedRef.current || questions.length === 0) return;
     submittedRef.current = true;
-   
-    try {
-      localStorage.removeItem(attemptStorageKey);
-    } catch {
-      // Storage unavailable — nothing to clean up.
-    }
 
     if (isReal) {
-     
+      // Don't delete the local draft yet — the submit is a network round
+      // trip that can fail. It's only cleared once submitTestResult actually
+      // arrives (see the effect below) or the retry-recovery effect below
+      // resets submittedRef so the student can try again with nothing lost.
       const submitAnswers = questions.map((q, i) => buildSubmitAnswer(q, answers[i]));
       awaitingSubmitRef.current = true;
       dispatch(submitTest({ testId: testSlug, answers: submitAnswers }));
       return;
+    }
+
+    try {
+      localStorage.removeItem(attemptStorageKey);
+    } catch {
+      // Storage unavailable — nothing to clean up.
     }
 
     const marksPerQuestion = totalMarks / questions.length;
@@ -253,7 +271,7 @@ export default function TestScreen() {
     dispatch(actions.setTestAttempt(snapshot));
     recordTestAttempt(categorySlug, testSlug, { submissionId: null, snapshot });
 
-    navigate("/result", { replace: true });
+    navigate("/result", { replace: true, state: { categorySlug } });
   }
 
   // Once the real submit endpoint resolves, build the same testAttempt shape
@@ -264,10 +282,16 @@ export default function TestScreen() {
     if (!awaitingSubmitRef.current || !submitTestResult) return;
     awaitingSubmitRef.current = false;
 
+    try {
+      localStorage.removeItem(attemptStorageKey);
+    } catch {
+      // Storage unavailable — nothing to clean up.
+    }
+
     const r = submitTestResult;
     if (r.submissionId) {
       recordTestAttempt(categorySlug, testSlug, { submissionId: r.submissionId });
-      navigate(`/result/${r.submissionId}`, { replace: true });
+      navigate(`/result/${r.submissionId}`, { replace: true, state: { categorySlug } });
       return;
     }
 
@@ -290,9 +314,25 @@ export default function TestScreen() {
     dispatch(actions.setTestAttempt(snapshot));
     recordTestAttempt(categorySlug, testSlug, { submissionId: null, snapshot });
 
-    navigate("/result", { replace: true });
+    navigate("/result", { replace: true, state: { categorySlug } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submitTestResult]);
+
+  // If the submit request itself fails (network drop, 5xx, etc. — as
+  // opposed to a 409 "already attempted", which is handled by the
+  // `attempted` flag switching to the AlreadyAttempted view instead), undo
+  // the submitted lock so the student can hit Submit again. Their answers
+  // were never deleted from localStorage in this case (see finalizeAndSubmit
+  // above), so nothing is lost.
+  const wasSubmitLoadingRef = useRef(false);
+  useEffect(() => {
+    const wasLoading = wasSubmitLoadingRef.current;
+    wasSubmitLoadingRef.current = submitTestLoading;
+    if (!isReal || !wasLoading || submitTestLoading) return;
+    if (!awaitingSubmitRef.current || submitTestResult || serverAttempted) return;
+    awaitingSubmitRef.current = false;
+    submittedRef.current = false;
+  }, [submitTestLoading, submitTestResult, isReal, serverAttempted]);
 
   // Trap the very next "Back" press: push a duplicate history entry once, on
   // mount, so pressing Back lands on this same URL (no route change) instead
@@ -336,10 +376,10 @@ export default function TestScreen() {
           const record = getAttemptRecord(categorySlug, testSlug);
           const submissionId = record?.submissionId || serverAttemptedSubmissionId;
           if (submissionId) {
-            navigate(`/review/${submissionId}`);
+            navigate(`/review/${submissionId}`, { state: { categorySlug } });
           } else if (record?.snapshot) {
             dispatch(actions.setTestAttempt(record.snapshot));
-            navigate("/review");
+            navigate("/review", { state: { categorySlug } });
           } else {
             navigate("/test-series");
           }
@@ -431,7 +471,7 @@ export default function TestScreen() {
         </Heading>
 
         <Timer
-          duration={durationMinutes * 60}
+          endTime={examEndAt}
           onTimeUp={finalizeAndSubmit}
         />
       </Flex>

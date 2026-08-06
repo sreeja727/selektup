@@ -14,14 +14,11 @@ export default function ForgotPassword() {
   const loading = useSelector(getApiLoading)
   const forgotPasswordData = useSelector(getForgotPasswordData)
 
-  const [step, setStep] = useState('mobile') // 'mobile' | 'otp'
+  const [step, setStep] = useState('mobile') 
   const [mobile, setMobile] = useState('')
   const [otp, setOtp] = useState('')
   const [mobileError, setMobileError] = useState('')
   const [otpError, setOtpError] = useState('')
-  // Tracks the forgotPasswordData object we've already reacted to, so a stale
-  // success from an earlier visit in this session doesn't skip straight to
-  // the OTP step on mount.
   const [handledForgotPasswordData, setHandledForgotPasswordData] = useState(forgotPasswordData)
 
   if (forgotPasswordData && forgotPasswordData !== handledForgotPasswordData) {

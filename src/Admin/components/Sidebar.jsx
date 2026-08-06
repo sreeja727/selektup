@@ -1,22 +1,8 @@
 import { useState } from "react";
 import { Box, VStack, Text } from "@chakra-ui/react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  FaTachometerAlt,
-  FaEnvelopeOpenText,
-  FaLayerGroup,
-  FaUserGraduate,
-  FaBook,
-  FaQuestionCircle,
-  FaChevronDown,
-  FaChevronLeft,
-  FaChevronRight,
-  FaUserCheck,
-  FaIdCard,
-  FaChartBar,
-} from "react-icons/fa";
+import {FaTachometerAlt,FaEnvelopeOpenText,FaLayerGroup,FaUserGraduate,FaBook,FaQuestionCircle,FaChevronDown,FaChevronLeft,FaChevronRight,FaUserCheck,FaIdCard,FaChartBar,} from "react-icons/fa";
 
-// Must match the ml values AdminLayout.jsx offsets its content by.
 const WIDTH_EXPANDED = "250px";
 const WIDTH_COLLAPSED = "76px";
 
@@ -60,9 +46,6 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }) {
     setOpenGroups((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
-  // Clicking a group's icon while collapsed can't open a flyout (out of
-  // scope here), so it expands the sidebar and opens that group instead —
-  // the same click that would normally toggle it once expanded.
   const handleGroupClick = (name) => {
     if (collapsed) {
       onToggleCollapse?.();
@@ -73,10 +56,7 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }) {
   };
 
   return (
-    // No overflow set on this outer box — it only positions the sidebar and
-    // hosts the toggle button, which needs to sit half outside its right
-    // edge. Scrolling is handled by the inner content box below instead, so
-    // the button is never clipped by a scroll container.
+    
     <Box
       w={collapsed ? WIDTH_COLLAPSED : WIDTH_EXPANDED}
       bg="#0C1222"

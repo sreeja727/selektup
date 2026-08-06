@@ -57,18 +57,20 @@ export default function AlreadyAttempted({ categoryTitle, testTitle, color = "#E
                   <FaArrowLeft size={12} />
                   Back
                 </Button>
-                <Button
-                  bg={color}
-                  color="white"
-                  fontWeight={700}
-                  borderRadius="lg"
-                  _hover={{ opacity: 0.9 }}
-                  onClick={onReview}
-                  w={{ base: "100%", sm: "auto" }}
-                >
-                  <FaCheck size={14} />
-                  View Review
-                </Button>
+                {onReview && (
+                  <Button
+                    bg={color}
+                    color="white"
+                    fontWeight={700}
+                    borderRadius="lg"
+                    _hover={{ opacity: 0.9 }}
+                    onClick={onReview}
+                    w={{ base: "100%", sm: "auto" }}
+                  >
+                    <FaCheck size={14} />
+                    Review Answers
+                  </Button>
+                )}
               </Stack>
             </Stack>
           </Box>

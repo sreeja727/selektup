@@ -57,9 +57,6 @@ export default function App() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const isAdminRoute = location.pathname.startsWith('/admin')
-  // Instructions (/test-series/:categorySlug/:testSlug) and TestScreen
-  // (/mock-test/:categorySlug/:testSlug) run full-screen during an exam
-  // attempt, so the navbar/footer chrome shouldn't be shown alongside them.
   const isExamRoute = /^\/test-series\/[^/]+\/[^/]+$/.test(location.pathname)
     || /^\/mock-test\/[^/]+\/[^/]+$/.test(location.pathname)
   const hideChrome = isAdminRoute || isExamRoute

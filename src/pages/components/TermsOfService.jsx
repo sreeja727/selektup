@@ -94,7 +94,6 @@ export default function TermsOfService() {
         </Container>
       </Box>
 
-      {/* Single content container */}
       <Container maxW="5xl" mt={{ base: -10, md: -14 }} pb={{ base: 14, md: 20 }} position="relative" zIndex={2}>
         <Box
           bg="white"

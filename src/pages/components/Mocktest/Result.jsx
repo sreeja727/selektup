@@ -9,7 +9,7 @@ import {
 } from "@chakra-ui/react";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams, Navigate } from "react-router-dom";
+import { useNavigate, useParams, useLocation, Navigate } from "react-router-dom";
 import {
   FaTrophy,
   FaSadTear,
@@ -41,10 +41,12 @@ function StatTile({ tile }) {
 
 export default function Result() {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const { submissionId } = useParams();
   const attempt = useSelector(getTestAttempt);
   const submission = useSelector(getSubmission);
+  const categorySlug = location.state?.categorySlug;
 
   useEffect(() => {
     if (submissionId) dispatch(fetchSubmission(submissionId));
@@ -125,9 +127,6 @@ export default function Result() {
                   transition="width 0.4s ease"
                 />
               </Box>
-              <Text mt={2} fontSize="xs" color="gray.400">
-                Cut off: {result.cutoff} marks
-              </Text>
             </Box>
 
             <SimpleGrid columns={{ base: 2, md: 3 }} gap={4} w="100%">
@@ -147,7 +146,7 @@ export default function Result() {
               borderRadius="lg"
               _hover={{ bg: "#0277BD", transform: "translateY(-2px)" }}
               transition="all 0.2s"
-              onClick={() => navigate(submissionId ? `/review/${submissionId}` : "/review")}
+              onClick={() => navigate(submissionId ? `/review/${submissionId}` : "/review", { state: { categorySlug } })}
             >
               <FaCheck size={14} />
               Review Answers

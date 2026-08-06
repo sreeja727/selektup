@@ -5,9 +5,7 @@ const getPagesData = (state) => state[STATE_REDUCER_KEY];
 
 export const getCommonConfigSelector = flow(getPagesData);
 
-/* ===========================
-   AUTH
-=========================== */
+
 
 const registerData = (state) => state.registerData;
 export const getRegisterData = flow(
@@ -45,10 +43,6 @@ export const getChangePasswordData = flow(
   changePasswordData
 );
 
-/* ===========================
-   COMMON (loading / toast / navigation)
-=========================== */
-
 const apiLoading = (state) => state.apiLoading;
 export const getApiLoading = flow(
   getPagesData,
@@ -67,17 +61,11 @@ export const getCustomToast = flow(
   customToast
 );
 
-/* ===========================
-   CATEGORY ACCESS
-=========================== */
-
 export const getStatusForCategory = (categorySlug) => flow(
   getPagesData,
   (state) => state.statusByCategory[categorySlug] || ACCESS_STATUS.NOT_REQUESTED
 );
 
-// Undefined until the first fetch for this category resolves — lets callers
-// distinguish "haven't checked yet" from a confirmed NOT_REQUESTED.
 export const getRawStatusForCategory = (categorySlug) => flow(
   getPagesData,
   (state) => state.statusByCategory[categorySlug]
