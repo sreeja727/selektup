@@ -110,6 +110,16 @@ export const getAdminResultDetail = flow(getPagesData, (state) => state.adminRes
 export const getAdminResultDetailLoading = flow(getPagesData, (state) => state.adminResultDetailLoading);
 export const getAdminTests = flow(getPagesData, (state) => state.adminTests);
 export const getAdminTestsLoading = flow(getPagesData, (state) => state.adminTestsLoading);
+export const getAdminStudentResults = flow(getPagesData, (state) => state.adminStudentResults);
+export const getAdminStudentResultsLoading = flow(getPagesData, (state) => state.adminStudentResultsLoading);
+export const getAdminStudentResultsTotalPages = flow(getPagesData, (state) => state.adminStudentResultsTotalPages);
+export const getAdminStudentResultsPageSize = flow(getPagesData, (state) => state.adminStudentResultsPageSize);
+export const getAdminStudentCategoryResults = flow(getPagesData, (state) => state.adminStudentCategoryResults);
+export const getAdminStudentCategoryResultsLoading = flow(getPagesData, (state) => state.adminStudentCategoryResultsLoading);
+export const getAdminResultReview = flow(getPagesData, (state) => state.adminResultReview);
+export const getAdminResultReviewLoading = flow(getPagesData, (state) => state.adminResultReviewLoading);
+export const getAdminAttemptReviewByStudentTest = flow(getPagesData, (state) => state.adminAttemptReviewByStudentTest);
+export const getAdminAttemptReviewByStudentTestLoading = flow(getPagesData, (state) => state.adminAttemptReviewByStudentTestLoading);
 export const getAdminEnquiries = flow(getPagesData, (state) => state.adminEnquiries);
 export const getAdminEnquiriesLoading = flow(getPagesData, (state) => state.adminEnquiriesLoading);
 export const getContactSubmitting = flow(getPagesData, (state) => state.contactSubmitting);

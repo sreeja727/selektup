@@ -15,10 +15,6 @@ import { ACCESS_STATUS } from './constants';
 const ADMIN_ROLE = 'ADMIN';
 const MOCK_LATENCY_MS = 300;
 
-/* ===========================
-   AUTH SAGAS
-=========================== */
-
 export function* registerSaga({ payload = {} }) {
   const { fullName = '', mobile = '', password = '' } = payload;
   yield put(actions.setApiLoading(true));
@@ -168,12 +164,7 @@ export function* verifyOtpSaga({ payload = {} }) {
   if (type === ACTION_TYPES[ACTIONS.VERIFY_OTP][1]) {
     const { success, message = '', data: resultData = {} } = apiPayload.data || {};
     if (success) {
-      // ApiResponseMapStringString's data is an untyped string map — the
-      // key holding the reset token isn't documented in the OpenAPI spec,
-      // so `resetToken` (matching ResetPasswordWithTokenRequest's field
-      // name) is the assumed key, with `token` as a fallback. Confirm the
-      // exact key once a real OTP can be issued end-to-end in an
-      // environment with working email delivery.
+      
       const resetToken = resultData.resetToken || resultData.token || '';
       yield put(actions.navigateTo({ to: '/reset-password', options: { state: { mobile, resetToken } } }));
     } else {
@@ -240,12 +231,6 @@ export function* resetPasswordSaga({ payload = {} }) {
   yield put(actions.setApiLoading(false));
 }
 
-// Logged-in student changing their own password — POST /api/auth/change-password.
-// Distinct from forgotPasswordSaga/resetPasswordSaga above, which are for
-// someone who doesn't know their current password. Stores the raw
-// { success, message } via changePasswordData (see slice.js) so
-// ChangePassword.jsx can show "Current password is incorrect" inline under
-// that field, in addition to the toast every other auth saga uses.
 export function* changePasswordSaga({ payload = {} }) {
   yield put(actions.setApiLoading(true));
   yield fork(handleAPIRequest, api.changePasswordApi, payload);
@@ -287,10 +272,6 @@ export function* changePasswordSaga({ payload = {} }) {
   }
   yield put(actions.setApiLoading(false));
 }
-
-/* ===========================
-   CATEGORY ACCESS SAGAS
-=========================== */
 
 function* runRequest(actionKey, worker, payload) {
   const [REQUEST, SUCCESS, FAILURE] = ACTION_TYPES[actionKey];
@@ -338,9 +319,6 @@ function* fetchAdminRequestsSaga() {
   ]);
 }
 
-// approve/reject return no body (ApiResponseVoid), so the row's studentName/
-// categoryTitle for the toast — and the id/status to patch adminRequests
-// with — come from what's already in Redux, not the response.
 function* approveRequestSaga({ payload: requestId }) {
   const requests = yield select(getAdminRequests);
   const target = requests.find((r) => r.requestId === requestId);
@@ -420,6 +398,38 @@ function* fetchAdminTestsSaga() {
   yield take([
     ACTION_TYPES[ACTIONS.FETCH_ADMIN_TESTS][1],
     ACTION_TYPES[ACTIONS.FETCH_ADMIN_TESTS][2]
+  ]);
+}
+
+function* fetchAdminStudentResultsSaga({ payload }) {
+  yield fork(handleAPIRequest, api.getAdminStudentResultsApi, payload);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENT_RESULTS][1],
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENT_RESULTS][2]
+  ]);
+}
+
+function* fetchAdminStudentCategoryResultsSaga({ payload }) {
+  yield fork(handleAPIRequest, api.getAdminStudentCategoryResultsApi, payload);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENT_CATEGORY_RESULTS][1],
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENT_CATEGORY_RESULTS][2]
+  ]);
+}
+
+function* fetchAdminResultReviewSaga({ payload: attemptId }) {
+  yield fork(handleAPIRequest, api.getAdminResultReviewApi, attemptId);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULT_REVIEW][1],
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULT_REVIEW][2]
+  ]);
+}
+
+function* fetchAdminAttemptReviewByStudentTestSaga({ payload }) {
+  yield fork(handleAPIRequest, api.getAdminAttemptReviewByStudentTestApi, payload);
+  yield take([
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_ATTEMPT_REVIEW_BY_STUDENT_TEST][1],
+    ACTION_TYPES[ACTIONS.FETCH_ADMIN_ATTEMPT_REVIEW_BY_STUDENT_TEST][2]
   ]);
 }
 
@@ -670,13 +680,6 @@ function* deleteQuestionSaga({ payload }) {
   }
 }
 
-// When there's no active search/type filter, `isFiltered` is false and this
-// calls the real bulk DELETE /api/admin/tests/{testId}/questions endpoint
-// (confirmed via /v3/api-docs — no body, deletes everything unconditionally).
-// That endpoint can't be scoped to a subset, so when a filter IS active this
-// falls back to looping the single-question DELETE instead — sequential
-// rather than parallel so a slow/rate-limited backend isn't hit with e.g.
-// 199 requests at once; each failure is tallied rather than aborting the rest.
 function* deleteAllQuestionsSaga({ payload = {} }) {
   const { testId, questionIds = [], isFiltered } = payload;
 
@@ -765,6 +768,10 @@ export default function* pagesSaga() {
     takeLatest(ACTIONS.FETCH_ADMIN_RESULTS, fetchAdminResultsSaga),
     takeLatest(ACTIONS.FETCH_ADMIN_RESULT_DETAIL, fetchAdminResultDetailSaga),
     takeLatest(ACTIONS.FETCH_ADMIN_TESTS, fetchAdminTestsSaga),
+    takeLatest(ACTIONS.FETCH_ADMIN_STUDENT_RESULTS, fetchAdminStudentResultsSaga),
+    takeLatest(ACTIONS.FETCH_ADMIN_STUDENT_CATEGORY_RESULTS, fetchAdminStudentCategoryResultsSaga),
+    takeLatest(ACTIONS.FETCH_ADMIN_RESULT_REVIEW, fetchAdminResultReviewSaga),
+    takeLatest(ACTIONS.FETCH_ADMIN_ATTEMPT_REVIEW_BY_STUDENT_TEST, fetchAdminAttemptReviewByStudentTestSaga),
     takeLatest(ACTIONS.BLOCK_STUDENT, blockStudentSaga),
     takeLatest(ACTIONS.UNBLOCK_STUDENT, unblockStudentSaga),
     takeLatest(ACTIONS.FETCH_ADMIN_ENQUIRIES, fetchAdminEnquiriesSaga),

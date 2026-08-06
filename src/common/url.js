@@ -14,6 +14,10 @@ export const API_URL={
     ADMIN_STUDENTS_PAGINATED:'admin/students/paginated',
     ADMIN_ENQUIRIES:'admin/enquiries',
     ADMIN_RESULTS:'admin/results',
+    ADMIN_RESULTS_STUDENTS:'admin/results/students',
+    ADMIN_RESULTS_STUDENT_CATEGORY:'admin/results/student',
+    ADMIN_RESULTS_REVIEW:'admin/results/review',
+    ADMIN_RESULTS_ATTEMPTS:'admin/results/attempts',
     HOME_CONTACT:'home/contact',
     TESTS:'tests',
     ADMIN_TESTS:'admin/tests'

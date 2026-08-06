@@ -97,6 +97,68 @@ function normalizeAdminTest(raw) {
   };
 }
 
+// One row per student x purchased category (GET /api/admin/results/students).
+function normalizeAdminStudentResult(raw) {
+  if (!raw) return raw;
+  return {
+    studentId: raw.studentId,
+    studentName: raw.studentName,
+    studentEmail: raw.studentEmail,
+    categoryId: raw.categoryId,
+    categoryTitle: raw.categoryTitle,
+    testsCompleted: raw.testsCompleted ?? 0,
+    testsTotal: raw.testsTotal ?? 0,
+    averageScorePercent: raw.averageScorePercent ?? 0,
+    lastAttemptAt: raw.lastAttemptAt ?? null,
+  };
+}
+
+// A single mock test row within a student's category results (GET
+// /api/admin/results/student/{studentId}/category/{categoryId}) — the
+// backend returns a bare array of these (AdminStudentTestDto), with no
+// student/category info attached, so that has to come from wherever the
+// page was navigated from.
+function normalizeAdminCategoryTest(raw) {
+  if (!raw) return raw;
+  return {
+    testId: raw.testId,
+    testTitle: raw.testTitle,
+    status: raw.status || 'NOT_ATTEMPTED',
+    attemptId: raw.attemptId ?? null,
+    score: raw.score ?? null,
+    totalMarks: raw.totalMarks ?? null,
+    durationMinutes: raw.durationMinutes ?? null,
+    submittedAt: raw.submittedAt ?? null,
+  };
+}
+
+// Full per-question review for one attempt, admin-scoped (AdminAttemptReviewDto,
+// shared by GET /api/admin/results/attempts/{attemptId}/review and GET
+// /api/admin/results/review?studentId=&testId=) — reuses the same
+// per-question normalization as the student-facing submission review.
+function normalizeAdminAttemptReview(raw) {
+  if (!raw) return raw;
+  return {
+    attemptId: raw.attemptId,
+    studentName: raw.studentName,
+    studentEmail: raw.studentEmail,
+    categoryTitle: raw.categoryName,
+    testTitle: raw.testTitle,
+    submittedAt: raw.submittedAt,
+    score: raw.score ?? 0,
+    totalMarks: raw.totalMarks,
+    totalQuestions: raw.totalQuestions,
+    correct: raw.correctCount ?? 0,
+    wrong: raw.wrongCount ?? 0,
+    unanswered: raw.skippedCount ?? 0,
+    accuracyPercent: raw.accuracy ?? 0,
+    timeTakenSeconds: raw.timeTakenMinutes != null ? raw.timeTakenMinutes * 60 : null,
+    hasPendingManualGrading: raw.hasPendingManualGrading ?? false,
+    manualGradingCount: raw.manualGradingCount ?? 0,
+    questions: (raw.questions || []).map(normalizeSubmissionQuestion),
+  };
+}
+
 const initialState = {
   // auth
   registerData: {},
@@ -141,6 +203,17 @@ const initialState = {
   adminResultDetailLoading: false,
   adminTests: [],
   adminTestsLoading: false,
+  adminStudentResults: [],
+  adminStudentResultsLoading: false,
+  adminStudentResultsTotalPages: 0,
+  adminStudentResultsPageSize: 10,
+  adminStudentResultsCurrentPage: 0,
+  adminStudentCategoryResults: [],
+  adminStudentCategoryResultsLoading: false,
+  adminResultReview: null,
+  adminResultReviewLoading: false,
+  adminAttemptReviewByStudentTest: null,
+  adminAttemptReviewByStudentTestLoading: false,
   adminEnquiries: [],
   adminEnquiriesLoading: false,
   contactSubmitting: false,
@@ -480,6 +553,72 @@ const pagesSlice = createSlice({
       })
       .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_TESTS][2], (state) => {
         state.adminTestsLoading = false;
+      })
+
+      // Fetch admin student results (GET /api/admin/results/students) — one
+      // row per student x purchased category, backing the redesigned
+      // Results list. Same Page<T>-as-Map response shape as
+      // FETCH_ADMIN_RESULTS above.
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENT_RESULTS][0], (state) => {
+        state.adminStudentResultsLoading = true;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENT_RESULTS][1], (state, { payload = {} }) => {
+        const raw = payload.data?.data;
+        const src = Array.isArray(raw) ? { content: raw } : (raw || {});
+        state.adminStudentResults = (src.content || []).map(normalizeAdminStudentResult);
+        state.adminStudentResultsTotalPages = src.totalPages ?? 0;
+        state.adminStudentResultsPageSize = src.pageSize ?? src.size ?? 10;
+        state.adminStudentResultsCurrentPage = src.currentPage ?? src.number ?? 0;
+        state.adminStudentResultsLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENT_RESULTS][2], (state) => {
+        state.adminStudentResultsLoading = false;
+      })
+
+      // Fetch a student's mock tests within one category (GET
+      // /api/admin/results/student/{studentId}/category/{categoryId}) — backs
+      // the Student Results Details page. Response is a bare array, so the
+      // page has to source studentName/categoryTitle from wherever it navigated from.
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENT_CATEGORY_RESULTS][0], (state) => {
+        state.adminStudentCategoryResultsLoading = true;
+        state.adminStudentCategoryResults = [];
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENT_CATEGORY_RESULTS][1], (state, { payload = {} }) => {
+        const raw = payload.data?.data;
+        state.adminStudentCategoryResults = (Array.isArray(raw) ? raw : []).map(normalizeAdminCategoryTest);
+        state.adminStudentCategoryResultsLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_STUDENT_CATEGORY_RESULTS][2], (state) => {
+        state.adminStudentCategoryResultsLoading = false;
+      })
+
+      // Fetch the full per-question review for one attempt, admin-scoped
+      // (GET /api/admin/results/attempts/{attemptId}/review).
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULT_REVIEW][0], (state) => {
+        state.adminResultReviewLoading = true;
+        state.adminResultReview = null;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULT_REVIEW][1], (state, { payload = {} }) => {
+        state.adminResultReview = normalizeAdminAttemptReview(payload.data?.data) || null;
+        state.adminResultReviewLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_RESULT_REVIEW][2], (state) => {
+        state.adminResultReviewLoading = false;
+      })
+
+      // Look up the same per-question review by studentId + testId instead of
+      // attemptId (GET /api/admin/results/review?studentId=&testId=) — same
+      // response shape (AdminAttemptReviewDto) as the attemptId-based fetch above.
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_ATTEMPT_REVIEW_BY_STUDENT_TEST][0], (state) => {
+        state.adminAttemptReviewByStudentTestLoading = true;
+        state.adminAttemptReviewByStudentTest = null;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_ATTEMPT_REVIEW_BY_STUDENT_TEST][1], (state, { payload = {} }) => {
+        state.adminAttemptReviewByStudentTest = normalizeAdminAttemptReview(payload.data?.data) || null;
+        state.adminAttemptReviewByStudentTestLoading = false;
+      })
+      .addCase(ACTION_TYPES[ACTIONS.FETCH_ADMIN_ATTEMPT_REVIEW_BY_STUDENT_TEST][2], (state) => {
+        state.adminAttemptReviewByStudentTestLoading = false;
       })
 
       // Block / unblock student (admin) — the actual adminStudents update

@@ -26,7 +26,6 @@ import ForgotPassword from './pages/components/ForgotPassword'
 import ResetPassword from './pages/components/ResetPassword'
 import ChangePassword from './pages/components/ChangePassword'
 import AdminRoutes from './Admin/Routes/AdminRoutes'
-// import Dashboard from './Admin/components/Dashboard'
 import Instructions from "./pages/components/Mocktest/Instructions";
 import TestScreen from "./pages/components/Mocktest/TestScreen";
 import Result from "./pages/components/Mocktest/Result";
@@ -58,6 +57,12 @@ export default function App() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const isAdminRoute = location.pathname.startsWith('/admin')
+  // Instructions (/test-series/:categorySlug/:testSlug) and TestScreen
+  // (/mock-test/:categorySlug/:testSlug) run full-screen during an exam
+  // attempt, so the navbar/footer chrome shouldn't be shown alongside them.
+  const isExamRoute = /^\/test-series\/[^/]+\/[^/]+$/.test(location.pathname)
+    || /^\/mock-test\/[^/]+\/[^/]+$/.test(location.pathname)
+  const hideChrome = isAdminRoute || isExamRoute
   const apiLoading = useSelector(getApiLoading)
   const navigation = useSelector(getNavigation)
   const customToast = useSelector(getCustomToast)
@@ -87,7 +92,7 @@ export default function App() {
       <ScrollToTop />
       <Toaster />
       {apiLoading && <Loader fullScreen />}
-      {!isAdminRoute && <Navbar />}
+      {!hideChrome && <Navbar />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/contact" element={<ContactForm key={location.key} />} />
@@ -103,7 +108,6 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPassword />}/>
         <Route path="/reset-password" element={<ResetPassword />}/>
         <Route path="/change-password" element={<ChangePassword />}/>
-        {/* <Route path="/dashboard" element={<Dashboard/>}/> */}
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route path="/mock-test/:categorySlug/:testSlug" element={<TestScreen />} />
         <Route path="/result" element={<Result />} />
@@ -112,7 +116,7 @@ export default function App() {
         <Route path="/review/:submissionId" element={<Review/>}/>
      </Routes>
 
-      {!isAdminRoute && <Footer />}
+      {!hideChrome && <Footer />}
     </>
   );
 }
