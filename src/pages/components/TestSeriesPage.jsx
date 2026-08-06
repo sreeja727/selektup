@@ -7,8 +7,6 @@ import { fetchTestCategories } from '../actions'
 import { getTestCategories, getTestCategoriesLoading } from '../selectors'
 import Loader from '../../components/Loader'
 
-// Real categories carry no color/icon of their own — rotate a small fixed
-// palette by id so cards stay visually distinct without backend support for it.
 const PALETTE = [
   { bg: 'rgba(233,30,140,0.10)', color: '#E91E8C' },
   { bg: 'rgba(3,155,229,0.10)', color: '#039BE5' },

@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Badge, Box, Button, Flex, Heading, Input, Table, Text } from "@chakra-ui/react";
 import { FaSearch } from "react-icons/fa";
-import { STATUS_COLOR } from "../../data/mockAdminData";
 import Breadcrumb from "../common/Breadcrumb";
 import Pagination from "../common/Pagination";
 import { blockStudent, fetchAdminStudents, unblockStudent } from "../../../pages/actions";
 import { getActionLoading, getAdminStudents, getAdminStudentsLoading } from "../../../pages/selectors";
 
+const STATUS_COLOR = { Active: "green", Blocked: "red" };
 const FILTERS = ["All", "Active", "Blocked"];
 const PAGE_SIZE = 5;
 

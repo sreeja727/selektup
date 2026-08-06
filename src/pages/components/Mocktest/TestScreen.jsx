@@ -271,7 +271,7 @@ export default function TestScreen() {
     dispatch(actions.setTestAttempt(snapshot));
     recordTestAttempt(categorySlug, testSlug, { submissionId: null, snapshot });
 
-    navigate("/result", { replace: true });
+    navigate("/result", { replace: true, state: { categorySlug } });
   }
 
   // Once the real submit endpoint resolves, build the same testAttempt shape
@@ -291,7 +291,7 @@ export default function TestScreen() {
     const r = submitTestResult;
     if (r.submissionId) {
       recordTestAttempt(categorySlug, testSlug, { submissionId: r.submissionId });
-      navigate(`/result/${r.submissionId}`, { replace: true });
+      navigate(`/result/${r.submissionId}`, { replace: true, state: { categorySlug } });
       return;
     }
 
@@ -314,7 +314,7 @@ export default function TestScreen() {
     dispatch(actions.setTestAttempt(snapshot));
     recordTestAttempt(categorySlug, testSlug, { submissionId: null, snapshot });
 
-    navigate("/result", { replace: true });
+    navigate("/result", { replace: true, state: { categorySlug } });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submitTestResult]);
 
@@ -376,10 +376,10 @@ export default function TestScreen() {
           const record = getAttemptRecord(categorySlug, testSlug);
           const submissionId = record?.submissionId || serverAttemptedSubmissionId;
           if (submissionId) {
-            navigate(`/review/${submissionId}`);
+            navigate(`/review/${submissionId}`, { state: { categorySlug } });
           } else if (record?.snapshot) {
             dispatch(actions.setTestAttempt(record.snapshot));
-            navigate("/review");
+            navigate("/review", { state: { categorySlug } });
           } else {
             navigate("/test-series");
           }

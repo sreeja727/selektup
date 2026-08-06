@@ -31,16 +31,12 @@ export default function ContactForm() {
   const successMsg = useSelector(getContactSuccessMessage)
   const apiError = useSelector(getContactError)
 
-  // Reset the form the moment a new success message arrives — an "adjust
-  // state during render" sync rather than a setState-in-effect, per React's
-  // guidance for reacting to a value change without an extra render.
   if (successMsg && successMsg !== handledSuccessMsg) {
     setHandledSuccessMsg(successMsg)
     setForm(EMPTY_FORM)
   }
 
   useEffect(() => {
-    // Clear any status left over from a previous visit to this page.
     dispatch(actions.clearContactStatus())
   }, [dispatch])
 
@@ -60,7 +56,6 @@ export default function ContactForm() {
     const { name } = e.target
     const value = name === 'phone' ? e.target.value.replace(/\D/g, '').slice(0, 10) : e.target.value
     setForm((f) => ({ ...f, [name]: value }))
-    // Clear the inline error for this field as the user types
     if (fieldErrors[name]) setFieldErrors((fe) => ({ ...fe, [name]: '' }))
     if (apiError || successMsg) dispatch(actions.clearContactStatus())
   }
@@ -107,13 +102,11 @@ export default function ContactForm() {
   return (
     <Box bg="#F8F9FA" minH="calc(100vh - 88px)">
 
-      {/* ── Thin gradient banner strip ── */}
       <Box
         h="8px"
         bg="linear-gradient(135deg, #0C1222 0%, #1a0830 50%, #0277BD 100%)"
       />
 
-      {/* ── Card area ── */}
       <Box maxW="860px" mx="auto" px={{ base: 4, md: 8 }} py={{ base: 10, md: 16 }}>
         <Box
           bg="white"
@@ -123,7 +116,6 @@ export default function ContactForm() {
           border="1px solid"
           borderColor="gray.100"
         >
-          {/* Heading */}
           <Text fontSize="2xl" fontWeight={800} color="#0C1222" mb={1}>
             Enquiry Form
           </Text>
@@ -133,7 +125,6 @@ export default function ContactForm() {
             {' '}are required.
           </Text>
 
-          {/* API success alert */}
           {successMsg && (
             <Box
               bg="green.50"
@@ -311,7 +302,6 @@ export default function ContactForm() {
   )
 }
 
-// ── Small reusable sub-components ────────────────────────────────────────────
 
 function FieldLabel({ children }) {
   return (

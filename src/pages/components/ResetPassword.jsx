@@ -6,19 +6,13 @@ import { FaLock, FaEye, FaEyeSlash, FaExclamationTriangle } from 'react-icons/fa
 import { resetPassword } from '../actions'
 import { getApiLoading } from '../selectors'
 
-// Backend requirement for ResetPasswordWithTokenRequest.newPassword,
-// re-confirmed live against the current schema: just minLength 6, no
-// character-composition rule (the earlier upper+lower+digit+symbol regex
-// was dropped server-side at some point).
+
 const PASSWORD_MIN_LENGTH = 6
 
 export default function ResetPassword() {
   const dispatch = useDispatch()
   const loading = useSelector(getApiLoading)
   const location = useLocation()
-  // Comes from ForgotPassword.jsx after OTP verification — the backend's
-  // real reset-password-with-token endpoint takes the token verify-otp
-  // returned, not the mobile/otp pair again.
   const { resetToken } = location.state || {}
 
   const [password, setPassword] = useState('')

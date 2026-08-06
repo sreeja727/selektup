@@ -17,7 +17,6 @@ import {
   FaClipboardList,
   FaClock,
   FaStar,
-  FaBullseye,
   FaExclamationTriangle,
   FaCheckCircle,
 } from "react-icons/fa";
@@ -177,10 +176,10 @@ export default function Instructions() {
           const record = getAttemptRecord(categorySlug, testSlug);
           const submissionId = record?.submissionId || serverAttemptedSubmissionId;
           if (submissionId) {
-            navigate(`/review/${submissionId}`);
+            navigate(`/review/${submissionId}`, { state: { categorySlug } });
           } else if (record?.snapshot) {
             dispatch(actions.setTestAttempt(record.snapshot));
-            navigate("/review");
+            navigate("/review", { state: { categorySlug } });
           } else {
             navigate("/test-series");
           }
@@ -197,7 +196,6 @@ export default function Instructions() {
     : (test.questions ?? 0);
   const duration = isReal && realTestDetailMatches ? (realTestDetail.durationMinutes ?? 75) : (test.duration ?? 120);
   const marks = isReal && realTestDetailMatches ? (realTestDetail.totalMarks ?? questionCount) : (test.marks ?? questionCount);
-  const cutOffMarks = isReal && realTestDetailMatches ? (realTestDetail.cutOffMarks ?? 35) : 35;
 
   const instructions = [
     "Read every question carefully before answering.",
@@ -249,11 +247,10 @@ export default function Instructions() {
               Please read the instructions carefully before starting the exam.
             </Text>
 
-            <SimpleGrid columns={{ base: 2, md: 4 }} gap={4} mb={8}>
+            <SimpleGrid columns={{ base: 2, md: 3 }} gap={4} mb={8}>
               <InfoTile tile={{ Icon: FaClipboardList, label: "Questions", value: questionCount, color }} />
               <InfoTile tile={{ Icon: FaClock, label: "Duration", value: formatDuration(duration), color }} />
               <InfoTile tile={{ Icon: FaStar, label: "Total Marks", value: marks, color }} />
-              <InfoTile tile={{ Icon: FaBullseye, label: "Cut Off", value: `${cutOffMarks} Marks`, color }} />
             </SimpleGrid>
 
             <HStack

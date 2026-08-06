@@ -46,7 +46,6 @@ export default function ResultsList() {
     dispatch(fetchTestCategories());
   }, [dispatch]);
 
-  // Debounce the search box so we don't hit the backend on every keystroke.
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(handle);

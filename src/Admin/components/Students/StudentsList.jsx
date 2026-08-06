@@ -2,9 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Box, Button, Flex, Heading, Input, Table, Badge, Text } from "@chakra-ui/react";
 import { FaSearch } from "react-icons/fa";
-import {
-  examAccessRequests, STATUS_COLOR,
-} from "../../data/mockAdminData";
 import Breadcrumb from "../common/Breadcrumb";
 import Pagination from "../common/Pagination";
 import { toaster } from "../../../components/ui/toaster";
@@ -13,6 +10,7 @@ import {
   getAdminStudents, getAdminStudentsLoading, getAdminStudentsTotalPages, getAdminStudentsPageSize,
 } from "../../../pages/selectors";
 
+const STATUS_COLOR = { Active: "green", Blocked: "red", Enabled: "green", Disabled: "gray" };
 const FILTERS = ["All", "Active", "Blocked"];
 const PAGE_SIZE = 5;
 const STUDENTS_PAGE_SIZE = 10;
@@ -27,7 +25,7 @@ export default function StudentsList() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filter, setFilter] = useState("All");
-  const [requests, setRequests] = useState(examAccessRequests);
+  const [requests, setRequests] = useState([]);
   const [requestsPage, setRequestsPage] = useState(1);
   const [studentsPage, setStudentsPage] = useState(1);
 
