@@ -23,12 +23,13 @@ import {
 } from "react-icons/fa";
 import { getTest } from "../../../data/testSeries";
 import { isLoggedIn } from "../../../utils/auth";
-import { getAttemptRecord, hasAttemptedTest } from "../../../utils/mockTestAttempts";
-import { fetchAccessStatus, fetchTestCategories, fetchTestCategoryDetail, fetchTestDetail } from "../../actions";
+import { getAttemptRecord, hasAttemptedTest, recordTestAttempt } from "../../../utils/mockTestAttempts";
+import { fetchAccessStatus, fetchTestCategories, fetchTestCategoryDetail, fetchTestDetail, fetchSubmissionReview, startTest } from "../../actions";
 import {
   getRawStatusForCategory, getStatusLoading,
   getTestCategories, getTestCategoryDetail, getTestCategoryDetailLoading,
   getTestDetail, getTestDetailLoading,
+  getTestAlreadyAttempted, getTestAlreadyAttemptedSubmissionId,
 } from "../../selectors";
 import { ACCESS_STATUS } from "../../constants";
 import { actions } from "../../slice";
@@ -76,6 +77,11 @@ export default function Instructions() {
   const realTestDetailLoading = useSelector(getTestDetailLoading);
   const mockStatus = useSelector(getRawStatusForCategory(categorySlug));
   const mockStatusLoading = useSelector(getStatusLoading);
+  // See TestScreen.jsx: the backend's 409 on a redundant start is the only
+  // way to learn a completed test's submissionId when this device never
+  // recorded it locally (e.g. attempted on another device/browser).
+  const serverAttempted = useSelector(getTestAlreadyAttempted);
+  const serverAttemptedSubmissionId = useSelector(getTestAlreadyAttemptedSubmissionId);
 
   const realCategory = useMemo(
     () => realCategories.find((c) => String(c.id) === categorySlug),
@@ -103,6 +109,33 @@ export default function Instructions() {
   const result = mockResult || (isReal && realTest ? { category: realCategory, test: realTest } : null);
 
   const realTestDetailMatches = realTestDetail && String(realTestDetail.id) === testSlug;
+
+  // This page never calls startTest itself (unlike TestScreen), so when the
+  // backend says the test is already attempted but this device has no local
+  // submissionId, fire a redundant start on purpose to get the 409's
+  // submissionId — otherwise "Review Answers" has nothing to navigate to.
+  useEffect(() => {
+    if (!loggedIn || !isReal || !testSlug || !result?.test?.attempted) return;
+    if (getAttemptRecord(categorySlug, testSlug)?.submissionId) return;
+    dispatch(startTest({ testId: testSlug, silent: true }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loggedIn, isReal, testSlug, categorySlug, result?.test?.attempted]);
+
+  useEffect(() => {
+    if (!serverAttempted || !categorySlug || !testSlug) return;
+    recordTestAttempt(categorySlug, testSlug, { submissionId: serverAttemptedSubmissionId ?? null });
+  }, [serverAttempted, serverAttemptedSubmissionId, categorySlug, testSlug]);
+
+  // As soon as a submissionId is known — whether from a prior local record
+  // or just discovered via the 409 above — prefetch its review so the
+  // review screen has data ready the moment "Review Answers" is clicked,
+  // instead of only fetching after navigation.
+  useEffect(() => {
+    if (!loggedIn || !categorySlug || !testSlug || !result?.test?.attempted) return;
+    const submissionId = getAttemptRecord(categorySlug, testSlug)?.submissionId || serverAttemptedSubmissionId;
+    if (submissionId) dispatch(fetchSubmissionReview(submissionId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loggedIn, categorySlug, testSlug, result?.test?.attempted, serverAttemptedSubmissionId]);
 
   // undefined = haven't checked this category yet; distinct from a resolved
   // NOT_REQUESTED, so we don't flash-redirect before the fetch completes.
@@ -142,8 +175,9 @@ export default function Instructions() {
         onBack={() => navigate(`/test-series/${categorySlug}`)}
         onReview={() => {
           const record = getAttemptRecord(categorySlug, testSlug);
-          if (record?.submissionId) {
-            navigate(`/review/${record.submissionId}`);
+          const submissionId = record?.submissionId || serverAttemptedSubmissionId;
+          if (submissionId) {
+            navigate(`/review/${submissionId}`);
           } else if (record?.snapshot) {
             dispatch(actions.setTestAttempt(record.snapshot));
             navigate("/review");

@@ -581,8 +581,11 @@ function* submitTestSaga({ payload }) {
   ]);
 }
 
-function* startTestSaga({ payload: testId }) {
-  yield fork(handleAPIRequest, api.startTestApi, testId);
+function* startTestSaga({ payload }) {
+  const isOptions = payload !== null && typeof payload === 'object';
+  const testId = isOptions ? payload.testId : payload;
+  const silent = isOptions ? Boolean(payload.silent) : false;
+  yield fork(handleAPIRequest, api.startTestApi, testId, { silent });
   yield take([
     ACTION_TYPES[ACTIONS.START_TEST][1],
     ACTION_TYPES[ACTIONS.START_TEST][2]

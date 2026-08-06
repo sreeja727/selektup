@@ -8,6 +8,7 @@ import { FaSearch, FaPlus, FaUpload, FaDownload } from "react-icons/fa";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import Breadcrumb from "../common/Breadcrumb";
 import Pagination from "../common/Pagination";
+import ConfirmDialog from "../common/ConfirmDialog";
 import Loader from "../../../components/Loader";
 import BulkUploadDialog from "./BulkUploadDialog";
 import QuestionTypeBadge from "./QuestionTypeBadge";
@@ -45,6 +46,7 @@ export default function QuestionsList() {
   const [typeFilter, setTypeFilter] = useState("");
   const [page, setPage] = useState(1);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [confirmState, setConfirmState] = useState(null); // { message, onConfirm }
 
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
@@ -102,9 +104,13 @@ export default function QuestionsList() {
   };
 
   const handleDelete = (q) => {
-    if (window.confirm("Delete this question? This cannot be undone.")) {
-      dispatch(deleteQuestion({ testId, questionId: q.id }));
-    }
+    setConfirmState({
+      message: "Delete this question? This cannot be undone.",
+      onConfirm: () => {
+        dispatch(deleteQuestion({ testId, questionId: q.id }));
+        setConfirmState(null);
+      },
+    });
   };
 
   const handleDownloadTemplate = () => {
@@ -119,9 +125,13 @@ export default function QuestionsList() {
       typeFilter ? `of type "${getTypeConfig(typeFilter).label}"` : null,
     ].filter(Boolean).join(' ');
     const scope = filterDescription ? `the ${testQuestions.length} question(s) ${filterDescription}` : `all ${testQuestions.length} question(s)`;
-    if (window.confirm(`Delete ${scope} from "${testTitle}"? This cannot be undone.`)) {
-      dispatch(deleteAllQuestions({ testId, questionIds: testQuestions.map((q) => q.id), isFiltered }));
-    }
+    setConfirmState({
+      message: `Delete ${scope} from "${testTitle}"? This cannot be undone.`,
+      onConfirm: () => {
+        dispatch(deleteAllQuestions({ testId, questionIds: testQuestions.map((q) => q.id), isFiltered }));
+        setConfirmState(null);
+      },
+    });
   };
 
   if (categoriesLoading && categories.length === 0) {
@@ -299,6 +309,17 @@ export default function QuestionsList() {
         onClose={() => setBulkOpen(false)}
         testId={testId}
         testTitle={testTitle}
+        onUploaded={() => dispatch(fetchAdminTestQuestions({ testId, search: debouncedSearch, type: typeFilter }))}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(confirmState)}
+        title="Delete confirmation"
+        message={confirmState?.message}
+        confirmLabel="Delete"
+        loading={deleteAllLoading}
+        onConfirm={() => confirmState?.onConfirm()}
+        onCancel={() => setConfirmState(null)}
       />
     </>
   );

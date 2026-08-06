@@ -718,6 +718,12 @@ const pagesSlice = createSlice({
       // the UI doesn't block on it.
       .addCase(ACTION_TYPES[ACTIONS.START_TEST][0], (state) => {
         state.startTestLoading = true;
+        // Instructions.jsx dispatches startTest without also dispatching
+        // fetchTestQuestions, so it must clear these itself here — otherwise
+        // a stale submissionId from a previously-viewed test leaks into the
+        // next test's record (see recordTestAttempt call sites).
+        state.testAlreadyAttempted = false;
+        state.testAlreadyAttemptedSubmissionId = null;
       })
       .addCase(ACTION_TYPES[ACTIONS.START_TEST][1], (state) => {
         state.startTestLoading = false;

@@ -154,7 +154,7 @@ function* handleExtraResponse(response, isDocument, documentType, successAction)
 function* invokeApi(method, url, payload) {
   const {
     types = ['REQUEST', 'SUCCESS', 'FAILURE'], data: payloadData, params = {},
-    isDocument = false, headers, documentType, paramsSerializer = {}
+    isDocument = false, headers, documentType, paramsSerializer = {}, silent = false
   } = payload;
   const requestAction = createAction(types[0]);
   const successAction = createAction(types[1]);
@@ -234,9 +234,11 @@ function* invokeApi(method, url, payload) {
       default:
         break;
     }
-    yield put(commonActions.setCustomToast({
-      variant: 'error', message: description, title, open: true
-    }));
+    if (!silent) {
+      yield put(commonActions.setCustomToast({
+        variant: 'error', message: description, title, open: true
+      }));
+    }
   } else if (_.has(response, 'error')) {
     const customError = response.error || {};
     yield put(
