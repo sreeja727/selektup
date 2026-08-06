@@ -105,11 +105,11 @@ function normalizeAdminStudentResult(raw) {
     studentName: raw.studentName,
     studentEmail: raw.studentEmail,
     categoryId: raw.categoryId,
-    categoryTitle: raw.categoryTitle,
-    testsCompleted: raw.testsCompleted ?? 0,
-    testsTotal: raw.testsTotal ?? 0,
-    averageScorePercent: raw.averageScorePercent ?? 0,
-    lastAttemptAt: raw.lastAttemptAt ?? null,
+    categoryTitle: raw.categoryTitle ?? raw.categoryName,
+    testsCompleted: raw.testsCompleted ?? raw.completedMockTests ?? 0,
+    testsTotal: raw.testsTotal ?? raw.totalMockTests ?? 0,
+    averageScorePercent: raw.averageScorePercent ?? (raw.averageScore != null ? Math.round(Number(raw.averageScore) * 100) : 0),
+    lastAttemptAt: raw.lastAttemptAt ?? raw.lastAttemptDate ?? null,
   };
 }
 
